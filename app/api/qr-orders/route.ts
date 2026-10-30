@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -9,90 +10,114 @@ type InputItem = {
   quantity: number;
 };
 
+type OrderResult = {
+  id?: string;
+  order_number?: number | string;
+  total_amount?: number | string;
+  status?: string;
+};
+
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+function errorResponse(message: string, status: number) {
+  return NextResponse.json({ error: message }, { status });
+}
+
 export async function POST(req: NextRequest) {
+  // 1. Validate server configuration
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !serviceKey) {
-    return NextResponse.json(
-      { error: "Server configuration is incomplete." },
-      { status: 503 }
+    console.error("QR order creation failed: Missing server configuration.");
+
+    return errorResponse(
+      "The ordering service is temporarily unavailable.",
+      503
     );
   }
 
+  // 2. Parse request body
   let body: Record<string, unknown>;
 
   try {
-    body = await req.json();
+    const parsed: unknown = await req.json();
+
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      Array.isArray(parsed)
+    ) {
+      return errorResponse("Invalid request body.", 400);
+    }
+
+    body = parsed as Record<string, unknown>;
   } catch {
-    return NextResponse.json(
-      { error: "Invalid request body." },
-      { status: 400 }
-    );
+    return errorResponse("Invalid request body.", 400);
   }
 
+  // 3. Read and normalize input
   const restaurantId = String(body.restaurantId ?? "").trim();
   const tableCode = String(body.tableCode ?? "").trim();
   const customerName = String(body.customerName ?? "").trim();
   const customerPhone = String(body.customerPhone ?? "").trim();
   const notes = String(body.notes ?? "").trim();
-  const items: InputItem[] = Array.isArray(body.items)
-    ? body.items as InputItem[]
-    : [];
 
+  const rawItems = Array.isArray(body.items) ? body.items : [];
+
+  // 4. Validate restaurant
   if (!uuidPattern.test(restaurantId)) {
-    return NextResponse.json(
-      { error: "Invalid restaurant." },
-      { status: 400 }
-    );
+    return errorResponse("Invalid restaurant.", 400);
   }
 
+  // 5. Validate table
   if (!tableCode || tableCode.length > 50) {
-    return NextResponse.json(
-      { error: "Invalid table QR code." },
-      { status: 400 }
-    );
+    return errorResponse("Invalid table QR code.", 400);
   }
 
-  if (customerName.length < 1 || customerName.length > 100) {
-    return NextResponse.json(
-      { error: "Please enter your name." },
-      { status: 400 }
-    );
+  // 6. Validate customer details
+  if (!customerName || customerName.length > 100) {
+    return errorResponse("Please enter your name.", 400);
   }
 
   if (
     customerPhone.replace(/\D/g, "").length < 10 ||
     customerPhone.length > 30
   ) {
-    return NextResponse.json(
-      { error: "Please enter a valid phone number." },
-      { status: 400 }
-    );
+    return errorResponse("Please enter a valid phone number.", 400);
   }
 
   if (notes.length > 500) {
-    return NextResponse.json(
-      { error: "Notes must be under 500 characters." },
-      { status: 400 }
+    return errorResponse(
+      "Special instructions must be under 500 characters.",
+      400
     );
   }
 
-  if (items.length < 1 || items.length > 40) {
-    return NextResponse.json(
-      { error: "Your cart is empty or contains too many items." },
-      { status: 400 }
+  // 7. Validate cart
+  if (rawItems.length < 1 || rawItems.length > 40) {
+    return errorResponse(
+      "Your cart is empty or contains too many items.",
+      400
     );
   }
 
+  const items: InputItem[] = [];
   const seen = new Set<string>();
 
-  for (const item of items) {
-    const productId = String(item?.productId ?? "");
-    const quantity = Number(item?.quantity);
+  for (const rawItem of rawItems) {
+    if (
+      !rawItem ||
+      typeof rawItem !== "object" ||
+      Array.isArray(rawItem)
+    ) {
+      return errorResponse("Invalid product or quantity.", 400);
+    }
+
+    const item = rawItem as Record<string, unknown>;
+    const productId = String(item.productId ?? "").trim();
+    const quantity = Number(item.quantity);
 
     if (
       !uuidPattern.test(productId) ||
@@ -100,24 +125,22 @@ export async function POST(req: NextRequest) {
       quantity < 1 ||
       quantity > 50
     ) {
-      return NextResponse.json(
-        { error: "Invalid product or quantity." },
-        { status: 400 }
-      );
+      return errorResponse("Invalid product or quantity.", 400);
     }
 
     if (seen.has(productId)) {
-      return NextResponse.json(
-        { error: "Duplicate products in cart. Please refresh the menu." },
-        { status: 400 }
+      return errorResponse(
+        "Duplicate products in cart. Please refresh the menu.",
+        400
       );
     }
 
     seen.add(productId);
+    items.push({ productId, quantity });
   }
 
-  // The service-role key is used only on the server.
-  // Never expose this key through NEXT_PUBLIC_* variables.
+  // 8. Create server-side Supabase client
+  // Never expose the service-role key to the browser.
   const db = createClient(url, serviceKey, {
     auth: {
       persistSession: false,
@@ -125,40 +148,93 @@ export async function POST(req: NextRequest) {
     },
   });
 
-const { data, error } = await db.rpc("create_qr_dine_in_order", {
-  p_restaurant_id: restaurantId,
-  p_table_code: tableCode,
-  p_customer_name: customerName,
-  p_customer_phone: customerPhone,
-  p_notes: notes || "",
-  p_items: items.map((item) => ({
-    productId: item.productId,
-    quantity: Number(item.quantity),
-  })),
-});
-
-  if (error || !data) {
-    console.error("QR order creation failed:", error?.message);
-
-    const message = error?.message ?? "";
-
-    const unavailable =
-      /closed|unavailable|inactive|invalid|not enough stock|disabled/i.test(
-        message
-      );
-
-    return NextResponse.json(
+  // 9. Create the dine-in order
+  try {
+    const { data, error } = await db.rpc(
+      "create_qr_dine_in_order",
       {
-        error: unavailable
+        p_restaurant_id: restaurantId,
+        p_table_code: tableCode,
+        p_customer_name: customerName,
+        p_customer_phone: customerPhone,
+        p_notes: notes,
+        p_items: items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+      }
+    );
+
+    // Log diagnostic information on the server.
+    if (error) {
+      console.error("QR order creation failed:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+
+      const message = error.message ?? "";
+
+      const unavailable =
+        /closed|unavailable|inactive|invalid|not enough stock|disabled/i.test(
+          message
+        );
+
+      return errorResponse(
+        unavailable
           ? "A menu item, table, or restaurant is currently unavailable. Please refresh and try again."
           : "We could not place your order. Please try again.",
-      },
-      { status: unavailable ? 409 : 400 }
+        unavailable ? 409 : 400
+      );
+    }
+
+    if (!data) {
+      console.error(
+        "QR order creation failed: RPC returned no order data."
+      );
+
+      return errorResponse(
+        "The order could not be confirmed. Please try again.",
+        500
+      );
+    }
+
+    // The RPC may return a single order object or an array.
+    const rawOrder: unknown = Array.isArray(data) ? data[0] : data;
+
+    if (
+      !rawOrder ||
+      typeof rawOrder !== "object" ||
+      Array.isArray(rawOrder)
+    ) {
+      console.error(
+        "QR order creation failed: Unexpected RPC response format."
+      );
+
+      return errorResponse(
+        "The order could not be confirmed. Please try again.",
+        500
+      );
+    }
+
+    const order = rawOrder as OrderResult;
+
+    return NextResponse.json({ order }, { status: 201 });
+  } catch (error) {
+    console.error(
+      "Unexpected QR order API error:",
+      error instanceof Error
+        ? {
+            message: error.message,
+            name: error.name,
+          }
+        : "Unknown error"
+    );
+
+    return errorResponse(
+      "An unexpected error occurred while placing your order.",
+      500
     );
   }
-
-  return NextResponse.json(
-    { order: data },
-    { status: 201 }
-  );
 }
