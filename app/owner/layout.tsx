@@ -1,0 +1,1 @@
+import type { Metadata } from "next"; export const metadata: Metadata={title:"Tho'am Partner — Restaurant dashboard",manifest:"/owner/manifest.webmanifest",applicationName:"Tho'am Partner"}; export default function OwnerLayout({children}:{children:React.ReactNode}){return children}
