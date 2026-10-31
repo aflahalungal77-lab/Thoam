@@ -1,10 +1,7 @@
-
 "use client";
 
 import { useMemo, useState } from "react";
-import MenuProductCard, {
-  type MenuProduct,
-} from "./MenuProductCard";
+import MenuProductCard, { type MenuProduct } from "./MenuProductCard";
 import MenuCart, { type CartItem } from "./MenuCart";
 import WhatsAppOrderForm, {
   type CustomerOrderForm,
@@ -13,6 +10,17 @@ import {
   createWhatsAppOrderMessage,
   getWhatsAppUrl,
 } from "@/lib/whatsapp";
+import {
+  Search,
+  ArrowLeft,
+  ArrowRight,
+  ShoppingBag,
+  Utensils,
+  Clock3,
+  CheckCircle2,
+  X,
+  Sparkles,
+} from "lucide-react";
 
 interface Props {
   restaurant: {
@@ -28,10 +36,7 @@ interface Props {
   products: MenuProduct[];
 }
 
-export default function PublicMenu({
-  restaurant,
-  products,
-}: Props) {
+export default function PublicMenu({ restaurant, products }: Props) {
   const [cart, setCart] = useState<Record<string, CartItem>>({});
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
@@ -67,6 +72,11 @@ export default function PublicMenu({
   }, [products, search, category]);
 
   const cartItems = Object.values(cart);
+
+  const cartCount = cartItems.reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
 
   const subtotal = cartItems.reduce(
     (sum, item) =>
@@ -147,9 +157,7 @@ export default function PublicMenu({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          result.error || "Could not place your order."
-        );
+        throw new Error(result.error || "Could not place your order.");
       }
 
       const message = createWhatsAppOrderMessage({
@@ -186,34 +194,58 @@ export default function PublicMenu({
   if (showCheckout) {
     return (
       <main className="thoam-checkout">
-        <div className="checkout-inner">
+        <div className="checkout-topbar">
           <button
             type="button"
-            className="back-button"
+            className="checkout-back"
             onClick={() => setShowCheckout(false)}
           >
-            <span aria-hidden="true">←</span> Back to Menu
+            <ArrowLeft size={17} />
+            Back to menu
           </button>
 
+          <span className="checkout-brand">THO'AM.</span>
+        </div>
+
+        <div className="checkout-container">
           <div className="checkout-heading">
-            <p className="eyebrow">ALMOST THERE</p>
-            <h1>Complete your order</h1>
-            <p>Review your items and enter your details.</p>
+            <span className="checkout-kicker">
+              <span className="checkout-kicker-dot" />
+              FINAL STEP
+            </span>
+
+            <h1>Complete your order<span>.</span></h1>
+            <p>
+              A few details and your order will be on its way to the restaurant.
+            </p>
           </div>
 
-          <section className="order-summary">
-            <h2>Order summary</h2>
-
-            {cartItems.map(({ product, quantity }) => (
-              <div className="summary-row" key={product.id}>
-                <span>
-                  {product.name} <span className="quantity">× {quantity}</span>
-                </span>
-                <span>
-                  ₹{(Number(product.price) * quantity).toFixed(2)}
-                </span>
+          <section className="checkout-summary">
+            <div className="summary-heading">
+              <div>
+                <span className="summary-kicker">YOUR SELECTION</span>
+                <h2>Order summary</h2>
               </div>
-            ))}
+
+              <span className="summary-count">
+                {cartCount} items
+              </span>
+            </div>
+
+            <div className="summary-items">
+              {cartItems.map(({ product, quantity }) => (
+                <div className="summary-row" key={product.id}>
+                  <div>
+                    <strong>{product.name}</strong>
+                    <span>Quantity × {quantity}</span>
+                  </div>
+
+                  <strong>
+                    ₹{(Number(product.price) * quantity).toFixed(2)}
+                  </strong>
+                </div>
+              ))}
+            </div>
 
             <div className="summary-total">
               <span>Subtotal</span>
@@ -222,145 +254,246 @@ export default function PublicMenu({
           </section>
 
           {error && (
-            <p role="alert" className="menu-error">
+            <div role="alert" className="checkout-error">
+              <X size={17} />
               {error}
-            </p>
+            </div>
           )}
 
-          <WhatsAppOrderForm
-            loading={loading}
-            onSubmit={submitOrder}
-            onCancel={() => setShowCheckout(false)}
-          />
+          <div className="checkout-form-card">
+            <div className="checkout-form-heading">
+              <span className="summary-kicker">CUSTOMER DETAILS</span>
+              <h2>Where should we reach you?</h2>
+            </div>
+
+            <WhatsAppOrderForm
+              loading={loading}
+              onSubmit={submitOrder}
+              onCancel={() => setShowCheckout(false)}
+            />
+          </div>
+
+          <p className="checkout-secure-note">
+            <CheckCircle2 size={15} />
+            Your order details will be shared with the restaurant.
+          </p>
         </div>
 
         <style jsx>{`
           .thoam-checkout {
             min-height: 100vh;
-            padding: 32px 18px 64px;
-            background: #f8f7f4;
-            color: #191916;
-            font-family: Arial, sans-serif;
+            padding: 0 20px 60px;
+            background: #f7f7f5;
+            color: #171715;
+            font-family: Arial, Helvetica, sans-serif;
           }
 
-          .checkout-inner {
-            width: 100%;
-            max-width: 570px;
+          .checkout-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 900px;
             margin: 0 auto;
+            padding: 23px 0;
+            border-bottom: 1px solid #e9e9e5;
           }
 
-          .back-button {
+          .checkout-back {
             display: inline-flex;
             align-items: center;
             gap: 9px;
-            margin-bottom: 30px;
             padding: 10px 0;
-            color: #625f56;
+            color: #65655e;
             font-size: 13px;
             font-weight: 700;
           }
 
-          .back-button:hover {
-            color: #191916;
+          .checkout-back:hover {
+            color: #171715;
           }
 
-          .back-button span {
-            font-size: 19px;
+          .checkout-brand {
+            font-size: 15px;
+            font-weight: 950;
+            letter-spacing: .13em;
           }
 
-          .checkout-heading {
-            margin-bottom: 25px;
+          .checkout-container {
+            width: 100%;
+            max-width: 570px;
+            margin: 55px auto 0;
           }
 
-          .eyebrow {
-            margin-bottom: 10px;
-            color: #8b8578;
+          .checkout-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #77776e;
             font-size: 10px;
-            font-weight: 800;
-            letter-spacing: 0.22em;
+            font-weight: 850;
+            letter-spacing: .2em;
+          }
+
+          .checkout-kicker-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #24241f;
           }
 
           .checkout-heading h1 {
-            font-size: clamp(28px, 5vw, 38px);
-            font-weight: 850;
-            letter-spacing: -1.4px;
+            margin-top: 15px;
+            font-size: clamp(32px, 6vw, 43px);
+            font-weight: 900;
+            letter-spacing: -2px;
             line-height: 1.12;
           }
 
-          .checkout-heading > p:last-child {
-            margin-top: 9px;
-            color: #77766f;
+          .checkout-heading h1 span {
+            color: #99998f;
+          }
+
+          .checkout-heading p {
+            margin-top: 11px;
+            color: #77776f;
             font-size: 13px;
-            line-height: 1.7;
+            line-height: 1.8;
           }
 
-          .order-summary {
-            margin-bottom: 20px;
-            padding: 22px;
-            border: 1px solid #e9e5dc;
-            border-radius: 19px;
+          .checkout-summary,
+          .checkout-form-card {
+            margin-top: 25px;
+            padding: 24px;
+            border: 1px solid #e9e9e4;
+            border-radius: 20px;
             background: #fff;
-            box-shadow: 0 8px 28px rgb(30 25 15 / 4%);
+            box-shadow: 0 8px 30px rgb(0 0 0 / 3%);
           }
 
-          .order-summary h2 {
-            margin-bottom: 18px;
-            font-size: 17px;
-            font-weight: 800;
+          .summary-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 22px;
+          }
+
+          .summary-kicker {
+            color: #8b8b80;
+            font-size: 9px;
+            font-weight: 850;
+            letter-spacing: .17em;
+          }
+
+          .summary-heading h2,
+          .checkout-form-heading h2 {
+            margin-top: 7px;
+            font-size: 18px;
+            font-weight: 850;
+            letter-spacing: -.5px;
+          }
+
+          .summary-count {
+            padding: 8px 11px;
+            border: 1px solid #e9e9e5;
+            border-radius: 30px;
+            color: #77776f;
+            font-size: 11px;
+            font-weight: 700;
+          }
+
+          .summary-items {
+            display: grid;
+            gap: 17px;
           }
 
           .summary-row {
             display: flex;
             justify-content: space-between;
-            gap: 16px;
-            margin-top: 14px;
-            color: #4f4c44;
+            align-items: flex-start;
+            gap: 15px;
             font-size: 13px;
           }
 
-          .summary-row > span:last-child {
-            flex-shrink: 0;
-            color: #22221e;
-            font-weight: 700;
+          .summary-row div {
+            display: grid;
+            gap: 5px;
           }
 
-          .quantity {
-            color: #8a867c;
+          .summary-row div strong {
+            font-size: 13px;
+            font-weight: 750;
+          }
+
+          .summary-row div span {
+            color: #8b8b82;
+            font-size: 11px;
+          }
+
+          .summary-row > strong {
+            flex-shrink: 0;
+            font-size: 13px;
           }
 
           .summary-total {
             display: flex;
             justify-content: space-between;
-            gap: 16px;
-            margin-top: 20px;
-            padding-top: 17px;
-            border-top: 1px solid #ece9e2;
+            align-items: center;
+            gap: 12px;
+            margin-top: 22px;
+            padding-top: 19px;
+            border-top: 1px solid #ecece7;
+            color: #62625a;
             font-size: 13px;
+            font-weight: 700;
           }
 
           .summary-total strong {
-            font-size: 18px;
-            font-weight: 850;
+            color: #171715;
+            font-size: 21px;
+            font-weight: 900;
           }
 
-          .menu-error {
-            margin-bottom: 16px;
+          .checkout-form-heading {
+            margin-bottom: 20px;
+          }
+
+          .checkout-error {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-top: 17px;
             padding: 13px 15px;
             border: 1px solid #f0d2ce;
             border-radius: 12px;
             background: #fff5f3;
             color: #a52e25;
-            font-size: 13px;
-            line-height: 1.6;
+            font-size: 12px;
+          }
+
+          .checkout-secure-note {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 7px;
+            margin-top: 22px;
+            color: #85857b;
+            font-size: 11px;
           }
 
           @media (max-width: 480px) {
             .thoam-checkout {
-              padding: 22px 14px 42px;
+              padding-inline: 15px;
             }
 
-            .order-summary {
-              padding: 18px;
+            .checkout-container {
+              margin-top: 35px;
+            }
+
+            .checkout-summary,
+            .checkout-form-card {
+              padding: 19px;
+              border-radius: 17px;
             }
           }
         `}</style>
@@ -370,92 +503,107 @@ export default function PublicMenu({
 
   return (
     <main className="thoam-menu">
+      {/* HEADER */}
       <header className="restaurant-header">
-        <div className="header-inner">
-          <div className="brand-row">
+        <div className="header-top">
+          <div className="header-brand">
             {restaurant.logo_url ? (
               <img
-                className="restaurant-logo"
                 src={restaurant.logo_url}
                 alt={`${restaurant.name} logo`}
+                className="restaurant-logo"
               />
             ) : (
-              <div className="brand-mark" aria-hidden="true">
-                T<span>.</span>
-              </div>
+              <div className="brand-mark">T<span>.</span></div>
             )}
 
-            <div className="brand-copy">
-              <p className="brand-name">THO&apos;AM</p>
-              <p className="brand-caption">THE FOOD MENU</p>
+            <div>
+              <strong>THO'AM</strong>
+              <span>ORDER DIRECTLY</span>
             </div>
           </div>
 
-          <div className="restaurant-intro">
-            <div className="restaurant-copy">
-              <p className="section-eyebrow">MADE FOR YOUR CRAVINGS</p>
-              <h1>{restaurant.name}</h1>
+          <span className="header-tag">
+            <Sparkles size={13} />
+            DIGITAL MENU
+          </span>
+        </div>
 
-              {restaurant.description && (
-                <p className="restaurant-description">
-                  {restaurant.description}
-                </p>
-              )}
+        <div className="hero-content">
+          <div className="hero-copy">
+            <span className="hero-eyebrow">
+              <span className="hero-eyebrow-line" />
+              WELCOME TO
+            </span>
 
-              <div className="restaurant-meta">
-                <span
-                  className={`status-pill ${
-                    restaurant.is_open ? "is-open" : "is-closed"
-                  }`}
-                >
-                  <span className="status-dot" />
-                  {restaurant.is_open ? "Open now" : "Currently closed"}
-                </span>
+            <h1>{restaurant.name}<span>.</span></h1>
 
-                <span className="meta-divider" />
+            {restaurant.description && (
+              <p className="hero-description">
+                {restaurant.description}
+              </p>
+            )}
 
-                <span className="menu-label">Freshly listed menu</span>
-              </div>
-            </div>
+            <div className="hero-meta">
+              <span
+                className={`restaurant-status ${
+                  restaurant.is_open ? "is-open" : "is-closed"
+                }`}
+              >
+                <span className="status-dot" />
+                {restaurant.is_open ? "Open for orders" : "Currently closed"}
+              </span>
 
-            <div className="header-decoration" aria-hidden="true">
-              <span className="decoration-circle circle-one" />
-              <span className="decoration-circle circle-two" />
-              <span className="decoration-letter">T</span>
+              <span className="hero-meta-divider" />
+
+              <span className="hero-menu-label">
+                <Utensils size={14} />
+                Explore our menu
+              </span>
             </div>
           </div>
+
+          <div className="hero-graphic" aria-hidden="true">
+            <div className="hero-graphic-ring ring-one" />
+            <div className="hero-graphic-ring ring-two" />
+            <div className="hero-graphic-center">
+              <span>T<span>.</span></span>
+            </div>
+            <div className="hero-graphic-caption">GOOD FOOD, YOUR WAY</div>
+          </div>
+        </div>
+
+        <div className="hero-bottom">
+          <span>MADE FOR YOUR CRAVINGS</span>
+          <span>SCROLL TO EXPLORE ↓</span>
         </div>
       </header>
 
+      {/* MENU CONTENT */}
       <div className="menu-layout">
         <section className="menu-content">
           <div className="menu-section-heading">
             <div>
-              <p className="section-eyebrow">EXPLORE THE MENU</p>
-              <h2>Find your favourite</h2>
+              <span className="section-kicker">THE COLLECTION</span>
+              <h2>Explore the menu<span>.</span></h2>
+              <p>Find something delicious for today.</p>
             </div>
 
             <span className="item-count">
               {filteredProducts.length}{" "}
-              {filteredProducts.length === 1 ? "item" : "items"}
+              {filteredProducts.length === 1 ? "ITEM" : "ITEMS"}
             </span>
           </div>
 
+          {/* SEARCH */}
           <label className="search-box">
-            <svg
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              className="search-icon"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <path d="m16 16 4 4" />
-            </svg>
+            <Search size={19} className="search-icon" />
 
             <input
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search dishes..."
+              placeholder="Search your favourite food..."
               aria-label="Search food"
             />
 
@@ -466,10 +614,16 @@ export default function PublicMenu({
                 onClick={() => setSearch("")}
                 aria-label="Clear search"
               >
-                ×
+                <X size={16} />
               </button>
             )}
           </label>
+
+          {/* CATEGORIES */}
+          <div className="category-header">
+            <span>DISCOVER BY CATEGORY</span>
+            <span>{categories.length - 1} categories</span>
+          </div>
 
           <div className="category-list" aria-label="Food categories">
             {categories.map((item) => (
@@ -487,13 +641,18 @@ export default function PublicMenu({
             ))}
           </div>
 
+          {/* PRODUCTS */}
           {filteredProducts.length === 0 ? (
             <div className="empty-results">
-              <span className="empty-icon" aria-hidden="true">
-                ⌕
-              </span>
+              <div className="empty-symbol">
+                <Search size={25} />
+              </div>
+
               <h3>No dishes found</h3>
-              <p>Try another search or choose a different category.</p>
+              <p>
+                We couldn't find anything matching your search.
+                Try another dish or category.
+              </p>
 
               <button
                 type="button"
@@ -502,7 +661,7 @@ export default function PublicMenu({
                   setCategory("All");
                 }}
               >
-                Clear filters
+                Clear filters <ArrowRight size={15} />
               </button>
             </div>
           ) : (
@@ -518,13 +677,40 @@ export default function PublicMenu({
               ))}
             </div>
           )}
+
+          <div className="menu-bottom-note">
+            <span className="menu-bottom-line" />
+            <span>MADE WITH CARE. SERVED WITH LOVE.</span>
+            <span className="menu-bottom-line" />
+          </div>
         </section>
 
+        {/* CART */}
         <aside className="cart-sidebar">
+          <div className="cart-sidebar-heading">
+            <div>
+              <span className="section-kicker">YOUR SELECTION</span>
+              <h2>Your cart<span>.</span></h2>
+            </div>
+
+            <div className="cart-count">
+              <ShoppingBag size={16} />
+              {cartCount}
+            </div>
+          </div>
+
           {error && (
-            <p role="alert" className="menu-error">
+            <div role="alert" className="menu-error">
+              <X size={16} />
               {error}
-            </p>
+              <button
+                type="button"
+                onClick={() => setError("")}
+                aria-label="Dismiss error"
+              >
+                <X size={14} />
+              </button>
+            </div>
           )}
 
           <MenuCart
@@ -542,599 +728,975 @@ export default function PublicMenu({
             }}
           />
 
-          <div className="trust-note">
-            <span className="trust-icon" aria-hidden="true">
-              ✓
-            </span>
-            <p>
-              <strong>Direct ordering</strong>
-              <span>Your order goes straight to the restaurant.</span>
-            </p>
+          <div className="trust-card">
+            <div className="trust-icon">
+              <CheckCircle2 size={18} />
+            </div>
+
+            <div>
+              <strong>Order directly</strong>
+              <p>Your order goes straight to the restaurant.</p>
+            </div>
+          </div>
+
+          <div className="cart-delivery-note">
+            <Clock3 size={14} />
+            <span>Order confirmation via WhatsApp</span>
           </div>
         </aside>
       </div>
 
+      {/* FOOTER */}
       <footer className="menu-footer">
-        <span>THO&apos;AM</span>
-        <span>GOOD FOOD. GOOD MOOD.</span>
+        <div className="footer-inner">
+          <div className="footer-brand">
+            <strong>THO'AM<span>.</span></strong>
+            <p>Good food. Good moments.</p>
+          </div>
+
+          <div className="footer-right">
+            <span>POWERED BY THO'AM</span>
+            <span>© {new Date().getFullYear()}</span>
+          </div>
+        </div>
       </footer>
 
+      {/* MOBILE CART SHORTCUT */}
+      {cartCount > 0 && (
+        <button
+          type="button"
+          className="mobile-cart-shortcut"
+          onClick={() => {
+            document.querySelector(".cart-sidebar")?.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }}
+        >
+          <span className="mobile-cart-icon">
+            <ShoppingBag size={18} />
+            <span>{cartCount}</span>
+          </span>
+
+          <span>View your cart</span>
+
+          <strong>₹{subtotal.toFixed(2)}</strong>
+        </button>
+      )}
+
       <style jsx>{`
-        .thoam-menu {
-          --ink: #191916;
-          --muted: #77766f;
-          --border: #eae7df;
-          min-height: 100vh;
-          background: #f8f7f4;
-          color: var(--ink);
-          font-family: Arial, Helvetica, sans-serif;
-          -webkit-font-smoothing: antialiased;
-        }
-
-        .restaurant-header {
-          overflow: hidden;
-          border-bottom: 1px solid #e9e5dc;
-          background:
-            radial-gradient(
-              ellipse at 95% 20%,
-              rgba(222, 215, 199, 0.36),
-              transparent 42%
-            ),
-            #fff;
-        }
-
-        .header-inner {
-          max-width: 1180px;
-          margin: 0 auto;
-          padding: 25px 28px 38px;
-        }
-
-        .brand-row {
-          display: flex;
-          align-items: center;
-          gap: 11px;
-          padding-bottom: 23px;
-          border-bottom: 1px solid #f0eee8;
-        }
-
-        .brand-mark,
-        .restaurant-logo {
-          display: grid;
-          width: 43px;
-          height: 43px;
-          flex-shrink: 0;
-          place-items: center;
-          border-radius: 14px;
-          background: #191916;
-          color: #fff;
-          font-size: 22px;
-          font-weight: 850;
-          object-fit: cover;
-        }
-
-        .brand-mark span {
-          color: #d4c6a7;
-        }
-
-        .brand-copy {
-          display: grid;
-          gap: 4px;
-        }
-
-        .brand-name {
-          font-size: 13px;
-          font-weight: 900;
-          letter-spacing: 0.17em;
-        }
-
-        .brand-caption {
-          color: #89857a;
-          font-size: 9px;
-          font-weight: 700;
-          letter-spacing: 0.16em;
-        }
-
-        .restaurant-intro {
-          position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          min-height: 220px;
-          padding-top: 33px;
-        }
-
-        .restaurant-copy {
-          position: relative;
-          z-index: 1;
-          max-width: 690px;
-        }
-
-        .section-eyebrow {
-          color: #898375;
-          font-size: 10px;
-          font-weight: 800;
-          letter-spacing: 0.2em;
-          line-height: 1.6;
-        }
-
-        .restaurant-copy h1 {
-          margin-top: 12px;
-          font-size: clamp(36px, 5vw, 58px);
-          font-weight: 850;
-          letter-spacing: -2.5px;
-          line-height: 1.05;
-          overflow-wrap: anywhere;
-        }
-
-        .restaurant-description {
-          max-width: 520px;
-          margin-top: 13px;
-          color: #77766f;
-          font-size: 14px;
-          line-height: 1.8;
-        }
-
-        .restaurant-meta {
-          display: flex;
-          flex-wrap: wrap;
-          align-items: center;
-          gap: 13px;
-          margin-top: 22px;
-        }
-
-        .status-pill {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          padding: 8px 12px;
-          border: 1px solid #e8e6de;
-          border-radius: 999px;
-          background: #fff;
-          font-size: 11px;
-          font-weight: 750;
-        }
-
-        .status-pill.is-open {
-          color: #386c45;
-        }
-
-        .status-pill.is-closed {
-          color: #a34237;
-        }
-
-        .status-dot {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          background: currentColor;
-        }
-
-        .meta-divider {
-          width: 4px;
-          height: 4px;
-          border-radius: 50%;
-          background: #c7c2b6;
-        }
-
-        .menu-label {
-          color: #8b877d;
-          font-size: 11px;
-        }
-
-        .header-decoration {
-          position: absolute;
-          top: 24px;
-          right: 12px;
-          width: 220px;
-          height: 200px;
-          pointer-events: none;
-        }
-
-        .decoration-circle {
-          position: absolute;
-          display: block;
-          border: 1px solid rgba(160, 150, 130, 0.2);
-          border-radius: 50%;
-        }
-
-        .circle-one {
-          top: 5px;
-          right: 0;
-          width: 180px;
-          height: 180px;
-        }
-
-        .circle-two {
-          top: 28px;
-          right: 23px;
-          width: 134px;
-          height: 134px;
-          background: rgba(232, 227, 215, 0.3);
-        }
-
-        .decoration-letter {
-          position: absolute;
-          top: 22px;
-          right: 40px;
-          color: rgba(25, 25, 22, 0.08);
-          font-family: Georgia, serif;
-          font-size: 145px;
-          font-weight: 700;
-          line-height: 1;
-        }
-
-        .menu-layout {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) 320px;
-          align-items: start;
-          gap: 30px;
-          max-width: 1180px;
-          margin: 0 auto;
-          padding: 36px 28px 65px;
-        }
-
-        .menu-content {
-          min-width: 0;
-        }
-
-        .menu-section-heading {
-          display: flex;
-          align-items: end;
-          justify-content: space-between;
-          gap: 12px;
-          margin-bottom: 21px;
-        }
-
-        .menu-section-heading h2 {
-          margin-top: 7px;
-          font-size: clamp(23px, 3vw, 30px);
-          font-weight: 850;
-          letter-spacing: -1.1px;
-          line-height: 1.2;
-        }
-
-        .item-count {
-          padding: 7px 10px;
-          border: 1px solid #e9e5dc;
-          border-radius: 999px;
-          background: #fff;
-          color: #777268;
-          font-size: 11px;
-          font-weight: 700;
-          white-space: nowrap;
-        }
-
-        .search-box {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          min-height: 54px;
-          padding: 0 16px;
-          border: 1px solid #e5e1d8;
-          border-radius: 15px;
-          background: #fff;
-          box-shadow: 0 4px 14px rgb(30 25 15 / 3%);
-          transition: border-color 180ms ease, box-shadow 180ms ease;
-        }
-
-        .search-box:focus-within {
-          border-color: #a9a294;
-          box-shadow: 0 0 0 4px rgb(70 65 50 / 5%);
-        }
-
-        .search-icon {
-          width: 19px;
-          height: 19px;
-          flex-shrink: 0;
-          fill: none;
-          stroke: #8d897e;
-          stroke-width: 1.7;
-          stroke-linecap: round;
-        }
-
-        .search-box input {
-          width: 100%;
-          min-width: 0;
-          height: 50px;
-          border: 0;
-          outline: 0;
-          background: transparent;
-          color: #191916;
-          font: inherit;
-          font-size: 13px;
-        }
-
-        .search-box input::placeholder {
-          color: #a19d93;
-        }
-
-        .search-box input::-webkit-search-cancel-button {
-          display: none;
-        }
-
-        .clear-search {
-          display: grid;
-          width: 27px;
-          height: 27px;
-          flex-shrink: 0;
-          place-items: center;
-          border-radius: 50%;
-          background: #f1efe9;
-          color: #5e5b52;
-          font-size: 20px;
-        }
-
-        .category-list {
-          display: flex;
-          gap: 9px;
-          overflow-x: auto;
-          margin: 17px 0 25px;
-          padding-bottom: 3px;
-          scrollbar-width: none;
-        }
-
-        .category-list::-webkit-scrollbar {
-          display: none;
-        }
-
-        .category-button {
-          min-height: 40px;
-          padding: 0 17px;
-          border: 1px solid #e5e1d8;
-          border-radius: 999px;
-          background: #fff;
-          color: #666258;
-          font-size: 12px;
-          font-weight: 700;
-          white-space: nowrap;
-          transition: all 180ms ease;
-        }
-
-        .category-button:hover {
-          border-color: #777268;
-          color: #191916;
-        }
-
-        .category-button.active {
-          border-color: #191916;
-          background: #191916;
-          color: #fff;
-          box-shadow: 0 4px 10px rgb(25 25 22 / 12%);
-        }
-
-        .product-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          align-items: stretch;
-          gap: 19px;
-        }
-
-        .cart-sidebar {
-          position: sticky;
-          top: 24px;
-          min-width: 0;
-        }
-
-        .trust-note {
-          display: flex;
-          align-items: flex-start;
-          gap: 11px;
-          margin-top: 16px;
-          padding: 15px;
-          border: 1px solid #ebe7dd;
-          border-radius: 15px;
-          background: rgba(255, 255, 255, 0.65);
-        }
-
-        .trust-icon {
-          display: grid;
-          width: 25px;
-          height: 25px;
-          flex-shrink: 0;
-          place-items: center;
-          border-radius: 50%;
-          background: #e9eee5;
-          color: #456747;
-          font-size: 12px;
-          font-weight: 800;
-        }
-
-        .trust-note p {
-          display: grid;
-          gap: 4px;
-        }
-
-        .trust-note strong {
-          font-size: 11px;
-          font-weight: 800;
-        }
-
-        .trust-note p span {
-          color: #88847a;
-          font-size: 11px;
-          line-height: 1.6;
-        }
-
-        .menu-error {
-          margin-bottom: 14px;
-          padding: 13px;
-          border: 1px solid #f0d2ce;
-          border-radius: 12px;
-          background: #fff5f3;
-          color: #a52e25;
-          font-size: 12px;
-          line-height: 1.6;
-        }
-
-        .empty-results {
-          display: grid;
-          justify-items: center;
-          padding: 55px 20px;
-          border: 1px dashed #ded9ce;
-          border-radius: 19px;
-          background: rgba(255, 255, 255, 0.65);
-          text-align: center;
-        }
-
-        .empty-icon {
-          color: #8a8579;
-          font-size: 36px;
-        }
-
-        .empty-results h3 {
-          margin-top: 12px;
-          font-size: 17px;
-          font-weight: 800;
-        }
-
-        .empty-results p {
-          margin-top: 7px;
-          color: #858176;
-          font-size: 12px;
-          line-height: 1.7;
-        }
-
-        .empty-results button {
-          margin-top: 17px;
-          padding: 10px 15px;
-          border-radius: 10px;
-          background: #191916;
-          color: white;
-          font-size: 12px;
-          font-weight: 700;
-        }
-
-        .menu-footer {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 15px;
-          max-width: 1180px;
-          margin: 0 auto;
-          padding: 22px 28px;
-          border-top: 1px solid #e9e5dc;
-          color: #8b877d;
-          font-size: 9px;
-          font-weight: 800;
-          letter-spacing: 0.17em;
-        }
-
-        .menu-footer span:first-child {
-          color: #38372f;
-          font-size: 11px;
-        }
-
-        @media (min-width: 1200px) {
-          .product-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-          }
-        }
-
-        @media (max-width: 1023px) {
-          .menu-layout {
-            grid-template-columns: minmax(0, 1fr) 280px;
-            gap: 20px;
-            padding-inline: 20px;
-          }
-
-          .header-inner {
-            padding-inline: 20px;
-          }
-
-          .product-grid {
-            gap: 13px;
-          }
-
-          .header-decoration {
-            right: -35px;
-            opacity: 0.7;
-          }
-        }
-
-        @media (max-width: 760px) {
-          .header-inner {
-            padding: 19px 17px 27px;
-          }
-
-          .brand-row {
-            padding-bottom: 18px;
-          }
-
-          .brand-mark,
-          .restaurant-logo {
-            width: 38px;
-            height: 38px;
-            border-radius: 12px;
-          }
-
-          .restaurant-intro {
-            min-height: 0;
-            padding-top: 29px;
-          }
-
-          .restaurant-copy h1 {
-            font-size: clamp(34px, 9vw, 45px);
-            letter-spacing: -1.5px;
-          }
-
-          .restaurant-description {
-            max-width: 90%;
-            font-size: 13px;
-          }
-
-          .header-decoration {
-            top: 35px;
-            right: -90px;
-            opacity: 0.45;
-          }
-
-          .menu-layout {
-            grid-template-columns: minmax(0, 1fr);
-            gap: 28px;
-            padding: 26px 15px 40px;
-          }
-
-          .menu-section-heading h2 {
-            font-size: 25px;
-          }
-
-          .product-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
-          }
-
-          .cart-sidebar {
-            position: static;
-          }
-
-          .menu-footer {
-            padding: 19px 16px;
-          }
-        }
-
-        @media (max-width: 380px) {
-          .product-grid {
-            gap: 9px;
-          }
-
-          .menu-section-heading h2 {
-            font-size: 22px;
-          }
-
-          .category-button {
-            padding-inline: 14px;
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .thoam-menu *,
-          .thoam-menu *::before,
-          .thoam-menu *::after {
-            scroll-behavior: auto !important;
-            animation-duration: 0.01ms !important;
-            transition-duration: 0.01ms !important;
-          }
-        }
+        
+.thoam-menu {
+  --ink: #171715;
+  --muted: #77776f;
+  --border: #e9e9e4;
+  --paper: #f8f8f6;
+  --white: #ffffff;
+  min-height: 100vh;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.thoam-menu * {
+  box-sizing: border-box;
+}
+
+.thoam-menu button,
+.thoam-menu input {
+  font: inherit;
+}
+
+.thoam-menu button {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* HEADER */
+
+.restaurant-header {
+  position: relative;
+  overflow: hidden;
+  padding: 0 28px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 22px 0;
+  border-bottom: 1px solid #f0f0eb;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.brand-mark,
+.restaurant-logo {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 14px;
+  background: #171715;
+  color: #fff;
+  font-size: 23px;
+  font-weight: 950;
+  object-fit: cover;
+  box-shadow: 0 5px 14px rgb(0 0 0 / 10%);
+}
+
+.brand-mark span {
+  color: #c8c8b9;
+}
+
+.header-brand > div:last-child {
+  display: grid;
+  gap: 5px;
+}
+
+.header-brand strong {
+  font-size: 14px;
+  font-weight: 950;
+  letter-spacing: .16em;
+}
+
+.header-brand > div:last-child span {
+  color: #99998f;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .15em;
+}
+
+.header-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  border: 1px solid #eaeae4;
+  border-radius: 40px;
+  background: #fafaf8;
+  color: #65655d;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .12em;
+  transition: background .2s ease, border-color .2s ease;
+}
+
+.header-tag:hover {
+  border-color: #c9c9c0;
+  background: #f3f3ef;
+}
+
+/* HERO */
+
+.hero-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 330px;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 55px 0;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 2;
+  max-width: 720px;
+}
+
+.hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #85857b;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .22em;
+}
+
+.hero-eyebrow-line {
+  width: 30px;
+  height: 1px;
+  background: #171715;
+}
+
+.hero-copy h1 {
+  max-width: 760px;
+  margin-top: 19px;
+  font-size: clamp(44px, 6vw, 76px);
+  font-weight: 950;
+  letter-spacing: -4px;
+  line-height: 1.01;
+  overflow-wrap: anywhere;
+}
+
+.hero-copy h1 span,
+.menu-section-heading h2 span,
+.cart-sidebar-heading h2 span {
+  color: #aaa99f;
+}
+
+.hero-description {
+  max-width: 520px;
+  margin-top: 19px;
+  color: #77776f;
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.restaurant-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  border: 1px solid #e8e8e2;
+  border-radius: 40px;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 3px 10px rgb(0 0 0 / 2%);
+}
+
+.restaurant-status.is-open {
+  color: #347047;
+}
+
+.restaurant-status.is-closed {
+  color: #a13c32;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.restaurant-status.is-open .status-dot {
+  box-shadow: 0 0 0 4px rgb(52 112 71 / 10%);
+}
+
+.restaurant-status.is-closed .status-dot {
+  box-shadow: 0 0 0 4px rgb(161 60 50 / 10%);
+}
+
+.hero-meta-divider {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #c5c5bb;
+}
+
+.hero-menu-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #77776e;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.hero-graphic {
+  position: absolute;
+  top: 50%;
+  right: 30px;
+  width: 285px;
+  height: 285px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.hero-graphic-ring {
+  position: absolute;
+  border: 1px solid #e7e7e0;
+  border-radius: 50%;
+}
+
+.ring-one {
+  inset: 0;
+}
+
+.ring-two {
+  inset: 29px;
+  background: #fafaf8;
+}
+
+.hero-graphic-center {
+  position: absolute;
+  display: grid;
+  inset: 57px;
+  place-items: center;
+  border: 1px solid #e8e8e1;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #f6f6f2, #eeeeea);
+  box-shadow: inset 0 0 30px rgb(0 0 0 / 2%);
+}
+
+.hero-graphic-center > span {
+  color: #d0d0c7;
+  font-family: Georgia, serif;
+  font-size: 120px;
+  font-weight: 700;
+}
+
+.hero-graphic-center > span span {
+  color: #aaa99e;
+}
+
+.hero-graphic-caption {
+  position: absolute;
+  right: 0;
+  bottom: 17px;
+  left: 0;
+  color: #85857c;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .19em;
+  text-align: center;
+}
+
+.hero-bottom {
+  display: flex;
+  justify-content: space-between;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 15px 0;
+  border-top: 1px solid #eeeeea;
+  color: #929288;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .17em;
+}
+
+/* MAIN */
+
+.menu-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 345px;
+  align-items: start;
+  gap: 38px;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 60px 28px 85px;
+}
+
+.menu-content {
+  min-width: 0;
+}
+
+.menu-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 27px;
+}
+
+.section-kicker {
+  color: #929288;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .2em;
+}
+
+.menu-section-heading h2,
+.cart-sidebar-heading h2 {
+  margin-top: 9px;
+  font-size: clamp(28px, 3vw, 37px);
+  font-weight: 950;
+  letter-spacing: -1.8px;
+  line-height: 1.12;
+}
+
+.menu-section-heading p {
+  margin-top: 9px;
+  color: #85857c;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.item-count {
+  padding: 10px 14px;
+  border: 1px solid #e8e8e2;
+  border-radius: 40px;
+  background: #fff;
+  color: #6f6f66;
+  font-size: 10px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+/* SEARCH */
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 59px;
+  padding: 0 18px;
+  border: 1px solid #e8e8e2;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 4px 15px rgb(0 0 0 / 2%);
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+.search-box:focus-within {
+  border-color: #aaa99e;
+  box-shadow: 0 0 0 4px rgb(0 0 0 / 4%), 0 8px 20px rgb(0 0 0 / 3%);
+}
+
+.search-icon {
+  flex-shrink: 0;
+  color: #85857c;
+}
+
+.search-box input {
+  width: 100%;
+  min-width: 0;
+  height: 56px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #171715;
+  font: inherit;
+  font-size: 13px;
+}
+
+.search-box input::placeholder {
+  color: #a2a298;
+}
+
+.search-box input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.clear-search {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 50%;
+  background: #f1f1ed;
+  color: #55554d;
+  transition: background .2s ease, transform .2s ease;
+}
+
+.clear-search:hover {
+  background: #e7e7e0;
+  transform: rotate(90deg);
+}
+
+/* CATEGORIES */
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 29px;
+  margin-bottom: 13px;
+  color: #929288;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .14em;
+}
+
+.category-list {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  margin-bottom: 30px;
+  padding: 2px 0 7px;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.category-list::-webkit-scrollbar {
+  display: none;
+}
+
+.category-button {
+  min-height: 41px;
+  padding: 0 18px;
+  border: 1px solid #e7e7e0;
+  border-radius: 40px;
+  background: #fff;
+  color: #696960;
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
+  transition: color .2s ease, background .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+.category-button:hover {
+  border-color: #171715;
+  color: #171715;
+  transform: translateY(-1px);
+}
+
+.category-button.active {
+  border-color: #171715;
+  background: #171715;
+  color: #fff;
+  box-shadow: 0 5px 13px rgb(0 0 0 / 12%);
+}
+
+/* PRODUCT GRID */
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 19px;
+}
+
+/* CART */
+
+.cart-sidebar {
+  position: sticky;
+  top: 22px;
+  min-width: 0;
+  padding: 23px;
+  border: 1px solid #e9e9e3;
+  border-radius: 21px;
+  background: #fff;
+  box-shadow: 0 12px 35px rgb(0 0 0 / 4%);
+}
+
+.cart-sidebar-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 21px;
+}
+
+.cart-sidebar-heading h2 {
+  font-size: 25px;
+}
+
+.cart-count {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border: 1px solid #e9e9e3;
+  border-radius: 40px;
+  background: #fafaf8;
+  color: #55554d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.trust-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 19px;
+  padding: 16px;
+  border: 1px solid #e9e9e3;
+  border-radius: 15px;
+  background: #fafaf8;
+}
+
+.trust-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 50%;
+  background: #e9eee6;
+  color: #426748;
+}
+
+.trust-card strong {
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.trust-card p {
+  margin-top: 6px;
+  color: #85857b;
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.cart-delivery-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 16px;
+  color: #8a8a80;
+  font-size: 10px;
+}
+
+.menu-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 13px;
+  border: 1px solid #f0d2ce;
+  border-radius: 12px;
+  background: #fff5f3;
+  color: #a52e25;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.menu-error button {
+  display: grid;
+  flex-shrink: 0;
+  margin-left: auto;
+  place-items: center;
+}
+
+/* EMPTY STATE */
+
+.empty-results {
+  display: grid;
+  justify-items: center;
+  padding: 70px 20px;
+  border: 1px dashed #dcdcd4;
+  border-radius: 20px;
+  background: #fff;
+  text-align: center;
+}
+
+.empty-symbol {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border-radius: 18px;
+  background: #f0f0eb;
+  color: #77776d;
+}
+
+.empty-results h3 {
+  margin-top: 18px;
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.empty-results p {
+  max-width: 300px;
+  margin-top: 9px;
+  color: #85857b;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.empty-results button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 12px 17px;
+  border-radius: 11px;
+  background: #171715;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  transition: background .2s ease, transform .2s ease;
+}
+
+.empty-results button:hover {
+  background: #35352f;
+  transform: translateY(-2px);
+}
+
+/* BOTTOM NOTE */
+
+.menu-bottom-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  margin-top: 48px;
+  color: #a0a096;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .16em;
+  text-align: center;
+}
+
+.menu-bottom-line {
+  width: 35px;
+  height: 1px;
+  background: #deded6;
+}
+
+/* FOOTER */
+
+.menu-footer {
+  border-top: 1px solid #e9e9e3;
+  background: #fff;
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 27px 28px;
+}
+
+.footer-brand strong {
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: .14em;
+}
+
+.footer-brand strong span {
+  color: #99998f;
+}
+
+.footer-brand p {
+  margin-top: 6px;
+  color: #85857b;
+  font-size: 10px;
+}
+
+.footer-right {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 17px;
+  color: #99998f;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+/* MOBILE CART */
+
+.mobile-cart-shortcut {
+  display: none;
+}
+
+/* RESPONSIVE */
+
+@media (min-width: 1200px) {
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+  .menu-layout {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 24px;
+    padding-inline: 22px;
+  }
+
+  .hero-graphic {
+    right: 0;
+    opacity: .65;
+  }
+
+  .product-grid {
+    gap: 14px;
+  }
+}
+
+@media (max-width: 760px) {
+  .restaurant-header {
+    padding-inline: 17px;
+  }
+
+  .header-top {
+    padding: 17px 0;
+  }
+
+  .brand-mark,
+  .restaurant-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+
+  .header-tag {
+    padding: 8px 10px;
+    font-size: 8px;
+  }
+
+  .hero-content {
+    min-height: 260px;
+    padding: 39px 0;
+  }
+
+  .hero-copy h1 {
+    max-width: 95%;
+    font-size: clamp(38px, 9vw, 55px);
+    letter-spacing: -2.5px;
+  }
+
+  .hero-description {
+    max-width: 92%;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+
+  .hero-graphic {
+    right: -135px;
+    opacity: .3;
+  }
+
+  .hero-bottom {
+    font-size: 7px;
+  }
+
+  .menu-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 29px;
+    padding: 37px 15px 48px;
+  }
+
+  .menu-section-heading {
+    margin-bottom: 22px;
+  }
+
+  .menu-section-heading h2 {
+    font-size: 29px;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .cart-sidebar {
+    position: static;
+    scroll-margin-top: 20px;
+    border-radius: 18px;
+  }
+
+  .footer-inner {
+    padding: 23px 17px;
+  }
+
+  .mobile-cart-shortcut {
+    position: fixed;
+    z-index: 50;
+    right: 13px;
+    bottom: max(13px, env(safe-area-inset-bottom));
+    left: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 60px;
+    padding: 0 18px;
+    border: 1px solid #33332e;
+    border-radius: 16px;
+    background: #171715;
+    color: #fff;
+    box-shadow: 0 10px 35px rgb(0 0 0 / 23%);
+    font-size: 12px;
+    font-weight: 750;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+
+  .mobile-cart-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .mobile-cart-icon > span {
+    position: absolute;
+    top: -9px;
+    right: -9px;
+    display: grid;
+    width: 18px;
+    height: 18px;
+    place-items: center;
+    border-radius: 50%;
+    background: #fff;
+    color: #171715;
+    font-size: 9px;
+    font-weight: 900;
+  }
+
+  .mobile-cart-shortcut strong {
+    margin-left: auto;
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  .menu-footer {
+    padding-bottom: 82px;
+  }
+}
+
+@media (max-width: 390px) {
+  .header-tag {
+    gap: 5px;
+    padding: 7px 8px;
+    font-size: 7px;
+  }
+
+  .hero-copy h1 {
+    font-size: 36px;
+  }
+
+  .product-grid {
+    gap: 9px;
+  }
+
+  .menu-section-heading h2 {
+    font-size: 25px;
+  }
+
+  .item-count {
+    padding: 7px 9px;
+    font-size: 9px;
+  }
+
+  .footer-right {
+    gap: 8px;
+    font-size: 8px;
+  }
+}
+
+/* ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+  .thoam-menu *,
+  .thoam-menu *::before,
+  .thoam-menu *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
+
       `}</style>
     </main>
   );

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -22,6 +22,9 @@ import {
   ChevronRight,
   UtensilsCrossed,
   RefreshCw,
+  Bell,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 type RestaurantData = {
@@ -59,6 +62,42 @@ export default function RestaurantAdmin() {
   const [message, setMessage] = useState("");
   const [savingStatus, setSavingStatus] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const soundEnabledRef = useRef(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  const playNewOrderSound = useCallback(() => {
+    if (!soundEnabledRef.current || typeof window === "undefined") return;
+    try {
+      const AudioContextClass = window.AudioContext;
+      if (!AudioContextClass) return;
+      const context = audioContextRef.current || new AudioContextClass();
+      audioContextRef.current = context;
+      if (context.state === "suspended") void context.resume();
+
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(880, context.currentTime);
+      oscillator.frequency.setValueAtTime(660, context.currentTime + 0.16);
+      gain.gain.setValueAtTime(0.001, context.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.16, context.currentTime + 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.48);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start();
+      oscillator.stop(context.currentTime + 0.5);
+    } catch (error) {
+      console.error("Order notification sound failed:", error);
+    }
+  }, []);
+
+  function toggleOrderSound() {
+    const next = !soundEnabledRef.current;
+    soundEnabledRef.current = next;
+    setSoundEnabled(next);
+    if (next) playNewOrderSound();
+  }
 
   const router = useRouter();
 
@@ -200,6 +239,50 @@ export default function RestaurantAdmin() {
     void loadDashboard();
   }, [loadDashboard]);
 
+  // Listen for new orders and status changes for this restaurant only.
+ useEffect(() => {
+  const client = supabase;
+
+  if (!client || !restaurant?.id) return;
+
+  const channel = client
+    .channel(`restaurant-orders-${restaurant.id}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "orders",
+        filter: `restaurant_id=eq.${restaurant.id}`,
+      },
+      (payload) => {
+        const newOrder = payload.new as OrderData;
+
+        if ((newOrder.status || "").toLowerCase() === "placed") {
+          playNewOrderSound();
+        }
+
+        void loadDashboard(true);
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "orders",
+        filter: `restaurant_id=eq.${restaurant.id}`,
+      },
+      () => {
+        void loadDashboard(true);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    void client.removeChannel(channel);
+  };
+}, [restaurant?.id, loadDashboard, playNewOrderSound]);
   async function toggleOpen() {
     if (!supabase || !restaurant || savingStatus) return;
 
@@ -259,13 +342,26 @@ export default function RestaurantAdmin() {
       order.status === "completed"
   );
 
-  const pendingOrders = todayOrders.filter(
-    (order) =>
-      !["delivered", "completed", "cancelled", "rejected"].includes(
-        (order.status || "").toLowerCase()
-      )
+  const pendingOrders = todayOrders.filter((order) =>
+    !["delivered", "completed", "cancelled", "rejected", "ready"].includes(
+      (order.status || "pending").toLowerCase()
+    )
   );
 
+  // Ready orders leave the red alert. Delivered/completed orders are hidden
+  // from the Recent orders list, but remain included in today's statistics.
+// Only newly placed orders appear in the red alert.
+const newOrders = orders.filter(
+  (order) => (order.status || "").toLowerCase() === "placed"
+);
+
+// Delivered/completed orders are hidden from Recent Orders.
+const visibleRecentOrders = orders.filter(
+  (order) =>
+    !["delivered", "completed"].includes(
+      (order.status || "").toLowerCase()
+    )
+);
   const sales = completed.reduce(
     (sum, order) => sum + Number(order.total_amount || 0),
     0
@@ -367,6 +463,16 @@ export default function RestaurantAdmin() {
           </div>
 
           <div className="ta-topbar-right">
+            <button
+              className={`ta-sound-toggle ${soundEnabled ? "is-enabled" : ""}`}
+              onClick={toggleOrderSound}
+              aria-label={soundEnabled ? "Disable order sound" : "Enable order sound"}
+              title={soundEnabled ? "Order sound enabled" : "Enable order sound"}
+            >
+              {soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
+              <span>{soundEnabled ? "Sound on" : "Enable sound"}</span>
+            </button>
+
             <button
               className="ta-refresh"
               onClick={() => void loadDashboard(true)}
@@ -519,6 +625,20 @@ export default function RestaurantAdmin() {
                 </div>
               </section>
 
+              <Link
+                href="/restaurant-admin/orders"
+                className={`ta-new-orders-alert ${newOrders.length > 0 ? "has-new-orders" : "is-clear"}`}
+                aria-live="polite"
+              >
+                <span className="ta-new-orders-icon"><Bell size={21} /></span>
+                <span className="ta-new-orders-copy">
+                  <strong>{newOrders.length > 0 ? "Orders need attention" : "You’re all caught up"}</strong>
+                  <small>{newOrders.length > 0 ? "Orders waiting to be marked Ready" : "No orders waiting for preparation"}</small>
+                </span>
+                <span className="ta-new-orders-count">{newOrders.length}</span>
+                <ArrowUpRight size={18} className="ta-new-orders-arrow" />
+              </Link>
+
               <section className="ta-stats-section">
                 <div className="ta-section-header">
                   <div>
@@ -612,7 +732,7 @@ export default function RestaurantAdmin() {
                     <h3>Order management</h3>
                     <p>Review incoming orders and follow their progress.</p>
                     <div className="ta-tool-bottom">
-                      <span>{orders.length} recent orders</span>
+                      <span>{visibleRecentOrders.length} recent orders</span>
                       <span className="ta-tool-link">Open workspace <ChevronRight size={15} /></span>
                     </div>
                   </Link>
@@ -641,7 +761,7 @@ export default function RestaurantAdmin() {
                   </Link>
                 </div>
 
-                {orders.length === 0 ? (
+                {visibleRecentOrders.length === 0 ? (
                   <div className="ta-empty-orders">
                     <div className="ta-empty-icon"><ClipboardList size={25} /></div>
                     <h3>Your next order starts here.</h3>
@@ -667,7 +787,7 @@ export default function RestaurantAdmin() {
                         </tr>
                       </thead>
                       <tbody>
-                        {orders.slice(0, 8).map((order) => {
+                        {visibleRecentOrders.slice(0, 8).map((order) => {
                           const state = (order.status || "pending").toLowerCase();
 
                           return (
