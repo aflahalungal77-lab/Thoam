@@ -1073,21 +1073,23 @@ export default function QRMenu() {
       {/* INTERNAL CSS */}
       <style jsx>{`
 
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
+
 .premium-menu {
-  --red: #c51f32;
-  --red-dark: #a81729;
-  --red-soft: #fff1f3;
-  --black: #111111;
-  --muted: #77747a;
-  --border: #ece8e9;
-  --surface: #faf8f8;
+  --red: #176b49;
+  --red-dark: #104b35;
+  --red-soft: #eaf5ee;
+  --black: #101713;
+  --muted: #777f79;
+  --border: #e5ebe6;
+  --surface: #f6f9f6;
   --white: #ffffff;
 
   min-height: 100vh;
   padding-bottom: 35px;
-  background: var(--white);
+  background: #fff;
   color: var(--black);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'DM Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -1109,7 +1111,7 @@ export default function QRMenu() {
 .premium-menu a:focus-visible,
 .premium-menu input:focus-visible,
 .premium-menu textarea:focus-visible {
-  outline: 3px solid #c51f3260;
+  outline: 3px solid #176b4945;
   outline-offset: 3px;
 }
 
@@ -1123,6 +1125,7 @@ export default function QRMenu() {
   justify-content: space-between;
   border-bottom: 1px solid var(--border);
   background: #ffffffed;
+  backdrop-filter: blur(16px);
   position: relative;
   z-index: 5;
 }
@@ -1133,8 +1136,9 @@ export default function QRMenu() {
   gap: 12px;
   color: var(--black);
   text-decoration: none;
+  font-family: 'Manrope', sans-serif;
   font-size: 23px;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: -1.2px;
 }
 
@@ -1143,10 +1147,10 @@ export default function QRMenu() {
   height: 43px;
   display: grid;
   place-items: center;
-  background: var(--red);
+  background: linear-gradient(145deg, #21865c, #0b3828);
   color: white;
-  border-radius: 12px;
-  box-shadow: 0 5px 15px #c51f3230;
+  border-radius: 13px;
+  box-shadow: 0 7px 20px #176b4935;
 }
 
 .premium-brand small {
@@ -1171,7 +1175,6 @@ export default function QRMenu() {
   margin-top: 4px;
   color: var(--black);
   font-size: 12px;
-  letter-spacing: .5px;
 }
 
 .live-dot {
@@ -1189,7 +1192,7 @@ export default function QRMenu() {
 .premium-kicker {
   color: var(--red);
   font-size: 10px;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 2px;
 }
 
@@ -1197,17 +1200,30 @@ export default function QRMenu() {
   position: relative;
   overflow: hidden;
   width: 86%;
-  min-height: 390px;
+  min-height: 410px;
   margin: 26px auto 55px;
   padding: 65px 7%;
   display: flex;
   align-items: center;
   background:
-    radial-gradient(circle at 85% 50%, #c51f3230, transparent 30%),
-    linear-gradient(120deg, #101010, #1d1718);
+    radial-gradient(ellipse at 85% 20%, #23885a55, transparent 35%),
+    radial-gradient(ellipse at 15% 100%, #164c3655, transparent 45%),
+    linear-gradient(125deg, #080e0b 0%, #102b20 48%, #07110c 100%);
   color: white;
-  border-radius: 20px;
-  box-shadow: 0 22px 55px #00000012;
+  border: 1px solid #ffffff12;
+  border-radius: 22px;
+  box-shadow: 0 25px 65px #071b1230;
+}
+
+.premium-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(#ffffff08 1px, transparent 1px),
+                    linear-gradient(90deg, #ffffff08 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to right, transparent, black);
+  pointer-events: none;
 }
 
 .premium-hero::after {
@@ -1217,9 +1233,9 @@ export default function QRMenu() {
   top: -180px;
   width: 420px;
   height: 420px;
-  border: 1px solid #ffffff12;
+  border: 1px solid #ffffff18;
   border-radius: 50%;
-  box-shadow: 0 0 0 35px #ffffff05, 0 0 0 70px #ffffff04;
+  box-shadow: 0 0 0 35px #ffffff07, 0 0 0 70px #ffffff04;
 }
 
 .hero-copy {
@@ -1229,24 +1245,28 @@ export default function QRMenu() {
 }
 
 .hero-copy .premium-kicker {
-  color: #ff7583;
+  color: #8be0b0;
 }
 
 .hero-copy h1 {
   margin: 26px 0 22px;
+  font-family: 'Manrope', sans-serif;
   font-size: clamp(45px, 6vw, 78px);
   line-height: .99;
   letter-spacing: -4.5px;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .hero-copy h1 span {
-  color: #ff6678;
+  background: linear-gradient(90deg, #a3e8bc, #43b77c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .hero-copy > p {
   max-width: 420px;
-  color: #c4c0c0;
+  color: #c1d0c6;
   font-size: 14px;
   line-height: 1.9;
 }
@@ -1256,7 +1276,7 @@ export default function QRMenu() {
   flex-wrap: wrap;
   gap: 23px;
   margin-top: 28px;
-  color: #e0dcdc;
+  color: #d8e5dc;
   font-size: 11px;
 }
 
@@ -1282,7 +1302,7 @@ export default function QRMenu() {
   position: absolute;
   width: 225px;
   height: 225px;
-  border: 1px solid #ffffff25;
+  border: 1px solid #a4e8bf40;
   border-radius: 50%;
   box-shadow: 0 0 0 22px #ffffff08;
 }
@@ -1293,8 +1313,8 @@ export default function QRMenu() {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: #fff;
-  color: var(--red);
+  background: linear-gradient(145deg, #fff, #dcece1);
+  color: #176b49;
   box-shadow: 0 20px 55px #0008;
 }
 
@@ -1303,12 +1323,13 @@ export default function QRMenu() {
   right: -4px;
   bottom: 10px;
   padding: 11px 15px;
-  background: var(--red);
+  background: linear-gradient(135deg, #2b9a68, #105238);
   color: white;
   font-size: 9px;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 1px;
   transform: rotate(-6deg);
+  box-shadow: 0 7px 20px #0004;
 }
 
 .hero-bottom {
@@ -1325,7 +1346,7 @@ export default function QRMenu() {
 }
 
 .hero-bottom-label {
-  color: #aaa;
+  color: #9aafa2;
   font-size: 9px;
   letter-spacing: 1px;
 }
@@ -1335,7 +1356,7 @@ export default function QRMenu() {
   align-items: center;
   gap: 8px;
   margin-left: auto;
-  color: #ddd;
+  color: #dce9e0;
 }
 
 /* MAIN CONTENT */
@@ -1351,10 +1372,10 @@ export default function QRMenu() {
 .table-assistance {
   margin-bottom: 55px;
   padding: 25px;
-  border: 1px solid var(--border);
-  border-radius: 15px;
-  background: linear-gradient(135deg, #fff, #fffafa);
-  box-shadow: 0 8px 30px #00000005;
+  border: 1px solid #dfeae2;
+  border-radius: 16px;
+  background: linear-gradient(125deg, #ffffff, #f0f7f2);
+  box-shadow: 0 12px 35px #102b2010;
 }
 
 .assistance-copy {
@@ -1369,20 +1390,22 @@ export default function QRMenu() {
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  border-radius: 13px;
-  background: var(--black);
+  border-radius: 14px;
+  background: linear-gradient(145deg, #1d7651, #0b3828);
   color: white;
+  box-shadow: 0 7px 18px #176b4930;
 }
 
 .assistance-label {
   color: var(--red);
   font-size: 9px;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 1.8px;
 }
 
 .assistance-copy h3 {
   margin: 6px 0;
+  font-family: 'Manrope', sans-serif;
   font-size: 20px;
   letter-spacing: -.7px;
 }
@@ -1403,18 +1426,20 @@ export default function QRMenu() {
   justify-content: center;
   gap: 10px;
   border: 0;
-  border-radius: 7px;
-  background: var(--red);
+  border-radius: 8px;
+  background: linear-gradient(120deg, #1d7651, #0d4933);
   color: white;
   font-size: 11px;
   font-weight: 800;
   cursor: pointer;
-  transition: background .2s, transform .2s;
+  box-shadow: 0 6px 16px #176b4925;
+  transition: .25s;
 }
 
 .assistance-open:hover {
-  background: var(--red-dark);
+  background: linear-gradient(120deg, #23885d, #10583c);
   transform: translateY(-2px);
+  box-shadow: 0 10px 22px #176b4935;
 }
 
 .assistance-form {
@@ -1426,6 +1451,7 @@ export default function QRMenu() {
 
 .assistance-form-heading h3 {
   margin: 9px 0 20px;
+  font-family: 'Manrope', sans-serif;
   font-size: 24px;
   letter-spacing: -.8px;
 }
@@ -1453,8 +1479,8 @@ export default function QRMenu() {
 }
 
 .need-option:hover {
-  border-color: #d9a0a6;
-  background: #fffafa;
+  border-color: #8bb9a0;
+  background: #f6fbf7;
 }
 
 .need-option.selected {
@@ -1504,12 +1530,12 @@ export default function QRMenu() {
   color: var(--black);
   font-size: 13px;
   line-height: 1.6;
-  transition: border .2s, box-shadow .2s;
+  transition: .2s;
 }
 
 .need-message-label textarea:focus {
   border-color: var(--red);
-  box-shadow: 0 0 0 3px #c51f3210;
+  box-shadow: 0 0 0 3px #176b4915;
 }
 
 .need-submit {
@@ -1522,7 +1548,7 @@ export default function QRMenu() {
   gap: 10px;
   border: 0;
   border-radius: 8px;
-  background: var(--black);
+  background: linear-gradient(120deg, #17231c, #0c3e2b);
   color: white;
   font-size: 12px;
   font-weight: 800;
@@ -1531,7 +1557,7 @@ export default function QRMenu() {
 }
 
 .need-submit:hover:not(:disabled) {
-  background: var(--red);
+  background: linear-gradient(120deg, #176b49, #0d4933);
 }
 
 .need-submit:disabled {
@@ -1555,8 +1581,8 @@ export default function QRMenu() {
 }
 
 .need-feedback.error {
-  background: var(--red-soft);
-  color: var(--red-dark);
+  background: #fff1f1;
+  color: #a81729;
 }
 
 .need-privacy {
@@ -1577,6 +1603,7 @@ export default function QRMenu() {
 
 .menu-heading h2 {
   margin: 10px 0;
+  font-family: 'Manrope', sans-serif;
   font-size: clamp(30px, 4vw, 44px);
   letter-spacing: -2px;
 }
@@ -1597,6 +1624,7 @@ export default function QRMenu() {
 
 .menu-count strong {
   display: block;
+  font-family: 'Manrope', sans-serif;
   font-size: 34px;
   letter-spacing: -1.5px;
 }
@@ -1625,7 +1653,7 @@ export default function QRMenu() {
 .premium-search:focus-within {
   border-color: var(--red);
   background: white;
-  box-shadow: 0 0 0 4px #c51f3210;
+  box-shadow: 0 0 0 4px #176b4910;
 }
 
 .premium-search input {
@@ -1638,7 +1666,7 @@ export default function QRMenu() {
 }
 
 .search-shortcut {
-  color: #aaa;
+  color: #9aa49c;
   font-size: 9px;
   letter-spacing: 1px;
 }
@@ -1671,9 +1699,10 @@ export default function QRMenu() {
 }
 
 .premium-category.active {
-  border-color: var(--black);
-  background: var(--black);
+  border-color: #102b20;
+  background: linear-gradient(120deg, #17231c, #0e4933);
   color: white;
+  box-shadow: 0 5px 14px #102b2025;
 }
 
 /* FOOD CARDS */
@@ -1687,26 +1716,27 @@ export default function QRMenu() {
 .premium-food-card {
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 13px;
+  border-radius: 14px;
   background: white;
   transition: transform .25s, box-shadow .25s, border-color .25s;
 }
 
 .premium-food-card:hover {
   transform: translateY(-5px);
-  border-color: #ded6d7;
-  box-shadow: 0 18px 40px #0000000c;
+  border-color: #c7d9cc;
+  box-shadow: 0 18px 40px #102b2012;
 }
 
 .premium-food-card.is-selected {
   border-color: var(--red);
+  box-shadow: 0 0 0 2px #176b4910;
 }
 
 .premium-food-image {
   position: relative;
   height: 205px;
   overflow: hidden;
-  background: #f3f0f0;
+  background: #edf3ee;
 }
 
 .premium-food-photo {
@@ -1725,7 +1755,7 @@ export default function QRMenu() {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  color: #aaa;
+  color: #8ba495;
 }
 
 .food-placeholder span {
@@ -1739,7 +1769,7 @@ export default function QRMenu() {
   left: 13px;
   padding: 7px 10px;
   border-radius: 5px;
-  background: #111e;
+  background: #101713dd;
   color: white;
   font-size: 9px;
 }
@@ -1764,7 +1794,7 @@ export default function QRMenu() {
 }
 
 .food-type-badge.nonveg {
-  color: var(--red);
+  color: #a83a35;
 }
 
 .premium-food-info {
@@ -1774,12 +1804,13 @@ export default function QRMenu() {
 .premium-food-category {
   color: var(--red);
   font-size: 9px;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 1.3px;
 }
 
 .premium-food-info h3 {
   margin: 10px 0 8px;
+  font-family: 'Manrope', sans-serif;
   font-size: 17px;
   letter-spacing: -.5px;
   line-height: 1.4;
@@ -1802,6 +1833,7 @@ export default function QRMenu() {
 }
 
 .premium-food-price {
+  font-family: 'Manrope', sans-serif;
   font-size: 20px;
   letter-spacing: -.5px;
 }
@@ -1814,16 +1846,17 @@ export default function QRMenu() {
   gap: 8px;
   border: 0;
   border-radius: 7px;
-  background: var(--red);
+  background: linear-gradient(120deg, #21865c, #105238);
   color: white;
   font-size: 10px;
-  font-weight: 900;
+  font-weight: 800;
   cursor: pointer;
+  box-shadow: 0 5px 13px #176b4925;
   transition: .2s;
 }
 
 .premium-add-button:hover {
-  background: var(--red-dark);
+  background: linear-gradient(120deg, #27986a, #176b49);
   transform: translateY(-2px);
 }
 
@@ -1870,10 +1903,10 @@ export default function QRMenu() {
 .premium-checkout {
   margin-top: 60px;
   padding: 30px;
-  border: 1px solid var(--border);
+  border: 1px solid #dfe9e1;
   border-radius: 16px;
-  background: white;
-  box-shadow: 0 12px 40px #00000007;
+  background: linear-gradient(145deg, #fff, #f7faf7);
+  box-shadow: 0 15px 45px #102b200b;
 }
 
 .checkout-heading {
@@ -1891,12 +1924,13 @@ export default function QRMenu() {
   display: grid;
   place-items: center;
   border-radius: 11px;
-  background: var(--black);
+  background: linear-gradient(145deg, #1d7651, #0b3828);
   color: white;
 }
 
 .checkout-heading h2 {
   margin: 6px 0;
+  font-family: 'Manrope', sans-serif;
   font-size: 22px;
 }
 
@@ -1908,8 +1942,8 @@ export default function QRMenu() {
 
 .checkout-total {
   margin-left: auto;
+  font-family: 'Manrope', sans-serif;
   font-size: 24px;
-  letter-spacing: -.8px;
 }
 
 .checkout-items {
@@ -1973,7 +2007,7 @@ export default function QRMenu() {
 .premium-field textarea:focus {
   border-color: var(--red);
   background: white;
-  box-shadow: 0 0 0 3px #c51f3210;
+  box-shadow: 0 0 0 3px #176b4910;
 }
 
 .notes-field {
@@ -1988,7 +2022,7 @@ export default function QRMenu() {
   padding: 17px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--surface);
+  background: #f1f7f2;
 }
 
 .cash-symbol {
@@ -1999,6 +2033,7 @@ export default function QRMenu() {
   place-items: center;
   border-radius: 50%;
   background: white;
+  color: #176b49;
   font-weight: 900;
 }
 
@@ -2034,16 +2069,17 @@ export default function QRMenu() {
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
-  transition: background .2s, transform .2s;
+  transition: .2s;
 }
 
 .premium-button-black {
-  background: var(--black);
+  background: linear-gradient(120deg, #17231c, #0c4933);
   color: white;
+  box-shadow: 0 7px 18px #102b2025;
 }
 
 .premium-button-black:hover:not(:disabled) {
-  background: var(--red);
+  background: linear-gradient(120deg, #21865c, #105238);
   transform: translateY(-2px);
 }
 
@@ -2100,6 +2136,7 @@ export default function QRMenu() {
 .premium-state h2 {
   margin: 15px 0 8px;
   color: var(--black);
+  font-family: 'Manrope', sans-serif;
 }
 
 .premium-state p,
@@ -2130,6 +2167,7 @@ export default function QRMenu() {
 
 .premium-success h1 {
   margin: 15px 0;
+  font-family: 'Manrope', sans-serif;
   font-size: 48px;
   letter-spacing: -2.5px;
 }
@@ -2190,6 +2228,7 @@ export default function QRMenu() {
 
 .premium-footer-brand {
   color: var(--black);
+  font-family: 'Manrope', sans-serif;
   font-size: 18px;
   font-weight: 900;
   text-decoration: none;
@@ -2220,16 +2259,16 @@ export default function QRMenu() {
   transform: translateX(-50%);
   border: 1px solid #ffffff20;
   border-radius: 12px;
-  background: #111;
+  background: linear-gradient(115deg, #17231c, #0b3b29);
   color: white;
   box-shadow: 0 12px 40px #0004;
   cursor: pointer;
   text-align: left;
-  transition: background .2s, transform .2s;
+  transition: .2s;
 }
 
 .premium-sticky-cart:hover {
-  background: #252020;
+  background: linear-gradient(115deg, #21865c, #105238);
 }
 
 .sticky-cart-count {
@@ -2239,7 +2278,7 @@ export default function QRMenu() {
   display: grid;
   place-items: center;
   border-radius: 9px;
-  background: var(--red);
+  background: linear-gradient(145deg, #36a875, #176b49);
   font-size: 12px;
   font-weight: 900;
 }
@@ -2247,7 +2286,7 @@ export default function QRMenu() {
 .premium-sticky-cart small {
   display: block;
   margin-top: 4px;
-  color: #aaa;
+  color: #c1d0c6;
   font-size: 10px;
 }
 
@@ -2317,7 +2356,7 @@ export default function QRMenu() {
     min-height: 390px;
     margin: 14px auto 38px;
     padding: 35px 22px 85px;
-    border-radius: 15px;
+    border-radius: 16px;
   }
 
   .hero-copy h1 {
@@ -2479,7 +2518,6 @@ export default function QRMenu() {
     scroll-behavior: auto !important;
   }
 }
-
       `}</style>
     </main>
   );
