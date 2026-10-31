@@ -193,25 +193,24 @@ export default function OrdersPage() {
 
   // Delivered orders remain included in revenue calculations.
   // Cancelled/rejected orders are excluded.
-  const revenueOrders = useMemo(
-    () =>
-      items.filter(
-        (order) => !isCancelled(getStatus(order))
-      ),
-    [items]
-  );
+// Only delivered/completed orders count towards revenue.
+const revenueOrders = useMemo(
+  () =>
+    items.filter((order) => isDelivered(getStatus(order))),
+  [items]
+);
 
-  const totalRevenue = revenueOrders.reduce(
+const totalRevenue = revenueOrders.reduce(
+  (sum, order) => sum + Number(order.total_amount || 0),
+  0
+);
+
+const todayRevenue = revenueOrders
+  .filter((order) => isToday(order.created_at))
+  .reduce(
     (sum, order) => sum + Number(order.total_amount || 0),
     0
   );
-
-  const todayRevenue = revenueOrders
-    .filter((order) => isToday(order.created_at))
-    .reduce(
-      (sum, order) => sum + Number(order.total_amount || 0),
-      0
-    );
 
   const newOrders = items.filter(
     (order) => getStatus(order) === "placed"
@@ -299,7 +298,7 @@ export default function OrdersPage() {
             <IndianRupee size={19} />
           </div>
           <strong>{money(totalRevenue)}</strong>
-          <small>All-time orders · excluding cancelled orders</small>
+          <small>All-time · Delivered orders only</small>
         </article>
 
         <article className="ta-revenue-card ta-revenue-today">
@@ -308,7 +307,7 @@ export default function OrdersPage() {
             <TrendingUp size={19} />
           </div>
           <strong>{money(todayRevenue)}</strong>
-          <small>Today's orders · excluding cancelled orders</small>
+          <small>Today's delivered orders only</small>
         </article>
       </section>
 

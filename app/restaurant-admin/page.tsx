@@ -336,11 +336,17 @@ export default function RestaurantAdmin() {
     return orderDate === today;
   });
 
-  const completed = todayOrders.filter(
-    (order) =>
-      order.status === "delivered" ||
-      order.status === "completed"
-  );
+const completed = todayOrders.filter((order) =>
+  ["delivered", "completed"].includes(
+    (order.status || "").toLowerCase()
+  )
+);
+
+// Only delivered/completed orders count as sales.
+const sales = completed.reduce(
+  (sum, order) => sum + Number(order.total_amount || 0),
+  0
+);
 
   const pendingOrders = todayOrders.filter((order) =>
     !["delivered", "completed", "cancelled", "rejected", "ready"].includes(
@@ -362,10 +368,7 @@ const visibleRecentOrders = orders.filter(
       (order.status || "").toLowerCase()
     )
 );
-  const sales = completed.reduce(
-    (sum, order) => sum + Number(order.total_amount || 0),
-    0
-  );
+
 
   const money = (value: number) =>
     new Intl.NumberFormat("en-IN", {
