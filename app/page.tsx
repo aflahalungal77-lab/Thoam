@@ -59,7 +59,7 @@ export default function Home() {
 
           supabase
             .from("restaurants")
-            .select("id, name, slug, description")
+            .select("id, name, slug, description, logo_url")
             .eq("status", "approved")
             .limit(6),
         ]);
@@ -387,8 +387,29 @@ export default function Home() {
                     key={restaurant.id}
                     className="restaurant-card"
                   >
-                    <div className="restaurant-mark">
-                      <span>T.</span>
+                    <div
+                      className="restaurant-mark"
+                      style={{
+                        width: 64,
+                        height: 64,
+                        padding: 5,
+                        overflow: "hidden",
+                        border: "1px solid #deded8",
+                        borderRadius: 15,
+                        background: "linear-gradient(145deg, #ffffff, #f2f2ee)",
+                        boxShadow: "0 5px 18px rgba(0,0,0,0.07), inset 0 0 0 3px #fff",
+                      }}
+                    >
+                      {restaurant.logo_url ? (
+                        <img
+                          src={restaurant.logo_url}
+                          alt={`${restaurant.name} logo`}
+                          style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 10, background: "#fff" }}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <span>T.</span>
+                      )}
                     </div>
 
                     <div className="restaurant-details">
