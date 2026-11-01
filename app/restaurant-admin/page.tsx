@@ -489,6 +489,15 @@ export default function RestaurantAdmin() {
             QR ordering
             <ChevronRight size={15} className="ta-nav-arrow" />
           </Link>
+
+          <Link
+            href="/restaurant-admin/kitchen"
+            className="ta-nav-link"
+          >
+            <UtensilsCrossed size={18} />
+            Kitchen KOT
+            <ChevronRight size={15} className="ta-nav-arrow" />
+          </Link>
         </nav>
 
         <div className="ta-sidebar-bottom">
