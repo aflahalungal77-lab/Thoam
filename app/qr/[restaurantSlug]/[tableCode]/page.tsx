@@ -298,7 +298,8 @@ export default function QRMenu() {
 
       setPlacedOrder(created);
       setQty({});
-      setNotes("");\n      setItemNotes({});
+      setNotes("");
+      setItemNotes({});
       setStatus("");
 
       window.scrollTo({
