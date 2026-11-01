@@ -58,6 +58,23 @@ export default async function PublicMenuPage({ params }: Props) {
     .eq("is_available", true)
     .order("name");
 
+  // Offers are configured by the restaurant owner; this page only displays currently valid ones.
+  const now = new Date();
+  const { data: offerRows, error: offersError } = await supabase
+    .from("offers")
+    .select("id,title,description,image_url,scope,discount_type,discount_value,product_ids,min_order_amount,max_discount,starts_at,ends_at,is_active")
+    .eq("restaurant_id", restaurant.id)
+    .eq("is_active", true)
+    .order("created_at", { ascending: false });
+
+  if (offersError) console.error("Public menu offers query error:", offersError);
+
+  const activeOffers = (offerRows ?? []).filter((offer) => {
+    const startsAt = offer.starts_at ? new Date(offer.starts_at) : null;
+    const endsAt = offer.ends_at ? new Date(offer.ends_at) : null;
+    return (!startsAt || startsAt <= now) && (!endsAt || endsAt >= now);
+  });
+
   if (productsError) {
     console.error("Products query error:", productsError);
     return (
@@ -82,6 +99,7 @@ export default async function PublicMenuPage({ params }: Props) {
           is_open: restaurant.is_open,
         }}
         products={(products ?? []) as MenuProduct[]}
+        offers={activeOffers}
       />
 
       
