@@ -76,19 +76,7 @@ export async function POST(req: NextRequest) {
     return errorResponse("Invalid table QR code.", 400);
   }
 
-  // 6. Validate customer details
-  if (!customerName || customerName.length > 100) {
-    return errorResponse("Please enter your name.", 400);
-  }
-
-  if (
-    customerPhone.replace(/\D/g, "").length < 10 ||
-    customerPhone.length > 30
-  ) {
-    return errorResponse("Please enter a valid phone number.", 400);
-  }
-
-  if (notes.length > 500) {
+  // QR dine-in orders intentionally do not collect customer identity.\n\n  if (notes.length > 500) {
     return errorResponse(
       "Special instructions must be under 500 characters.",
       400
@@ -151,7 +139,7 @@ export async function POST(req: NextRequest) {
   // 9. Create the dine-in order
   try {
     const { data, error } = await db.rpc(
-      "create_qr_dine_in_order",
+      "create_qr_dine_in_order_v2",
       {
         p_restaurant_id: restaurantId,
         p_table_code: tableCode,
