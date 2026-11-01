@@ -320,13 +320,29 @@ export default function Restaurants() {
                 >
                   <div className="restaurant-card-visual">
                     {restaurant.logo_url ? (
-                      <Image
-                        src={restaurant.logo_url}
-                        alt={`${restaurant.name} logo`}
-                        fill
-                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 45vw, 300px"
-                        className="restaurant-card-logo"
-                      />
+                      <div
+                        className="restaurant-logo-frame"
+                        style={{
+                          position: "absolute",
+                          inset: 14,
+                          display: "grid",
+                          placeItems: "center",
+                          overflow: "hidden",
+                          border: "1px solid rgba(255,255,255,0.82)",
+                          borderRadius: 18,
+                          background: "linear-gradient(145deg, #ffffff 0%, #f5f5f2 100%)",
+                          boxShadow: "0 8px 28px rgba(0,0,0,0.08), inset 0 0 0 4px rgba(255,255,255,0.72)",
+                        }}
+                      >
+                        <Image
+                          src={restaurant.logo_url}
+                          alt={`${restaurant.name} logo`}
+                          fill
+                          sizes="(max-width: 640px) 45vw, (max-width: 1024px) 45vw, 300px"
+                          className="restaurant-card-logo"
+                          style={{ objectFit: "contain", padding: 18 }}
+                        />
+                      </div>
                     ) : (
                       <div className="restaurant-card-placeholder">
                         <Store size={35} strokeWidth={1.2} />
