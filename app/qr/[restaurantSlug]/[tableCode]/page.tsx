@@ -89,7 +89,7 @@ export default function QRMenu() {
         const { data: rest, error: restaurantError } =
           await supabase
             .from("restaurants")
-            .select("id,name,slug,description,qr_enabled")
+            .select("id,name,slug,description,logo_url,qr_enabled")
             .eq("slug", restaurantSlug)
             .eq("status", "approved")
             .eq("qr_enabled", true)
@@ -323,9 +323,13 @@ export default function QRMenu() {
           href="/"
           aria-label="Tho'am home"
         >
-          <span className="premium-brand-mark">T.</span>
+          {r?.logo_url ? (
+            <img src={r.logo_url} alt={`${r.name} logo`} className="premium-restaurant-logo" />
+          ) : (
+            <span className="premium-brand-mark">T.</span>
+          )}
           <span>
-            Tho’am
+            {r?.name || "Tho’am"}
             <small>GOOD FOOD. GOOD MOMENTS.</small>
           </span>
         </a>
