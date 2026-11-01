@@ -38,8 +38,8 @@ begin
   if length(trim(coalesce(p_notes,''))) > 500 then
     raise exception 'Special instructions must be under 500 characters.';
   end if;
-  if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) < 1
-     or jsonb_array_length(p_items) > 40 then
+  if p_items is null or jsonb_typeof(p_items) is distinct from 'array'
+     or jsonb_array_length(p_items) < 1 or jsonb_array_length(p_items) > 40 then
     raise exception 'Cart is empty or contains too many different items.';
   end if;
 
