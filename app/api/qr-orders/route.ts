@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 type InputItem = {
   productId: string;
   quantity: number;
+  specialInstructions?: string;
 };
 
 type OrderResult = {
@@ -60,8 +61,6 @@ export async function POST(req: NextRequest) {
   // 3. Read and normalize input
   const restaurantId = String(body.restaurantId ?? "").trim();
   const tableCode = String(body.tableCode ?? "").trim();
-  const customerName = String(body.customerName ?? "").trim();
-  const customerPhone = String(body.customerPhone ?? "").trim();
   const notes = String(body.notes ?? "").trim();
 
   const rawItems = Array.isArray(body.items) ? body.items : [];
@@ -76,7 +75,9 @@ export async function POST(req: NextRequest) {
     return errorResponse("Invalid table QR code.", 400);
   }
 
-  // QR dine-in orders intentionally do not collect customer identity.\n\n  if (notes.length > 500) {
+  // QR dine-in orders intentionally do not collect customer identity.
+
+  if (notes.length > 500) {
     return errorResponse(
       "Special instructions must be under 500 characters.",
       400
@@ -123,8 +124,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const specialInstructions = String(item.specialInstructions ?? "").trim();
+    if (specialInstructions.length > 300) {
+      return errorResponse("Item instructions must be under 300 characters.", 400);
+    }
+
     seen.add(productId);
-    items.push({ productId, quantity });
+    items.push({ productId, quantity, specialInstructions });
   }
 
   // 8. Create server-side Supabase client
@@ -143,12 +149,11 @@ export async function POST(req: NextRequest) {
       {
         p_restaurant_id: restaurantId,
         p_table_code: tableCode,
-        p_customer_name: customerName,
-        p_customer_phone: customerPhone,
         p_notes: notes,
         p_items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
+          specialInstructions: item.specialInstructions || "",
         })),
       }
     );
