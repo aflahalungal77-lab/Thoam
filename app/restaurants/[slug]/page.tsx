@@ -964,14 +964,15 @@ export default function RestaurantPage() {
           flex: 0 0 100%;
           width: 100%;
           min-width: 0;
-          aspect-ratio: 4 / 1;
+          aspect-ratio: 3 / 1;
           overflow: hidden;
 
+          border: 1px solid #eceae5;
           border-radius: 14px;
-          background: #f4f2ee;
+          background: #fff;
           scroll-snap-align: start;
 
-          box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+          box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
         }
 
         .thoam-offer-image {
@@ -1365,6 +1366,7 @@ export default function RestaurantPage() {
           }
 
           .thoam-offer-card {
+            aspect-ratio: 2.5 / 1;
             border-radius: 11px;
           }
         }
