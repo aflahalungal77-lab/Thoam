@@ -14,6 +14,8 @@ export interface WhatsAppOrderDetails {
   notes?: string;
   items: WhatsAppOrderItem[];
   subtotal: number;
+  discountAmount?: number;
+  offerTitle?: string | null;
   deliveryFee: number;
   total: number;
 }
@@ -40,6 +42,9 @@ export function createWhatsAppOrderMessage(
     itemLines,
     "",
     `Subtotal: ₹${order.subtotal.toFixed(2)}`,
+    ...(order.discountAmount && order.discountAmount > 0
+      ? [`Offer: ${order.offerTitle || "Discount"}`, `Discount: -₹${order.discountAmount.toFixed(2)}`]
+      : []),
     `Delivery Fee: ₹${order.deliveryFee.toFixed(2)}`,
     `TOTAL: ₹${order.total.toFixed(2)}`,
     "",

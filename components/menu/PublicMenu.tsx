@@ -22,6 +22,21 @@ import {
   Sparkles,
 } from "lucide-react";
 
+export interface MenuOffer {
+  id: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  scope: "order" | "products";
+  discount_type: "percentage" | "fixed";
+  discount_value: number;
+  product_ids: string[] | null;
+  min_order_amount: number;
+  max_discount: number | null;
+  starts_at: string | null;
+  ends_at: string | null;
+}
+
 interface Props {
   restaurant: {
     id: string;
@@ -34,15 +49,17 @@ interface Props {
     is_open?: boolean;
   };
   products: MenuProduct[];
+  offers: MenuOffer[];
 }
 
-export default function PublicMenu({ restaurant, products }: Props) {
+export default function PublicMenu({ restaurant, products, offers }: Props) {
   const [cart, setCart] = useState<Record<string, CartItem>>({});
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [showCheckout, setShowCheckout] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
 
   const categories = useMemo(
     () => [
@@ -83,6 +100,31 @@ export default function PublicMenu({ restaurant, products }: Props) {
       sum + Number(item.product.price) * item.quantity,
     0
   );
+
+  const selectedOffer = offers.find((offer) => offer.id === selectedOfferId) ?? null;
+  const selectedOfferEligibleSubtotal = selectedOffer
+    ? cartItems.reduce((sum, item) => {
+        const eligible =
+          selectedOffer.scope === "order" ||
+          (selectedOffer.product_ids ?? []).includes(item.product.id);
+        return sum + (eligible ? Number(item.product.price) * item.quantity : 0);
+      }, 0)
+    : 0;
+  const estimatedDiscount = selectedOffer
+    ? Math.min(
+        selectedOfferEligibleSubtotal,
+        selectedOffer.max_discount == null
+          ? selectedOffer.discount_type === "percentage"
+            ? selectedOfferEligibleSubtotal * Number(selectedOffer.discount_value) / 100
+            : Number(selectedOffer.discount_value)
+          : Math.min(
+              selectedOffer.discount_type === "percentage"
+                ? selectedOfferEligibleSubtotal * Number(selectedOffer.discount_value) / 100
+                : Number(selectedOffer.discount_value),
+              Number(selectedOffer.max_discount)
+            )
+      )
+    : 0;
 
   function addProduct(product: MenuProduct) {
     setCart((previous) => {
@@ -147,6 +189,7 @@ export default function PublicMenu({ restaurant, products }: Props) {
           orderType: form.orderType,
           address: form.address,
           notes: form.notes,
+          offerId: selectedOfferId,
           items: cartItems.map((item) => ({
             productId: item.product.id,
             quantity: item.quantity,
@@ -170,6 +213,8 @@ export default function PublicMenu({ restaurant, products }: Props) {
         notes: form.notes,
         items: result.order.items,
         subtotal: result.order.subtotal,
+        discountAmount: result.order.discountAmount,
+        offerTitle: result.order.appliedOffer?.title ?? null,
         deliveryFee: result.order.deliveryFee,
         total: result.order.total,
       });
@@ -247,9 +292,78 @@ export default function PublicMenu({ restaurant, products }: Props) {
               ))}
             </div>
 
+            {offers.length > 0 && (
+              <div className="checkout-offers">
+                <div className="checkout-offers-heading">
+                  <span className="summary-kicker">AVAILABLE OFFERS</span>
+                  {selectedOfferId && (
+                    <button type="button" onClick={() => setSelectedOfferId(null)}>
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <div className="checkout-offer-list">
+                  {offers.map((offer) => {
+                    const eligibleSubtotal =
+                      offer.scope === "order"
+                        ? subtotal
+                        : cartItems.reduce(
+                            (sum, item) =>
+                              sum + ((offer.product_ids ?? []).includes(item.product.id)
+                                ? Number(item.product.price) * item.quantity
+                                : 0),
+                            0
+                          );
+                    const meetsMinimum = subtotal >= Number(offer.min_order_amount ?? 0);
+                    const canApply = meetsMinimum && eligibleSubtotal > 0;
+                    const active = selectedOfferId === offer.id;
+                    return (
+                      <button
+                        type="button"
+                        key={offer.id}
+                        className={`checkout-offer-option ${active ? "selected" : ""}`}
+                        disabled={!canApply}
+                        onClick={() => setSelectedOfferId(active ? null : offer.id)}
+                      >
+                        <span className="offer-radio">{active ? "✓" : "+"}</span>
+                        <span className="offer-option-copy">
+                          <strong>{offer.title}</strong>
+                          <small>
+                            {offer.discount_type === "percentage"
+                              ? `${Number(offer.discount_value)}% off`
+                              : `₹${Number(offer.discount_value).toFixed(0)} off`}
+                            {offer.scope === "products" ? " selected items" : " your order"}
+                            {Number(offer.min_order_amount) > 0
+                              ? ` · Min. ₹${Number(offer.min_order_amount).toFixed(0)}`
+                              : ""}
+                          </small>
+                          {!canApply && (
+                            <small className="offer-unavailable">
+                              {meetsMinimum ? "Add an eligible product to use this offer" : `Add ₹${Math.max(0, Number(offer.min_order_amount) - subtotal).toFixed(2)} more to unlock`}
+                            </small>
+                          )}
+                        </span>
+                        {active && <strong className="offer-saving">Applied</strong>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="summary-total">
               <span>Subtotal</span>
               <strong>₹{subtotal.toFixed(2)}</strong>
+            </div>
+            {selectedOffer && estimatedDiscount > 0 && (
+              <div className="summary-discount">
+                <span>Discount · {selectedOffer.title}</span>
+                <strong>−₹{estimatedDiscount.toFixed(2)}</strong>
+              </div>
+            )}
+            <div className="summary-payable">
+              <span>Items total after discount</span>
+              <strong>₹{Math.max(0, subtotal - estimatedDiscount).toFixed(2)}</strong>
             </div>
           </section>
 
@@ -435,6 +549,24 @@ export default function PublicMenu({ restaurant, products }: Props) {
             font-size: 13px;
           }
 
+          .checkout-offers{margin:22px 0 4px;padding:17px;border:1px solid #e9e9e4;border-radius:15px;background:#fbfbf9}
+          .checkout-offers-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+          .checkout-offers-heading button{font-size:11px;font-weight:750;color:#777}
+          .checkout-offer-list{display:grid;gap:8px}
+          .checkout-offer-option{display:flex;align-items:center;gap:11px;width:100%;padding:12px;border:1px solid #e8e8e2;border-radius:12px;background:#fff;text-align:left}
+          .checkout-offer-option.selected{border-color:#24241f;background:#f7f7f3}
+          .checkout-offer-option:disabled{opacity:.48;cursor:not-allowed}
+          .offer-radio{display:grid;place-items:center;flex:0 0 25px;width:25px;height:25px;border:1px solid #d9d9d1;border-radius:50%;font-size:13px;font-weight:800}
+          .checkout-offer-option.selected .offer-radio{background:#171715;color:#fff;border-color:#171715}
+          .offer-option-copy{display:grid;gap:4px;flex:1}
+          .offer-option-copy strong{font-size:12px}
+          .offer-option-copy small{font-size:10px;color:#77776f}
+          .offer-option-copy .offer-unavailable{color:#a34b37}
+          .offer-saving{font-size:10px;color:#24241f}
+          .summary-discount,.summary-payable{display:flex;justify-content:space-between;gap:12px;margin-top:13px;font-size:12px}
+          .summary-discount{color:#27734b}
+          .summary-payable{padding-top:13px;border-top:1px solid #ecece7;color:#66665e}
+          .summary-payable strong{font-size:17px;color:#171715}
           .summary-total {
             display: flex;
             justify-content: space-between;
@@ -496,7 +628,70 @@ export default function PublicMenu({ restaurant, products }: Props) {
               border-radius: 17px;
             }
           }
-        `}</style>
+  
+/* PREMIUM MENU POLISH */
+.thoam-menu{background:#f5f5f2;--ink:#171715;--muted:#77776f;--border:#e7e7e0}
+.restaurant-header{background:radial-gradient(ellipse at 82% 48%,#f0f0eb 0%,#fff 43%);border-bottom-color:#e5e5de}
+.header-top{border-bottom-color:#e9e9e3}
+.header-brand strong{font-size:15px;letter-spacing:.18em}
+.brand-mark,.restaurant-logo{border:1px solid #e4e4dc;box-shadow:0 5px 18px rgb(0 0 0 / 8%)}
+.header-tag{background:#fff;box-shadow:0 3px 12px rgb(0 0 0 / 3%)}
+.hero-content{min-height:350px}
+.hero-copy h1{max-width:760px;text-wrap:balance}
+.hero-graphic{opacity:.82}
+.hero-graphic-ring{border-color:#deded6}
+.hero-graphic-center{background:linear-gradient(145deg,#fff,#e9e9e3);box-shadow:0 18px 45px rgb(0 0 0 / 5%),inset 0 0 30px rgb(0 0 0 / 2%)}
+.menu-layout{padding-top:54px}
+.menu-section-heading{align-items:center}
+.menu-section-heading h2{letter-spacing:-1.9px}
+.search-box{min-height:62px;border-color:#e4e4dc;border-radius:16px;box-shadow:0 7px 22px rgb(0 0 0 / 3%)}
+.search-box:focus-within{border-color:#77776f;box-shadow:0 0 0 4px rgb(0 0 0 / 4%),0 10px 24px rgb(0 0 0 / 4%)}
+.category-button{min-height:43px;padding-inline:20px;border-color:#e4e4dc;background:#fff}
+.category-button.active{background:#171715;border-color:#171715}
+.cart-sidebar{padding:20px;border-color:#e5e5de;border-radius:22px;box-shadow:0 15px 42px rgb(0 0 0 / 5%)}
+.cart-sidebar-heading{margin-bottom:18px}
+.trust-card{background:linear-gradient(135deg,#fff,#f6f6f2);border-color:#e7e7e0}
+.menu-footer{background:#fff}
+.mobile-cart-shortcut{border-radius:17px;box-shadow:0 12px 36px rgb(0 0 0 / 24%)}
+.thoam-checkout{background:radial-gradient(ellipse at 50% 0%,#fff 0%,#f5f5f2 65%)}
+.checkout-topbar{border-bottom-color:#e5e5de}
+.checkout-summary,.checkout-form-card{border-color:#e5e5de;border-radius:22px;box-shadow:0 12px 36px rgb(0 0 0 / 4%)}
+.checkout-form-card{padding:24px}
+.checkout-heading h1{letter-spacing:-2.2px}
+.checkout-secure-note{line-height:1.6}
+@media(min-width:1200px){.menu-layout{gap:42px}.product-grid{gap:18px}}
+@media(max-width:1023px){.menu-layout{grid-template-columns:minmax(0,1fr) 310px}.cart-sidebar{padding:17px}}
+@media(max-width:760px){
+ .restaurant-header{padding-inline:16px}
+ .hero-content{min-height:250px;padding:34px 0}
+ .hero-graphic{right:-150px;opacity:.19}
+ .hero-copy{max-width:100%}
+ .hero-copy h1{max-width:90%;font-size:clamp(34px,9vw,52px);letter-spacing:-2px}
+ .hero-meta{gap:10px;margin-top:20px}
+ .hero-bottom{gap:12px;letter-spacing:.1em}
+ .menu-layout{padding:30px 14px 44px;gap:25px}
+ .menu-section-heading{align-items:flex-end}
+ .menu-section-heading h2{font-size:27px}
+ .search-box{min-height:55px;border-radius:14px}
+ .search-box input{height:53px;font-size:12px}
+ .category-header{margin-top:23px}
+ .category-button{min-height:39px;padding-inline:15px}
+ .cart-sidebar{padding:14px;border-radius:19px}
+ .checkout-container{margin-top:30px}
+ .checkout-form-card{padding:17px}
+}
+@media(max-width:390px){
+ .header-brand{gap:9px}
+ .brand-mark,.restaurant-logo{width:37px;height:37px}
+ .header-tag{font-size:7px}
+ .hero-copy h1{font-size:34px}
+ .hero-bottom{font-size:6px}
+ .menu-section-heading h2{font-size:24px}
+ .item-count{font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){.thoam-menu *{scroll-behavior:auto!important}}
+
+      `}</style>
       </main>
     );
   }
@@ -641,7 +836,43 @@ export default function PublicMenu({ restaurant, products }: Props) {
             ))}
           </div>
 
-          {/* PRODUCTS */}
+          {/* ACTIVE RESTAURANT OFFERS — display only; checkout pricing remains unchanged */}
+          {offers.length > 0 && (
+            <section className="public-offers" aria-label="Current restaurant offers">
+              <div className="public-offers-heading">
+                <span className="public-offers-kicker">LIMITED-TIME DEALS</span>
+                <span className="public-offers-count">{offers.length} {offers.length === 1 ? "OFFER" : "OFFERS"}</span>
+              </div>
+              <div className="public-offers-grid">
+                {offers.map((offer) => (
+                  <article className="public-offer-card" key={offer.id}>
+                    {offer.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img className="public-offer-image" src={offer.image_url} alt="" />
+                    ) : (
+                      <div className="public-offer-art" aria-hidden="true"><Sparkles size={22} /></div>
+                    )}
+                    <div className="public-offer-copy">
+                      <span className="public-offer-discount">
+                        {offer.discount_type === "percentage"
+                          ? `${Number(offer.discount_value)}% OFF`
+                          : `₹${Number(offer.discount_value).toFixed(0)} OFF`}
+                      </span>
+                      <h3>{offer.title}</h3>
+                      {offer.description && <p>{offer.description}</p>}
+                      <small>
+                        {offer.scope === "order" ? "On your order" : "On selected dishes"}
+                        {Number(offer.min_order_amount) > 0 ? ` · Min. order ₹${Number(offer.min_order_amount).toFixed(0)}` : ""}
+                        {offer.max_discount ? ` · Up to ₹${Number(offer.max_discount).toFixed(0)} off` : ""}
+                      </small>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+
+                    {/* PRODUCTS */}
           {filteredProducts.length === 0 ? (
             <div className="empty-results">
               <div className="empty-symbol">
@@ -1263,6 +1494,21 @@ export default function PublicMenu({ restaurant, products }: Props) {
   box-shadow: 0 5px 13px rgb(0 0 0 / 12%);
 }
 
+/* ACTIVE OFFER DISPLAY */
+.public-offers{margin:26px 0 30px;padding:18px;border:1px solid #e7e7e0;border-radius:20px;background:linear-gradient(135deg,#fff,#f3f3ee);box-shadow:0 10px 28px rgb(0 0 0 / 4%)}
+.public-offers-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.public-offers-kicker{font-size:9px;font-weight:900;letter-spacing:.2em;color:#77776f}
+.public-offers-count{font-size:8px;font-weight:850;letter-spacing:.12em;color:#88887f}
+.public-offers-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}
+.public-offer-card{display:flex;align-items:center;gap:13px;min-width:0;padding:11px;border:1px solid #e9e9e3;border-radius:15px;background:#fff}
+.public-offer-image,.public-offer-art{width:82px;height:82px;flex-shrink:0;border-radius:11px;object-fit:cover}
+.public-offer-art{display:grid;place-items:center;background:#171715;color:#fff}
+.public-offer-copy{min-width:0}
+.public-offer-discount{display:inline-flex;padding:5px 8px;border-radius:6px;background:#171715;color:#fff;font-size:9px;font-weight:900;letter-spacing:.06em}
+.public-offer-copy h3{margin:7px 0 3px;font-size:13px;font-weight:900;letter-spacing:-.2px}
+.public-offer-copy p{margin:0 0 5px;color:#77776f;font-size:10px;line-height:1.5}
+.public-offer-copy small{display:block;color:#8b8b82;font-size:9px;line-height:1.5}
+@media(max-width:480px){.public-offers{padding:13px;border-radius:16px;margin:20px 0 24px}.public-offer-image,.public-offer-art{width:68px;height:68px}.public-offer-card{gap:10px;padding:9px}}
 /* PRODUCT GRID */
 
 .product-grid {

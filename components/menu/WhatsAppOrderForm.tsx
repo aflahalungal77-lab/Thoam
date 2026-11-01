@@ -594,6 +594,19 @@ export default function WhatsAppOrderForm({
             transition: none;
           }
         }
+
+/* PREMIUM FORM FINISH */
+.customer-form{padding:27px;border-color:#e5e4dc;border-radius:22px;box-shadow:0 12px 34px rgb(0 0 0 / 4%)}
+.form-heading h2{letter-spacing:-.9px}
+.form-field input,.form-field textarea{border-color:#e4e3dc;border-radius:13px;background:#fafaf8}
+.form-field input:hover,.form-field textarea:hover{border-color:#c9c8bf}
+.order-type-option{min-height:72px;border-radius:14px}
+.order-type-option.selected{background:#f4f4ef}
+.submit-button{min-height:54px;border-radius:14px;box-shadow:0 7px 17px rgb(0 0 0 / 13%)}
+.cancel-button{border-radius:13px}
+.whatsapp-notice{border-top-color:#e9e8e1}
+@media(max-width:480px){.customer-form{padding:17px;border-radius:18px}.order-type-option{min-height:66px}}
+
       `}</style>
     </form>
   );
