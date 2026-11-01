@@ -33,6 +33,7 @@ export async function POST(request: Request) {
     const orderType = String(body.orderType ?? "").trim().toUpperCase();
     const address = String(body.address ?? "").trim();
     const notes = String(body.notes ?? "").trim();
+    const offerId = body.offerId ? String(body.offerId).trim() : null;
     const items = body.items;
 
     // Validate customer details.
@@ -175,12 +176,80 @@ export async function POST(request: Request) {
       });
     }
 
-    // Calculate totals using database prices.
+    // Calculate totals using database prices and validate any selected offer.
     const subtotal = Number(
       validatedItems
         .reduce((sum, item) => sum + item.lineTotal, 0)
         .toFixed(2)
     );
+
+    let discountAmount = 0;
+    let appliedOffer: { id: string; title: string } | null = null;
+
+    if (offerId) {
+      const { data: offer, error: offerError } = await supabase
+        .from("offers")
+        .select("id,title,scope,discount_type,discount_value,product_ids,min_order_amount,max_discount,starts_at,ends_at,is_active,restaurant_id")
+        .eq("id", offerId)
+        .eq("restaurant_id", restaurant.id)
+        .maybeSingle();
+
+      if (offerError) {
+        console.error("Offer lookup failed:", offerError);
+        return jsonError("Could not validate the selected offer.", 500);
+      }
+      if (!offer || !offer.is_active) {
+        return jsonError("This offer is no longer available. Please select another offer.", 400);
+      }
+
+      const now = Date.now();
+      if (
+        (offer.starts_at && new Date(offer.starts_at).getTime() > now) ||
+        (offer.ends_at && new Date(offer.ends_at).getTime() < now)
+      ) {
+        return jsonError("This offer is not currently valid.", 400);
+      }
+      if (subtotal < Number(offer.min_order_amount ?? 0)) {
+        return jsonError(
+          `This offer requires a minimum order of ₹${Number(offer.min_order_amount ?? 0).toFixed(2)}.`,
+          400
+        );
+      }
+
+      const eligibleItems =
+        offer.scope === "products"
+          ? validatedItems.filter((item) =>
+              Array.isArray(offer.product_ids) && offer.product_ids.includes(item.productId)
+            )
+          : validatedItems;
+      const eligibleSubtotal = Number(
+        eligibleItems.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2)
+      );
+      if (eligibleSubtotal <= 0) {
+        return jsonError("Your cart does not contain products eligible for this offer.", 400);
+      }
+
+      const discountValue = Number(offer.discount_value);
+      if (
+        !Number.isFinite(discountValue) ||
+        discountValue <= 0 ||
+        (offer.discount_type === "percentage" && discountValue > 100)
+      ) {
+        console.error("Invalid offer configuration:", offer.id);
+        return jsonError("This offer is configured incorrectly.", 500);
+      }
+
+      const rawDiscount =
+        offer.discount_type === "percentage"
+          ? (eligibleSubtotal * discountValue) / 100
+          : discountValue;
+      const cappedDiscount =
+        offer.max_discount !== null && offer.max_discount !== undefined
+          ? Math.min(rawDiscount, Number(offer.max_discount))
+          : rawDiscount;
+      discountAmount = Number(Math.min(eligibleSubtotal, cappedDiscount).toFixed(2));
+      appliedOffer = { id: offer.id, title: offer.title };
+    }
 
     const deliveryFee =
       orderType === "DELIVERY"
@@ -196,7 +265,7 @@ export async function POST(request: Request) {
     const platformFee = 1;
 
     const total = Number(
-      (subtotal + deliveryFee + platformFee).toFixed(2)
+      Math.max(0, subtotal - discountAmount + deliveryFee + platformFee).toFixed(2)
     );
 
     // Map the UI order types to the PostgreSQL enum values.
@@ -221,7 +290,7 @@ export async function POST(request: Request) {
         customer_phone: customerPhone,
         order_type: databaseOrderType,
         delivery_address: orderType === "DELIVERY" ? address : null,
-        notes: notes || null,
+        notes: [notes, appliedOffer ? `Offer applied: ${appliedOffer.title} (Discount: ₹${discountAmount.toFixed(2)})` : ""].filter(Boolean).join("\n") || null,
         subtotal,
         delivery_fee: deliveryFee,
         platform_fee: platformFee,
@@ -286,6 +355,8 @@ export async function POST(request: Request) {
           quantity: item.quantity,
         })),
         subtotal,
+        discountAmount,
+        appliedOffer,
         deliveryFee,
         platformFee,
         total,
