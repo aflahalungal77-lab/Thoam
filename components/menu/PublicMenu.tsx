@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import MenuProductCard, { type MenuProduct } from "./MenuProductCard";
 import MenuCart, { type CartItem } from "./MenuCart";
 import WhatsAppOrderForm, {
@@ -60,6 +60,12 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (showCheckout) {
+      window.scrollTo(0, 0);
+    }
+  }, [showCheckout]);
 
   const categories = useMemo(
     () => [
@@ -375,11 +381,6 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
           )}
 
           <div className="checkout-form-card">
-            <div className="checkout-form-heading">
-              <span className="summary-kicker">CUSTOMER DETAILS</span>
-              <h2>Where should we reach you?</h2>
-            </div>
-
             <WhatsAppOrderForm
               loading={loading}
               onSubmit={submitOrder}
@@ -624,7 +625,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
 
             .checkout-summary,
             .checkout-form-card {
-              padding: 19px;
+              padding: 16px;
               border-radius: 17px;
             }
           }
@@ -656,7 +657,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
 .thoam-checkout{background:radial-gradient(ellipse at 50% 0%,#fff 0%,#f5f5f2 65%)}
 .checkout-topbar{border-bottom-color:#e5e5de}
 .checkout-summary,.checkout-form-card{border-color:#e5e5de;border-radius:22px;box-shadow:0 12px 36px rgb(0 0 0 / 4%)}
-.checkout-form-card{padding:24px}
+.checkout-form-card{padding:18px}
 .checkout-heading h1{letter-spacing:-2.2px}
 .checkout-secure-note{line-height:1.6}
 @media(min-width:1200px){.menu-layout{gap:42px}.product-grid{gap:18px}}
