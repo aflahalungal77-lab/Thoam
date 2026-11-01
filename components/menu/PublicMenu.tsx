@@ -59,6 +59,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
   const [showCheckout, setShowCheckout] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
 
   const categories = useMemo(
     () => [
@@ -99,6 +100,31 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
       sum + Number(item.product.price) * item.quantity,
     0
   );
+
+  const selectedOffer = offers.find((offer) => offer.id === selectedOfferId) ?? null;
+  const selectedOfferEligibleSubtotal = selectedOffer
+    ? cartItems.reduce((sum, item) => {
+        const eligible =
+          selectedOffer.scope === "order" ||
+          (selectedOffer.product_ids ?? []).includes(item.product.id);
+        return sum + (eligible ? Number(item.product.price) * item.quantity : 0);
+      }, 0)
+    : 0;
+  const estimatedDiscount = selectedOffer
+    ? Math.min(
+        selectedOfferEligibleSubtotal,
+        selectedOffer.max_discount == null
+          ? selectedOffer.discount_type === "percentage"
+            ? selectedOfferEligibleSubtotal * Number(selectedOffer.discount_value) / 100
+            : Number(selectedOffer.discount_value)
+          : Math.min(
+              selectedOffer.discount_type === "percentage"
+                ? selectedOfferEligibleSubtotal * Number(selectedOffer.discount_value) / 100
+                : Number(selectedOffer.discount_value),
+              Number(selectedOffer.max_discount)
+            )
+      )
+    : 0;
 
   function addProduct(product: MenuProduct) {
     setCart((previous) => {
@@ -163,6 +189,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
           orderType: form.orderType,
           address: form.address,
           notes: form.notes,
+          offerId: selectedOfferId,
           items: cartItems.map((item) => ({
             productId: item.product.id,
             quantity: item.quantity,
@@ -186,6 +213,8 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
         notes: form.notes,
         items: result.order.items,
         subtotal: result.order.subtotal,
+        discountAmount: result.order.discountAmount,
+        offerTitle: result.order.appliedOffer?.title ?? null,
         deliveryFee: result.order.deliveryFee,
         total: result.order.total,
       });
@@ -263,9 +292,78 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
               ))}
             </div>
 
+            {offers.length > 0 && (
+              <div className="checkout-offers">
+                <div className="checkout-offers-heading">
+                  <span className="summary-kicker">AVAILABLE OFFERS</span>
+                  {selectedOfferId && (
+                    <button type="button" onClick={() => setSelectedOfferId(null)}>
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <div className="checkout-offer-list">
+                  {offers.map((offer) => {
+                    const eligibleSubtotal =
+                      offer.scope === "order"
+                        ? subtotal
+                        : cartItems.reduce(
+                            (sum, item) =>
+                              sum + ((offer.product_ids ?? []).includes(item.product.id)
+                                ? Number(item.product.price) * item.quantity
+                                : 0),
+                            0
+                          );
+                    const meetsMinimum = subtotal >= Number(offer.min_order_amount ?? 0);
+                    const canApply = meetsMinimum && eligibleSubtotal > 0;
+                    const active = selectedOfferId === offer.id;
+                    return (
+                      <button
+                        type="button"
+                        key={offer.id}
+                        className={`checkout-offer-option ${active ? "selected" : ""}`}
+                        disabled={!canApply}
+                        onClick={() => setSelectedOfferId(active ? null : offer.id)}
+                      >
+                        <span className="offer-radio">{active ? "✓" : "+"}</span>
+                        <span className="offer-option-copy">
+                          <strong>{offer.title}</strong>
+                          <small>
+                            {offer.discount_type === "percentage"
+                              ? `${Number(offer.discount_value)}% off`
+                              : `₹${Number(offer.discount_value).toFixed(0)} off`}
+                            {offer.scope === "products" ? " selected items" : " your order"}
+                            {Number(offer.min_order_amount) > 0
+                              ? ` · Min. ₹${Number(offer.min_order_amount).toFixed(0)}`
+                              : ""}
+                          </small>
+                          {!canApply && (
+                            <small className="offer-unavailable">
+                              {meetsMinimum ? "Add an eligible product to use this offer" : `Add ₹${Math.max(0, Number(offer.min_order_amount) - subtotal).toFixed(2)} more to unlock`}
+                            </small>
+                          )}
+                        </span>
+                        {active && <strong className="offer-saving">Applied</strong>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="summary-total">
               <span>Subtotal</span>
               <strong>₹{subtotal.toFixed(2)}</strong>
+            </div>
+            {selectedOffer && estimatedDiscount > 0 && (
+              <div className="summary-discount">
+                <span>Discount · {selectedOffer.title}</span>
+                <strong>−₹{estimatedDiscount.toFixed(2)}</strong>
+              </div>
+            )}
+            <div className="summary-payable">
+              <span>Items total after discount</span>
+              <strong>₹{Math.max(0, subtotal - estimatedDiscount).toFixed(2)}</strong>
             </div>
           </section>
 
@@ -451,6 +549,24 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
             font-size: 13px;
           }
 
+          .checkout-offers{margin:22px 0 4px;padding:17px;border:1px solid #e9e9e4;border-radius:15px;background:#fbfbf9}
+          .checkout-offers-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+          .checkout-offers-heading button{font-size:11px;font-weight:750;color:#777}
+          .checkout-offer-list{display:grid;gap:8px}
+          .checkout-offer-option{display:flex;align-items:center;gap:11px;width:100%;padding:12px;border:1px solid #e8e8e2;border-radius:12px;background:#fff;text-align:left}
+          .checkout-offer-option.selected{border-color:#24241f;background:#f7f7f3}
+          .checkout-offer-option:disabled{opacity:.48;cursor:not-allowed}
+          .offer-radio{display:grid;place-items:center;flex:0 0 25px;width:25px;height:25px;border:1px solid #d9d9d1;border-radius:50%;font-size:13px;font-weight:800}
+          .checkout-offer-option.selected .offer-radio{background:#171715;color:#fff;border-color:#171715}
+          .offer-option-copy{display:grid;gap:4px;flex:1}
+          .offer-option-copy strong{font-size:12px}
+          .offer-option-copy small{font-size:10px;color:#77776f}
+          .offer-option-copy .offer-unavailable{color:#a34b37}
+          .offer-saving{font-size:10px;color:#24241f}
+          .summary-discount,.summary-payable{display:flex;justify-content:space-between;gap:12px;margin-top:13px;font-size:12px}
+          .summary-discount{color:#27734b}
+          .summary-payable{padding-top:13px;border-top:1px solid #ecece7;color:#66665e}
+          .summary-payable strong{font-size:17px;color:#171715}
           .summary-total {
             display: flex;
             justify-content: space-between;
