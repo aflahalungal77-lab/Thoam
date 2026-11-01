@@ -496,7 +496,70 @@ export default function PublicMenu({ restaurant, products }: Props) {
               border-radius: 17px;
             }
           }
-        `}</style>
+  
+/* PREMIUM MENU POLISH */
+.thoam-menu{background:#f5f5f2;--ink:#171715;--muted:#77776f;--border:#e7e7e0}
+.restaurant-header{background:radial-gradient(ellipse at 82% 48%,#f0f0eb 0%,#fff 43%);border-bottom-color:#e5e5de}
+.header-top{border-bottom-color:#e9e9e3}
+.header-brand strong{font-size:15px;letter-spacing:.18em}
+.brand-mark,.restaurant-logo{border:1px solid #e4e4dc;box-shadow:0 5px 18px rgb(0 0 0 / 8%)}
+.header-tag{background:#fff;box-shadow:0 3px 12px rgb(0 0 0 / 3%)}
+.hero-content{min-height:350px}
+.hero-copy h1{max-width:760px;text-wrap:balance}
+.hero-graphic{opacity:.82}
+.hero-graphic-ring{border-color:#deded6}
+.hero-graphic-center{background:linear-gradient(145deg,#fff,#e9e9e3);box-shadow:0 18px 45px rgb(0 0 0 / 5%),inset 0 0 30px rgb(0 0 0 / 2%)}
+.menu-layout{padding-top:54px}
+.menu-section-heading{align-items:center}
+.menu-section-heading h2{letter-spacing:-1.9px}
+.search-box{min-height:62px;border-color:#e4e4dc;border-radius:16px;box-shadow:0 7px 22px rgb(0 0 0 / 3%)}
+.search-box:focus-within{border-color:#77776f;box-shadow:0 0 0 4px rgb(0 0 0 / 4%),0 10px 24px rgb(0 0 0 / 4%)}
+.category-button{min-height:43px;padding-inline:20px;border-color:#e4e4dc;background:#fff}
+.category-button.active{background:#171715;border-color:#171715}
+.cart-sidebar{padding:20px;border-color:#e5e5de;border-radius:22px;box-shadow:0 15px 42px rgb(0 0 0 / 5%)}
+.cart-sidebar-heading{margin-bottom:18px}
+.trust-card{background:linear-gradient(135deg,#fff,#f6f6f2);border-color:#e7e7e0}
+.menu-footer{background:#fff}
+.mobile-cart-shortcut{border-radius:17px;box-shadow:0 12px 36px rgb(0 0 0 / 24%)}
+.thoam-checkout{background:radial-gradient(ellipse at 50% 0%,#fff 0%,#f5f5f2 65%)}
+.checkout-topbar{border-bottom-color:#e5e5de}
+.checkout-summary,.checkout-form-card{border-color:#e5e5de;border-radius:22px;box-shadow:0 12px 36px rgb(0 0 0 / 4%)}
+.checkout-form-card{padding:24px}
+.checkout-heading h1{letter-spacing:-2.2px}
+.checkout-secure-note{line-height:1.6}
+@media(min-width:1200px){.menu-layout{gap:42px}.product-grid{gap:18px}}
+@media(max-width:1023px){.menu-layout{grid-template-columns:minmax(0,1fr) 310px}.cart-sidebar{padding:17px}}
+@media(max-width:760px){
+ .restaurant-header{padding-inline:16px}
+ .hero-content{min-height:250px;padding:34px 0}
+ .hero-graphic{right:-150px;opacity:.19}
+ .hero-copy{max-width:100%}
+ .hero-copy h1{max-width:90%;font-size:clamp(34px,9vw,52px);letter-spacing:-2px}
+ .hero-meta{gap:10px;margin-top:20px}
+ .hero-bottom{gap:12px;letter-spacing:.1em}
+ .menu-layout{padding:30px 14px 44px;gap:25px}
+ .menu-section-heading{align-items:flex-end}
+ .menu-section-heading h2{font-size:27px}
+ .search-box{min-height:55px;border-radius:14px}
+ .search-box input{height:53px;font-size:12px}
+ .category-header{margin-top:23px}
+ .category-button{min-height:39px;padding-inline:15px}
+ .cart-sidebar{padding:14px;border-radius:19px}
+ .checkout-container{margin-top:30px}
+ .checkout-form-card{padding:17px}
+}
+@media(max-width:390px){
+ .header-brand{gap:9px}
+ .brand-mark,.restaurant-logo{width:37px;height:37px}
+ .header-tag{font-size:7px}
+ .hero-copy h1{font-size:34px}
+ .hero-bottom{font-size:6px}
+ .menu-section-heading h2{font-size:24px}
+ .item-count{font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){.thoam-menu *{scroll-behavior:auto!important}}
+
+      `}</style>
       </main>
     );
   }
