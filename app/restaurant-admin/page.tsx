@@ -526,11 +526,14 @@ export default function RestaurantAdmin() {
 
       <section className="ta-main">
         <header className="ta-topbar">
-          <div>
-            <span className="ta-topbar-label">
-              THO’AM / PARTNER
-            </span>
-            <span className="ta-topbar-title">Dashboard</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+            {restaurant?.logo_url ? (
+              <img src={String(restaurant.logo_url)} alt={`${restaurant.name} logo`} style={{ width: 46, height: 46, borderRadius: 12, objectFit: "contain", border: "1px solid #e5e5e5", background: "#fff" }} />
+            ) : null}
+            <div style={{ display: "grid", gap: 3, minWidth: 0 }}>
+              <span className="ta-topbar-label">THO’AM / PARTNER</span>
+              <span className="ta-topbar-title">{restaurant?.name || "Dashboard"}</span>
+            </div>
           </div>
 
           <div className="ta-topbar-right">
