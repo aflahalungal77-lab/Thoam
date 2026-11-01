@@ -53,9 +53,8 @@ export default function QRMenu() {
   const [items, setItems] = useState<FoodProduct[]>([]);
   const [qty, setQty] = useState<Record<string, number>>({});
 
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [notes, setNotes] = useState("");\n  const [itemNotes, setItemNotes] = useState<Record<string, string>>({});
+  const [notes, setNotes] = useState("");
+  const [itemNotes, setItemNotes] = useState<Record<string, string>>({});
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -277,12 +276,11 @@ export default function QRMenu() {
         body: JSON.stringify({
           restaurantId: r.id,
           tableCode,
-          customerName: customerName.trim(),
-          customerPhone: customerPhone.trim(),
           notes: notes.trim(),
           items: selectedItems.map((p) => ({
             productId: p.id,
             quantity: qty[p.id],
+            specialInstructions: (itemNotes[p.id] || "").trim(),
           })),
         }),
       });
@@ -396,7 +394,7 @@ export default function QRMenu() {
 
             {placedOrder.order_number != null && (
               <div className="receipt-row">
-                <span>Order number</span>
+                <span>KOT number</span>
                 <strong>
                   #{placedOrder.order_number}
                 </strong>
@@ -913,7 +911,7 @@ export default function QRMenu() {
                         maxLength={300}
                         value={itemNotes[p.id] || ""}
                         onChange={(e) => setItemNotes((current) => ({ ...current, [p.id]: e.target.value }))}
-                        placeholder="Any note for the whole order (optional)"
+                        placeholder="Less spicy, no onions, etc. (optional)"
                         rows={2}
                       />
                     </label>
@@ -928,7 +926,7 @@ export default function QRMenu() {
                       onChange={(e) =>
                         setNotes(e.target.value)
                       }
-                      placeholder="Less spicy, no onions, etc. (optional)"
+                      placeholder="Any note for the whole order (optional)"
                       rows={3}
                     />
                   </label>
