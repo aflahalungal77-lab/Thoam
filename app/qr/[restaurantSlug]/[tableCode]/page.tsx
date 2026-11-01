@@ -55,7 +55,7 @@ export default function QRMenu() {
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState("");\n  const [itemNotes, setItemNotes] = useState<Record<string, string>>({});
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -265,18 +265,6 @@ export default function QRMenu() {
       return;
     }
 
-    if (!customerName.trim()) {
-      setStatus("Please enter your name.");
-      document.getElementById("qr-name")?.focus();
-      return;
-    }
-
-    if (customerPhone.replace(/\D/g, "").length < 10) {
-      setStatus("Please enter a valid phone number.");
-      document.getElementById("qr-phone")?.focus();
-      return;
-    }
-
     setSubmitting(true);
     setStatus("");
 
@@ -312,7 +300,7 @@ export default function QRMenu() {
 
       setPlacedOrder(created);
       setQty({});
-      setNotes("");
+      setNotes("");\n      setItemNotes({});
       setStatus("");
 
       window.scrollTo({
@@ -389,13 +377,13 @@ export default function QRMenu() {
           </div>
 
           <span className="premium-kicker">
-            ORDER CONFIRMED
+            KOT CREATED
           </span>
 
           <h1>You're all set.</h1>
 
           <p className="success-description">
-            Your order has been sent to{" "}
+            Your KOT has been sent to{" "}
             <strong>{r.name}</strong>. Sit back and enjoy your
             time.
           </p>
@@ -914,51 +902,25 @@ export default function QRMenu() {
 
                 <div className="checkout-form">
                   <div className="checkout-form-heading">
-                    <span className="premium-kicker">
-                      YOUR DETAILS
-                    </span>
-
-                    <p>
-                      We’ll use these details for your dine-in
-                      order.
-                    </p>
+                    <span className="premium-kicker">KITCHEN NOTES</span>
+                    <p>Add an instruction to any dish if needed. No personal details required.</p>
                   </div>
 
-                  <div className="checkout-field-grid">
-                    <label className="premium-field">
-                      <span>Name *</span>
-
-                      <input
-                        id="qr-name"
-                        autoComplete="name"
-                        maxLength={100}
-                        value={customerName}
-                        onChange={(e) =>
-                          setCustomerName(e.target.value)
-                        }
-                        placeholder="Your name"
+                  {selectedItems.map((p) => (
+                    <label className="premium-field notes-field" key={p.id}>
+                      <span>{p.name} · Special instruction</span>
+                      <textarea
+                        maxLength={300}
+                        value={itemNotes[p.id] || ""}
+                        onChange={(e) => setItemNotes((current) => ({ ...current, [p.id]: e.target.value }))}
+                        placeholder="Any note for the whole order (optional)"
+                        rows={2}
                       />
                     </label>
-
-                    <label className="premium-field">
-                      <span>Phone number *</span>
-
-                      <input
-                        id="qr-phone"
-                        type="tel"
-                        autoComplete="tel"
-                        maxLength={30}
-                        value={customerPhone}
-                        onChange={(e) =>
-                          setCustomerPhone(e.target.value)
-                        }
-                        placeholder="Your phone number"
-                      />
-                    </label>
-                  </div>
+                  ))}
 
                   <label className="premium-field notes-field">
-                    <span>Special instructions</span>
+                    <span>Order note (optional)</span>
 
                     <textarea
                       maxLength={500}
