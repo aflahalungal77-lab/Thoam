@@ -1100,6 +1100,247 @@ export default function RestaurantPage() {
           text-align: left;
         }
 
+        /* --------------------------------
+           RESPONSIVE PRODUCT CARDS
+           Marketplace-inspired layout
+        --------------------------------- */
+
+        .premium-food-grid {
+          display: grid !important;
+          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          align-items: stretch;
+          gap: 18px !important;
+        }
+
+        .premium-food-card {
+          display: flex !important;
+          min-width: 0;
+          min-height: 100%;
+          flex-direction: column;
+          border: 1px solid #e9e8e3 !important;
+          border-radius: 16px !important;
+          background: #fff;
+          box-shadow: 0 2px 9px rgba(20, 20, 20, 0.035);
+          transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+        }
+
+        .premium-food-card:hover {
+          transform: translateY(-3px);
+          border-color: #d4d2ca !important;
+          box-shadow: 0 12px 28px rgba(20, 20, 20, 0.075);
+        }
+
+        .premium-food-card-click {
+          display: flex !important;
+          min-width: 0;
+          flex: 1 1 auto;
+          flex-direction: column;
+          padding: 0;
+          border: 0;
+          background: transparent;
+          color: inherit;
+          cursor: pointer;
+          text-align: left;
+        }
+
+        .premium-food-image {
+          width: 100%;
+          height: auto !important;
+          aspect-ratio: 4 / 3;
+          background: #f3f2ee;
+        }
+
+        .premium-food-image img {
+          display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 260ms ease;
+        }
+
+        .premium-food-card:hover .premium-food-image img {
+          transform: scale(1.035);
+        }
+
+        .premium-food-content {
+          display: flex;
+          min-width: 0;
+          flex: 1 1 auto;
+          flex-direction: column;
+          padding: 13px 13px 8px;
+        }
+
+        .premium-food-category {
+          overflow: hidden;
+          margin-bottom: 6px;
+          color: #85847e;
+          font-size: 9px;
+          font-weight: 750;
+          letter-spacing: 0.08em;
+          text-overflow: ellipsis;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+
+        .premium-food-content h3 {
+          display: -webkit-box;
+          min-height: 38px;
+          overflow: hidden;
+          margin: 0;
+          color: #171717;
+          font-size: 14px;
+          font-weight: 750;
+          line-height: 1.35;
+          overflow-wrap: anywhere;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+        }
+
+        .premium-food-description {
+          display: -webkit-box;
+          min-height: 31px;
+          overflow: hidden;
+          margin: 6px 0 0;
+          color: #777770;
+          font-size: 10px;
+          line-height: 1.55;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+        }
+
+        .premium-food-bottom {
+          display: flex;
+          min-width: 0;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          margin-top: auto;
+          padding: 10px 12px 12px;
+          border-top: 1px solid #f0efeb;
+        }
+
+        .premium-food-price {
+          flex-shrink: 0;
+          color: #151515;
+          font-size: 18px;
+          font-weight: 850;
+          letter-spacing: -0.04em;
+        }
+
+        .premium-food-price > span {
+          margin-right: 1px;
+          font-size: 12px;
+        }
+
+        .premium-add-button {
+          display: inline-flex;
+          min-width: 68px;
+          min-height: 35px !important;
+          align-items: center;
+          justify-content: center;
+          gap: 5px;
+          padding: 0 10px !important;
+          border: 1px solid #171717;
+          border-radius: 9px !important;
+          background: #171717;
+          color: #fff;
+          font-size: 11px !important;
+          font-weight: 750 !important;
+          letter-spacing: 0;
+          transition: background 160ms ease, color 160ms ease;
+        }
+
+        .premium-add-button:hover:not(:disabled) {
+          background: #fff;
+          color: #171717;
+        }
+
+        .premium-add-button:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
+
+        .premium-card-quantity {
+          flex-shrink: 0;
+        }
+
+        @media (max-width: 1100px) {
+          .premium-food-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 15px !important;
+          }
+        }
+
+        @media (max-width: 760px) {
+          .premium-food-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 12px !important;
+          }
+
+          .premium-food-card {
+            border-radius: 14px !important;
+          }
+
+          .premium-food-content {
+            padding: 11px 10px 7px;
+          }
+
+          .premium-food-content h3 {
+            font-size: 13px;
+          }
+
+          .premium-food-bottom {
+            gap: 5px;
+            padding: 9px 9px 10px;
+          }
+
+          .premium-food-price {
+            font-size: 16px;
+          }
+
+          .premium-add-button {
+            min-width: 61px;
+            min-height: 33px !important;
+            padding: 0 8px !important;
+            font-size: 10px !important;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .premium-food-grid {
+            gap: 9px !important;
+          }
+
+          .premium-food-content {
+            padding-right: 8px;
+            padding-left: 8px;
+          }
+
+          .premium-food-content h3 {
+            font-size: 12px;
+          }
+
+          .premium-food-price {
+            font-size: 15px;
+          }
+
+          .premium-card-quantity {
+            min-width: 78px !important;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .premium-food-card,
+          .premium-food-image img {
+            transition: none;
+          }
+
+          .premium-food-card:hover,
+          .premium-food-card:hover .premium-food-image img {
+            transform: none;
+          }
+        }
+
         /* Mobile */
 
         @media (max-width: 600px) {
