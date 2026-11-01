@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   Store,
@@ -26,6 +26,9 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
   const [restaurantName, setRestaurantName] = useState("");
   const [slug, setSlug] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [logoPreview, setLogoPreview] = useState("");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -51,6 +54,52 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
         .replace(/-+/g, "-")
         .replace(/^-+|-+$/g, "")
     );
+  }
+
+  async function handleLogoUpload(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    if (!file) return;
+    setError("");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setError("Choose a JPG, PNG or WebP logo.");
+      input.value = "";
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Logo must be 5 MB or smaller.");
+      input.value = "";
+      return;
+    }
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const preset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+    if (!cloudName || !preset) {
+      setError("Logo upload is not configured. Please contact Tho'am support.");
+      input.value = "";
+      return;
+    }
+    setUploadingLogo(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("upload_preset", preset);
+      form.append("folder", "thoam-logos");
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: "POST",
+        body: form,
+      });
+      const result = await response.json();
+      if (!response.ok || !result.secure_url) {
+        throw new Error(result.error?.message || "Logo upload failed.");
+      }
+      setLogoUrl(result.secure_url);
+      setLogoPreview(result.secure_url);
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Logo upload failed.");
+    } finally {
+      setUploadingLogo(false);
+      input.value = "";
+    }
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -126,6 +175,7 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
           restaurantName: cleanRestaurantName,
           slug: cleanSlug,
           whatsappNumber: cleanWhatsappNumber,
+          logoUrl,
         }),
       });
 
@@ -155,9 +205,10 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
     restaurantName.trim().length > 0,
     slug.trim().length > 0,
     whatsappNumber.trim().length > 0,
+    Boolean(logoUrl),
   ].filter(Boolean).length;
 
-  const progress = (completedFields / 4) * 100;
+  const progress = (completedFields / 5) * 100;
 
   return (
     <div className="setup-overlay">
@@ -227,7 +278,7 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
               role="progressbar"
               aria-label="Form completion"
               aria-valuemin={0}
-              aria-valuemax={4}
+              aria-valuemax={5}
               aria-valuenow={completedFields}
             >
               <div
@@ -293,6 +344,20 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
                 {restaurantName.trim() && (
                   <Check className="field-check" size={17} />
                 )}
+              </div>
+            </div>
+
+            <div className="field-group">
+              <label htmlFor="restaurantLogo">Restaurant logo <span>· Optional</span></label>
+              <div className="logo-upload-row">
+                <div className="logo-preview">
+                  {logoPreview ? <img src={logoPreview} alt="Restaurant logo preview" /> : <Store size={23} />}
+                </div>
+                <div className="logo-upload-control">
+                  <input id="restaurantLogo" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleLogoUpload} disabled={uploadingLogo} />
+                  <span>{uploadingLogo ? "Uploading logo..." : logoUrl ? "Logo uploaded" : "JPG, PNG or WebP · Up to 5 MB"}</span>
+                  {logoUrl && <button type="button" onClick={() => { setLogoUrl(""); setLogoPreview(""); }}>Remove logo</button>}
+                </div>
               </div>
             </div>
 
@@ -796,6 +861,12 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
           line-height: 1.6;
         }
 
+        .logo-upload-row { display: flex; align-items: center; gap: 14px; padding: 12px; border: 1px dashed #d4d4d4; border-radius: 12px; background: #fafafa; }
+        .logo-preview { display: grid; width: 64px; height: 64px; flex-shrink: 0; place-items: center; overflow: hidden; border: 1px solid #e5e5e5; border-radius: 12px; background: white; color: #737373; }
+        .logo-preview img { width: 100%; height: 100%; object-fit: contain; }
+        .logo-upload-control { display: grid; min-width: 0; gap: 7px; color: #737373; font-size: 10px; }
+        .logo-upload-control input { max-width: 100%; color: #262626; font-size: 11px; }
+        .logo-upload-control button { width: fit-content; border: 0; background: transparent; color: #525252; font-size: 10px; font-weight: 750; text-decoration: underline; cursor: pointer; }
         .field-group {
           min-width: 0;
         }
