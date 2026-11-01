@@ -22,6 +22,21 @@ import {
   Sparkles,
 } from "lucide-react";
 
+export interface MenuOffer {
+  id: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  scope: "order" | "products";
+  discount_type: "percentage" | "fixed";
+  discount_value: number;
+  product_ids: string[] | null;
+  min_order_amount: number;
+  max_discount: number | null;
+  starts_at: string | null;
+  ends_at: string | null;
+}
+
 interface Props {
   restaurant: {
     id: string;
@@ -34,9 +49,10 @@ interface Props {
     is_open?: boolean;
   };
   products: MenuProduct[];
+  offers: MenuOffer[];
 }
 
-export default function PublicMenu({ restaurant, products }: Props) {
+export default function PublicMenu({ restaurant, products, offers }: Props) {
   const [cart, setCart] = useState<Record<string, CartItem>>({});
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
@@ -704,7 +720,43 @@ export default function PublicMenu({ restaurant, products }: Props) {
             ))}
           </div>
 
-          {/* PRODUCTS */}
+          {/* ACTIVE RESTAURANT OFFERS — display only; checkout pricing remains unchanged */}
+          {offers.length > 0 && (
+            <section className="public-offers" aria-label="Current restaurant offers">
+              <div className="public-offers-heading">
+                <span className="public-offers-kicker">LIMITED-TIME DEALS</span>
+                <span className="public-offers-count">{offers.length} {offers.length === 1 ? "OFFER" : "OFFERS"}</span>
+              </div>
+              <div className="public-offers-grid">
+                {offers.map((offer) => (
+                  <article className="public-offer-card" key={offer.id}>
+                    {offer.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img className="public-offer-image" src={offer.image_url} alt="" />
+                    ) : (
+                      <div className="public-offer-art" aria-hidden="true"><Sparkles size={22} /></div>
+                    )}
+                    <div className="public-offer-copy">
+                      <span className="public-offer-discount">
+                        {offer.discount_type === "percentage"
+                          ? `${Number(offer.discount_value)}% OFF`
+                          : `₹${Number(offer.discount_value).toFixed(0)} OFF`}
+                      </span>
+                      <h3>{offer.title}</h3>
+                      {offer.description && <p>{offer.description}</p>}
+                      <small>
+                        {offer.scope === "order" ? "On your order" : "On selected dishes"}
+                        {Number(offer.min_order_amount) > 0 ? ` · Min. order ₹${Number(offer.min_order_amount).toFixed(0)}` : ""}
+                        {offer.max_discount ? ` · Up to ₹${Number(offer.max_discount).toFixed(0)} off` : ""}
+                      </small>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+
+                    {/* PRODUCTS */}
           {filteredProducts.length === 0 ? (
             <div className="empty-results">
               <div className="empty-symbol">
@@ -1326,6 +1378,21 @@ export default function PublicMenu({ restaurant, products }: Props) {
   box-shadow: 0 5px 13px rgb(0 0 0 / 12%);
 }
 
+/* ACTIVE OFFER DISPLAY */
+.public-offers{margin:26px 0 30px;padding:18px;border:1px solid #e7e7e0;border-radius:20px;background:linear-gradient(135deg,#fff,#f3f3ee);box-shadow:0 10px 28px rgb(0 0 0 / 4%)}
+.public-offers-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.public-offers-kicker{font-size:9px;font-weight:900;letter-spacing:.2em;color:#77776f}
+.public-offers-count{font-size:8px;font-weight:850;letter-spacing:.12em;color:#88887f}
+.public-offers-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}
+.public-offer-card{display:flex;align-items:center;gap:13px;min-width:0;padding:11px;border:1px solid #e9e9e3;border-radius:15px;background:#fff}
+.public-offer-image,.public-offer-art{width:82px;height:82px;flex-shrink:0;border-radius:11px;object-fit:cover}
+.public-offer-art{display:grid;place-items:center;background:#171715;color:#fff}
+.public-offer-copy{min-width:0}
+.public-offer-discount{display:inline-flex;padding:5px 8px;border-radius:6px;background:#171715;color:#fff;font-size:9px;font-weight:900;letter-spacing:.06em}
+.public-offer-copy h3{margin:7px 0 3px;font-size:13px;font-weight:900;letter-spacing:-.2px}
+.public-offer-copy p{margin:0 0 5px;color:#77776f;font-size:10px;line-height:1.5}
+.public-offer-copy small{display:block;color:#8b8b82;font-size:9px;line-height:1.5}
+@media(max-width:480px){.public-offers{padding:13px;border-radius:16px;margin:20px 0 24px}.public-offer-image,.public-offer-art{width:68px;height:68px}.public-offer-card{gap:10px;padding:9px}}
 /* PRODUCT GRID */
 
 .product-grid {
