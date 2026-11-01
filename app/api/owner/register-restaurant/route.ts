@@ -81,6 +81,7 @@ export async function POST(request: Request) {
     const slug = String(body.slug ?? "").trim().toLowerCase();
     const whatsappNumber = String(body.whatsappNumber ?? "").replace(/\D/g, "");
     const description = String(body.description ?? "").trim();
+    const logoUrl = String(body.logoUrl ?? "").trim();
 
     if (!ownerName || !restaurantName || !slug || !whatsappNumber) {
       return jsonError("Please complete all required fields.", 400);
@@ -99,6 +100,10 @@ export async function POST(request: Request) {
         "Enter a valid WhatsApp number including country code.",
         400
       );
+    }
+
+    if (logoUrl && (!/^https:\/\//i.test(logoUrl) || logoUrl.length > 2048)) {
+      return jsonError("Please upload a valid restaurant logo.", 400);
     }
 
     if (description.length > 1000) {
@@ -204,6 +209,7 @@ export async function POST(request: Request) {
         slug,
         whatsapp_number: whatsappNumber,
         description: description || null,
+        logo_url: logoUrl || null,
         is_open: true,
         status: "pending",
       })
