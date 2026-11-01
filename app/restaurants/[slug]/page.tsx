@@ -25,12 +25,48 @@ import type { FoodProduct, Restaurant } from "@/lib/types";
 
 type FoodFilter = "all" | "veg" | "nonveg";
 
+type RestaurantOffer = {
+  id: string;
+  restaurant_id: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  scope: "order" | "products";
+  discount_type: "percentage" | "fixed";
+  discount_value: number;
+  product_ids: string[] | null;
+  min_order_amount: number | null;
+  max_discount: number | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  is_active: boolean;
+};
+
+function isOfferCurrentlyValid(offer: RestaurantOffer) {
+  const now = Date.now();
+
+  if (!offer.is_active) return false;
+
+  if (offer.starts_at) {
+    const start = new Date(offer.starts_at).getTime();
+    if (!Number.isNaN(start) && now < start) return false;
+  }
+
+  if (offer.ends_at) {
+    const end = new Date(offer.ends_at).getTime();
+    if (!Number.isNaN(end) && now > end) return false;
+  }
+
+  return true;
+}
+
 export default function RestaurantPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
 
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [products, setProducts] = useState<FoodProduct[]>([]);
+  const [offers, setOffers] = useState<RestaurantOffer[]>([]);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [message, setMessage] = useState("");
@@ -55,9 +91,7 @@ export default function RestaurantPage() {
           error: restaurantError,
         } = await supabase
           .from("restaurants")
-          .select(
-            "id,name,slug,description,area,city,is_open,qr_enabled"
-          )
+          .select("id,name,slug,description,area,city,is_open,qr_enabled")
           .eq("slug", slug)
           .eq("status", "approved")
           .maybeSingle();
@@ -73,19 +107,42 @@ export default function RestaurantPage() {
 
         setRestaurant(restaurantData as Restaurant);
 
-        const { data, error } = await supabase
-          .from("products")
-          .select(
-            "id,restaurant_id,name,description,price,image_url,category,is_veg,is_available"
-          )
-          .eq("restaurant_id", restaurantData.id)
-          .eq("is_available", true)
-          .order("name");
+        const [productsResult, offersResult] = await Promise.all([
+          supabase
+            .from("products")
+            .select(
+              "id,restaurant_id,name,description,price,image_url,category,is_veg,is_available"
+            )
+            .eq("restaurant_id", restaurantData.id)
+            .eq("is_available", true)
+            .order("name"),
+
+          supabase
+            .from("offers")
+            .select(
+              "id,restaurant_id,title,description,image_url,scope,discount_type,discount_value,product_ids,min_order_amount,max_discount,starts_at,ends_at,is_active"
+            )
+            .eq("restaurant_id", restaurantData.id)
+            .eq("is_active", true)
+            .order("created_at", { ascending: false }),
+        ]);
 
         if (cancelled) return;
-        if (error) throw error;
 
-        setProducts((data || []) as FoodProduct[]);
+        if (productsResult.error) throw productsResult.error;
+
+        setProducts((productsResult.data || []) as FoodProduct[]);
+
+        if (!offersResult.error) {
+          setOffers(
+            ((offersResult.data || []) as RestaurantOffer[])
+              .filter(isOfferCurrentlyValid)
+              .filter((offer) => Boolean(offer.image_url))
+          );
+        } else {
+          console.error("Unable to load offers:", offersResult.error);
+          setOffers([]);
+        }
       } catch (error) {
         if (!cancelled) {
           setMessage(
@@ -103,9 +160,15 @@ export default function RestaurantPage() {
 
     try {
       const saved = localStorage.getItem(`thoam-cart-${slug}`);
+
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+
+        if (
+          parsed &&
+          typeof parsed === "object" &&
+          !Array.isArray(parsed)
+        ) {
           setCart(parsed);
         }
       }
@@ -159,6 +222,13 @@ export default function RestaurantPage() {
     }
 
     saveCart(next);
+  }
+
+  function addToCart(product: FoodProduct) {
+    if (!restaurant?.is_open) return;
+
+    changeQuantity(product, 1);
+    setCartOpen(true);
   }
 
   const categories = useMemo(
@@ -234,14 +304,8 @@ export default function RestaurantPage() {
       // Continue to checkout.
     }
 
-    window.location.href = `/checkout?restaurant=${encodeURIComponent(slug)}`;
-  }
-
-  function addToCart(product: FoodProduct) {
-    if (!restaurant?.is_open) return;
-
-    changeQuantity(product, 1);
-    setCartOpen(true);
+    window.location.href =
+      `/checkout?restaurant=${encodeURIComponent(slug)}`;
   }
 
   return (
@@ -264,8 +328,13 @@ export default function RestaurantPage() {
             <section className="premium-empty">
               <Utensils size={34} />
               <h1>Restaurant unavailable</h1>
-              <p>{message || "This restaurant is currently unavailable."}</p>
-              <Link href="/restaurants" className="premium-primary-button">
+              <p>
+                {message || "This restaurant is currently unavailable."}
+              </p>
+              <Link
+                href="/restaurants"
+                className="premium-primary-button"
+              >
                 Explore restaurants
               </Link>
             </section>
@@ -316,24 +385,66 @@ export default function RestaurantPage() {
 
                 {!restaurant.is_open && (
                   <div className="premium-closed-notice">
-                    This restaurant is closed. You can browse the menu, but
-                    adding items and checkout are paused.
+                    This restaurant is closed. You can browse the menu,
+                    but adding items and checkout are paused.
                   </div>
                 )}
               </section>
 
-              {/* Menu section */}
+              {/* Offers slider - directly below restaurant hero */}
+              {offers.length > 0 && (
+                <section
+                  className="thoam-offers"
+                  aria-label="Restaurant offers"
+                >
+                  <div className="thoam-offers-heading">
+                    <div>
+                      <span>EXCLUSIVE DEALS</span>
+                      <h2>Offers for you</h2>
+                    </div>
+
+                    {offers.length > 1 && (
+                      <small>Swipe to explore</small>
+                    )}
+                  </div>
+
+                  <div className="thoam-offers-track">
+                    {offers.map((offer) => (
+                      <article
+                        className="thoam-offer-card"
+                        key={offer.id}
+                        title={offer.title}
+                      >
+                        <img
+                          className="thoam-offer-image"
+                          src={offer.image_url || ""}
+                          alt={offer.title}
+                          loading="lazy"
+                        />
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Menu */}
               <section className="premium-menu-section">
                 <div className="premium-menu-heading">
                   <div>
-                    <span className="premium-label">FRESHLY PREPARED</span>
+                    <span className="premium-label">
+                      FRESHLY PREPARED
+                    </span>
+
                     <h2>
                       Explore the menu<span>.</span>
                     </h2>
+
                     <p>
                       {filteredProducts.length}{" "}
                       {filteredProducts.length === 1 ? "dish" : "dishes"}
-                      {search || category !== "All" || foodFilter !== "all"
+                      {search ||
+                      category !== "All" ||
+                      foodFilter !== "all"
                         ? " found"
                         : " available"}
                     </p>
@@ -424,13 +535,16 @@ export default function RestaurantPage() {
                   <div className="premium-empty">
                     <ShoppingBag size={30} />
                     <h3>Menu coming soon</h3>
-                    <p>This restaurant has not added available items yet.</p>
+                    <p>
+                      This restaurant has not added available items yet.
+                    </p>
                   </div>
                 ) : filteredProducts.length === 0 ? (
                   <div className="premium-empty">
                     <Search size={30} />
                     <h3>No dishes found</h3>
                     <p>Try a different search or filter.</p>
+
                     <button
                       className="premium-secondary-button"
                       onClick={() => {
@@ -462,9 +576,7 @@ export default function RestaurantPage() {
                                 addToCart(product);
                               }
                             }}
-                            aria-label={`${
-                              quantity > 0 ? "View cart" : "Add"
-                            } ${product.name}`}
+                            aria-label={`${quantity > 0 ? "View cart" : "Add"} ${product.name}`}
                           >
                             <div className="premium-food-image">
                               {product.image_url ? (
@@ -490,8 +602,11 @@ export default function RestaurantPage() {
                               </span>
 
                               {quantity > 0 && (
-                                <span className="premium-quantity-badge">
-                                  {quantity} added
+                                <span
+                                  className="premium-quantity-badge"
+                                  aria-label={`${quantity} added`}
+                                >
+                                  {quantity}
                                 </span>
                               )}
                             </div>
@@ -525,14 +640,28 @@ export default function RestaurantPage() {
                                 Add <Plus size={15} />
                               </button>
                             ) : (
-                              <button
-                                className="premium-card-quantity"
-                                onClick={() => setCartOpen(true)}
-                                aria-label={`Edit ${product.name} quantity`}
-                              >
+                              <div className="premium-card-quantity">
+                                <button
+                                  onClick={() =>
+                                    changeQuantity(product, -1)
+                                  }
+                                  aria-label={`Remove one ${product.name}`}
+                                >
+                                  <Minus size={13} />
+                                </button>
+
                                 <span>{quantity}</span>
-                                <Plus size={15} />
-                              </button>
+
+                                <button
+                                  onClick={() =>
+                                    changeQuantity(product, 1)
+                                  }
+                                  disabled={!restaurant.is_open}
+                                  aria-label={`Add one ${product.name}`}
+                                >
+                                  <Plus size={13} />
+                                </button>
+                              </div>
                             )}
                           </div>
                         </article>
@@ -563,7 +692,7 @@ export default function RestaurantPage() {
         </div>
       </main>
 
-      {/* Floating cart button */}
+      {/* Floating cart */}
       {restaurant && cartCount > 0 && !cartOpen && (
         <button
           className="premium-floating-cart"
@@ -589,7 +718,7 @@ export default function RestaurantPage() {
         </button>
       )}
 
-      {/* Side cart drawer */}
+      {/* Cart drawer */}
       {cartOpen && restaurant && (
         <div
           className="premium-cart-overlay"
@@ -608,7 +737,11 @@ export default function RestaurantPage() {
             <div className="premium-cart-header">
               <div className="premium-cart-title-wrap">
                 <span className="premium-label">YOUR SELECTION</span>
-                <h2 id="premium-cart-title">Your cart<span>.</span></h2>
+
+                <h2 id="premium-cart-title">
+                  Your cart<span>.</span>
+                </h2>
+
                 <p>
                   {cartCount} {cartCount === 1 ? "item" : "items"} ·{" "}
                   {restaurant.name}
@@ -629,8 +762,12 @@ export default function RestaurantPage() {
                 <div className="premium-cart-empty-icon">
                   <ShoppingBag size={30} />
                 </div>
+
                 <h3>Your cart is empty</h3>
-                <p>Discover something delicious from the menu.</p>
+                <p>
+                  Discover something delicious from the menu.
+                </p>
+
                 <button
                   className="premium-primary-button"
                   onClick={() => setCartOpen(false)}
@@ -675,7 +812,9 @@ export default function RestaurantPage() {
                             </button>
                           </div>
 
-                          <p>₹{Number(product.price).toFixed(0)} each</p>
+                          <p>
+                            ₹{Number(product.price).toFixed(0)} each
+                          </p>
 
                           <div className="premium-cart-item-bottom">
                             <div className="premium-quantity-control">
@@ -726,8 +865,11 @@ export default function RestaurantPage() {
                   <div className="premium-cart-total-row">
                     <div>
                       <span>Subtotal</span>
-                      <small>Delivery charges, if any, at checkout</small>
+                      <small>
+                        Delivery charges, if any, at checkout
+                      </small>
                     </div>
+
                     <strong>₹{total.toFixed(2)}</strong>
                   </div>
 
@@ -757,6 +899,235 @@ export default function RestaurantPage() {
           </aside>
         </div>
       )}
+
+      {/* Internal CSS */}
+      <style jsx global>{`
+        /* --------------------------------
+           THO'AM - PREMIUM OFFER SLIDER
+        --------------------------------- */
+
+        .thoam-offers {
+          width: 100%;
+          margin: 22px 0 34px;
+          overflow: hidden;
+        }
+
+        .thoam-offers-heading {
+          display: flex;
+          align-items: end;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 13px;
+        }
+
+        .thoam-offers-heading span {
+          color: #a51f2d;
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 2px;
+        }
+
+        .thoam-offers-heading h2 {
+          margin: 5px 0 0;
+          color: #111;
+          font-size: 20px;
+          font-weight: 800;
+          letter-spacing: -0.7px;
+        }
+
+        .thoam-offers-heading small {
+          color: #999;
+          font-size: 10px;
+          white-space: nowrap;
+        }
+
+        .thoam-offers-track {
+          display: flex;
+          align-items: stretch;
+          gap: 12px;
+          width: 100%;
+          overflow-x: auto;
+          overflow-y: hidden;
+          padding: 2px 1px 8px;
+
+          scroll-snap-type: x mandatory;
+          scroll-behavior: smooth;
+          scrollbar-width: none;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .thoam-offers-track::-webkit-scrollbar {
+          display: none;
+        }
+
+        .thoam-offer-card {
+          flex: 0 0 100%;
+          width: 100%;
+          min-width: 0;
+          aspect-ratio: 4 / 1;
+          overflow: hidden;
+
+          border-radius: 14px;
+          background: #f4f2ee;
+          scroll-snap-align: start;
+
+          box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+        }
+
+        .thoam-offer-image {
+          display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          object-position: center;
+          border-radius: inherit;
+        }
+
+        /* --------------------------------
+           PRODUCT IMAGE
+        --------------------------------- */
+
+        .premium-food-image {
+          position: relative !important;
+          overflow: hidden !important;
+          isolation: isolate;
+        }
+
+        .premium-food-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        /* Compact quantity badge */
+
+        .premium-quantity-badge {
+          position: absolute !important;
+          top: 10px !important;
+          right: 10px !important;
+          left: auto !important;
+          bottom: auto !important;
+          z-index: 3 !important;
+
+          display: inline-flex !important;
+          align-items: center;
+          justify-content: center;
+
+          min-width: 23px !important;
+          width: auto !important;
+          height: 23px !important;
+          padding: 0 7px !important;
+
+          border: 1px solid rgba(255, 255, 255, 0.75) !important;
+          border-radius: 20px !important;
+
+          background: #111 !important;
+          color: #fff !important;
+
+          font-size: 10px !important;
+          font-weight: 700 !important;
+          line-height: 1 !important;
+
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+          pointer-events: none;
+        }
+
+        /* Compact quantity control */
+
+        .premium-card-quantity {
+          display: inline-flex !important;
+          align-items: center;
+          justify-content: center;
+          gap: 0 !important;
+
+          height: 34px !important;
+          min-width: 92px !important;
+          padding: 0 5px !important;
+
+          border: 1px solid #176d4d !important;
+          border-radius: 9px !important;
+
+          background: #176d4d !important;
+          color: #fff !important;
+        }
+
+        .premium-card-quantity button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 29px;
+          height: 29px;
+          padding: 0;
+          border: 0;
+          border-radius: 7px;
+          background: transparent;
+          color: #fff;
+          cursor: pointer;
+        }
+
+        .premium-card-quantity button:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
+
+        .premium-card-quantity span {
+          min-width: 23px;
+          text-align: center;
+          color: #fff;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        /* Add button */
+
+        .premium-add-button {
+          min-height: 34px !important;
+          padding: 0 13px !important;
+          border-radius: 9px !important;
+          font-size: 12px !important;
+          font-weight: 700 !important;
+        }
+
+        /* Product card */
+
+        .premium-food-card {
+          overflow: hidden;
+          border-radius: 17px !important;
+        }
+
+        .premium-food-card-click {
+          width: 100%;
+          text-align: left;
+        }
+
+        /* Mobile */
+
+        @media (max-width: 600px) {
+          .thoam-offers {
+            margin: 19px 0 27px;
+          }
+
+          .thoam-offers-heading {
+            margin-bottom: 11px;
+          }
+
+          .thoam-offers-heading h2 {
+            font-size: 18px;
+          }
+
+          .thoam-offers-heading small {
+            font-size: 9px;
+          }
+
+          .thoam-offers-track {
+            gap: 10px;
+          }
+
+          .thoam-offer-card {
+            border-radius: 11px;
+          }
+        }
+      `}</style>
     </>
   );
 }

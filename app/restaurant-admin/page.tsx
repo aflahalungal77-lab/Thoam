@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -25,6 +24,7 @@ import {
   Bell,
   Volume2,
   VolumeX,
+  Tag,
 } from "lucide-react";
 
 type RestaurantData = {
@@ -63,28 +63,54 @@ export default function RestaurantAdmin() {
   const [savingStatus, setSavingStatus] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
+
   const soundEnabledRef = useRef(false);
   const audioContextRef = useRef<AudioContext | null>(null);
 
+  const router = useRouter();
+
   const playNewOrderSound = useCallback(() => {
     if (!soundEnabledRef.current || typeof window === "undefined") return;
+
     try {
       const AudioContextClass = window.AudioContext;
       if (!AudioContextClass) return;
-      const context = audioContextRef.current || new AudioContextClass();
+
+      const context =
+        audioContextRef.current || new AudioContextClass();
+
       audioContextRef.current = context;
-      if (context.state === "suspended") void context.resume();
+
+      if (context.state === "suspended") {
+        void context.resume();
+      }
 
       const oscillator = context.createOscillator();
       const gain = context.createGain();
+
       oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(880, context.currentTime);
-      oscillator.frequency.setValueAtTime(660, context.currentTime + 0.16);
+      oscillator.frequency.setValueAtTime(
+        880,
+        context.currentTime
+      );
+      oscillator.frequency.setValueAtTime(
+        660,
+        context.currentTime + 0.16
+      );
+
       gain.gain.setValueAtTime(0.001, context.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.16, context.currentTime + 0.025);
-      gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.48);
+      gain.gain.exponentialRampToValueAtTime(
+        0.16,
+        context.currentTime + 0.025
+      );
+      gain.gain.exponentialRampToValueAtTime(
+        0.001,
+        context.currentTime + 0.48
+      );
+
       oscillator.connect(gain);
       gain.connect(context.destination);
+
       oscillator.start();
       oscillator.stop(context.currentTime + 0.5);
     } catch (error) {
@@ -94,12 +120,12 @@ export default function RestaurantAdmin() {
 
   function toggleOrderSound() {
     const next = !soundEnabledRef.current;
+
     soundEnabledRef.current = next;
     setSoundEnabled(next);
+
     if (next) playNewOrderSound();
   }
-
-  const router = useRouter();
 
   const loadDashboard = useCallback(
     async (showRefresh = false) => {
@@ -129,17 +155,20 @@ export default function RestaurantAdmin() {
         if (authError) throw authError;
 
         if (!currentUser) {
-          router.replace("/auth?role=owner&next=/restaurant-admin");
+          router.replace(
+            "/auth?role=owner&next=/restaurant-admin"
+          );
           return;
         }
 
         setUser(currentUser);
 
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("role, restaurant_id")
-          .eq("id", currentUser.id)
-          .maybeSingle();
+        const { data: profile, error: profileError } =
+          await supabase
+            .from("profiles")
+            .select("role, restaurant_id")
+            .eq("id", currentUser.id)
+            .maybeSingle();
 
         if (profileError) throw profileError;
 
@@ -151,7 +180,6 @@ export default function RestaurantAdmin() {
           return;
         }
 
-        // A customer or new account without a restaurant can register.
         if (!profile || !profile.restaurant_id) {
           if (
             !profile ||
@@ -224,6 +252,7 @@ export default function RestaurantAdmin() {
         setMessage("");
       } catch (error) {
         console.error("Restaurant dashboard load failed:", error);
+
         setMessage(
           "Could not load dashboard data. Please try refreshing."
         );
@@ -240,49 +269,52 @@ export default function RestaurantAdmin() {
   }, [loadDashboard]);
 
   // Listen for new orders and status changes for this restaurant only.
- useEffect(() => {
-  const client = supabase;
+  useEffect(() => {
+    const client = supabase;
 
-  if (!client || !restaurant?.id) return;
+    if (!client || !restaurant?.id) return;
 
-  const channel = client
-    .channel(`restaurant-orders-${restaurant.id}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "orders",
-        filter: `restaurant_id=eq.${restaurant.id}`,
-      },
-      (payload) => {
-        const newOrder = payload.new as OrderData;
+    const channel = client
+      .channel(`restaurant-orders-${restaurant.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "orders",
+          filter: `restaurant_id=eq.${restaurant.id}`,
+        },
+        (payload) => {
+          const newOrder = payload.new as OrderData;
 
-        if ((newOrder.status || "").toLowerCase() === "placed") {
-          playNewOrderSound();
+          if (
+            (newOrder.status || "").toLowerCase() === "placed"
+          ) {
+            playNewOrderSound();
+          }
+
+          void loadDashboard(true);
         }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `restaurant_id=eq.${restaurant.id}`,
+        },
+        () => {
+          void loadDashboard(true);
+        }
+      )
+      .subscribe();
 
-        void loadDashboard(true);
-      }
-    )
-    .on(
-      "postgres_changes",
-      {
-        event: "UPDATE",
-        schema: "public",
-        table: "orders",
-        filter: `restaurant_id=eq.${restaurant.id}`,
-      },
-      () => {
-        void loadDashboard(true);
-      }
-    )
-    .subscribe();
+    return () => {
+      void client.removeChannel(channel);
+    };
+  }, [restaurant?.id, loadDashboard, playNewOrderSound]);
 
-  return () => {
-    void client.removeChannel(channel);
-  };
-}, [restaurant?.id, loadDashboard, playNewOrderSound]);
   async function toggleOpen() {
     if (!supabase || !restaurant || savingStatus) return;
 
@@ -306,6 +338,7 @@ export default function RestaurantAdmin() {
       );
     } catch (error) {
       console.error("Restaurant status update failed:", error);
+
       setMessage(
         error instanceof Error
           ? error.message
@@ -328,47 +361,47 @@ export default function RestaurantAdmin() {
   const todayOrders = orders.filter((order) => {
     if (!order.created_at) return false;
 
-    const orderDate = new Date(order.created_at).toLocaleDateString(
-      "en-CA",
-      { timeZone: "Asia/Kolkata" }
-    );
+    const orderDate = new Date(
+      order.created_at
+    ).toLocaleDateString("en-CA", {
+      timeZone: "Asia/Kolkata",
+    });
 
     return orderDate === today;
   });
 
-const completed = todayOrders.filter((order) =>
-  ["delivered", "completed"].includes(
-    (order.status || "").toLowerCase()
-  )
-);
-
-// Only delivered/completed orders count as sales.
-const sales = completed.reduce(
-  (sum, order) => sum + Number(order.total_amount || 0),
-  0
-);
-
-  const pendingOrders = todayOrders.filter((order) =>
-    !["delivered", "completed", "cancelled", "rejected", "ready"].includes(
-      (order.status || "pending").toLowerCase()
+  const completed = todayOrders.filter((order) =>
+    ["delivered", "completed"].includes(
+      (order.status || "").toLowerCase()
     )
   );
 
-  // Ready orders leave the red alert. Delivered/completed orders are hidden
-  // from the Recent orders list, but remain included in today's statistics.
-// Only newly placed orders appear in the red alert.
-const newOrders = orders.filter(
-  (order) => (order.status || "").toLowerCase() === "placed"
-);
+  const sales = completed.reduce(
+    (sum, order) => sum + Number(order.total_amount || 0),
+    0
+  );
 
-// Delivered/completed orders are hidden from Recent Orders.
-const visibleRecentOrders = orders.filter(
-  (order) =>
-    !["delivered", "completed"].includes(
-      (order.status || "").toLowerCase()
-    )
-);
+  const pendingOrders = todayOrders.filter(
+    (order) =>
+      ![
+        "delivered",
+        "completed",
+        "cancelled",
+        "rejected",
+        "ready",
+      ].includes((order.status || "pending").toLowerCase())
+  );
 
+  const newOrders = orders.filter(
+    (order) => (order.status || "").toLowerCase() === "placed"
+  );
+
+  const visibleRecentOrders = orders.filter(
+    (order) =>
+      !["delivered", "completed"].includes(
+        (order.status || "").toLowerCase()
+      )
+  );
 
   const money = (value: number) =>
     new Intl.NumberFormat("en-IN", {
@@ -420,19 +453,38 @@ const visibleRecentOrders = orders.filter(
             Overview
           </a>
 
-          <Link href="/restaurant-admin/products" className="ta-nav-link">
+          <Link
+            href="/restaurant-admin/products"
+            className="ta-nav-link"
+          >
             <Package size={18} />
             Products
             <ChevronRight size={15} className="ta-nav-arrow" />
           </Link>
 
-          <Link href="/restaurant-admin/orders" className="ta-nav-link">
+          <Link
+            href="/restaurant-admin/orders"
+            className="ta-nav-link"
+          >
             <ClipboardList size={18} />
             Orders
             <ChevronRight size={15} className="ta-nav-arrow" />
           </Link>
 
-          <Link href="/restaurant-admin/qr" className="ta-nav-link">
+          {/* NEW: Offers navigation */}
+          <Link
+            href="/restaurant-admin/offers"
+            className="ta-nav-link"
+          >
+            <Tag size={18} />
+            Offers
+            <ChevronRight size={15} className="ta-nav-arrow" />
+          </Link>
+
+          <Link
+            href="/restaurant-admin/qr"
+            className="ta-nav-link"
+          >
             <QrCode size={18} />
             QR ordering
             <ChevronRight size={15} className="ta-nav-arrow" />
@@ -444,8 +496,13 @@ const visibleRecentOrders = orders.filter(
             <div className="ta-help-icon">
               <UtensilsCrossed size={19} />
             </div>
+
             <strong>Your restaurant.</strong>
-            <p>Your menu, orders and daily performance in one place.</p>
+
+            <p>
+              Your menu, orders and daily performance in one place.
+            </p>
+
             <Link href="/owner">
               Partner portal <ArrowUpRight size={14} />
             </Link>
@@ -461,19 +518,38 @@ const visibleRecentOrders = orders.filter(
       <section className="ta-main">
         <header className="ta-topbar">
           <div>
-            <span className="ta-topbar-label">THO’AM / PARTNER</span>
+            <span className="ta-topbar-label">
+              THO’AM / PARTNER
+            </span>
             <span className="ta-topbar-title">Dashboard</span>
           </div>
 
           <div className="ta-topbar-right">
             <button
-              className={`ta-sound-toggle ${soundEnabled ? "is-enabled" : ""}`}
+              className={`ta-sound-toggle ${
+                soundEnabled ? "is-enabled" : ""
+              }`}
               onClick={toggleOrderSound}
-              aria-label={soundEnabled ? "Disable order sound" : "Enable order sound"}
-              title={soundEnabled ? "Order sound enabled" : "Enable order sound"}
+              aria-label={
+                soundEnabled
+                  ? "Disable order sound"
+                  : "Enable order sound"
+              }
+              title={
+                soundEnabled
+                  ? "Order sound enabled"
+                  : "Enable order sound"
+              }
             >
-              {soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
-              <span>{soundEnabled ? "Sound on" : "Enable sound"}</span>
+              {soundEnabled ? (
+                <Volume2 size={17} />
+              ) : (
+                <VolumeX size={17} />
+              )}
+
+              <span>
+                {soundEnabled ? "Sound on" : "Enable sound"}
+              </span>
             </button>
 
             <button
@@ -506,13 +582,21 @@ const visibleRecentOrders = orders.filter(
               <div className="ta-setup-icon">
                 <ShieldAlert size={26} />
               </div>
+
               <span className="ta-eyebrow">ACCOUNT SETUP</span>
+
               <h1>Let’s get you set up.</h1>
+
               <p>{message}</p>
+
               <div className="ta-setup-actions">
-                <Link href="/owner" className="ta-primary-button">
+                <Link
+                  href="/owner"
+                  className="ta-primary-button"
+                >
                   Partner portal <ArrowUpRight size={16} />
                 </Link>
+
                 <button
                   className="ta-secondary-button"
                   onClick={() => void loadDashboard(true)}
@@ -539,7 +623,9 @@ const visibleRecentOrders = orders.filter(
 
                   <p>
                     Here’s what’s happening at{" "}
-                    <strong>{restaurant?.name || "your restaurant"}</strong>{" "}
+                    <strong>
+                      {restaurant?.name || "your restaurant"}
+                    </strong>{" "}
                     today.
                   </p>
 
@@ -563,13 +649,24 @@ const visibleRecentOrders = orders.filter(
                   </div>
                 </div>
 
-                <div className="ta-welcome-art" aria-hidden="true">
+                <div
+                  className="ta-welcome-art"
+                  aria-hidden="true"
+                >
                   <div className="ta-art-circle ta-art-circle-one" />
                   <div className="ta-art-circle ta-art-circle-two" />
+
                   <div className="ta-art-plate">
-                    <UtensilsCrossed size={64} strokeWidth={1.1} />
+                    <UtensilsCrossed
+                      size={64}
+                      strokeWidth={1.1}
+                    />
                   </div>
-                  <span className="ta-art-label">MADE WITH CARE</span>
+
+                  <span className="ta-art-label">
+                    MADE WITH CARE
+                  </span>
+
                   <div className="ta-art-caption">
                     <span>YOUR PARTNER DASHBOARD</span>
                     <strong>Everything, at a glance.</strong>
@@ -589,9 +686,14 @@ const visibleRecentOrders = orders.filter(
                   <div className="ta-restaurant-icon">
                     <Store size={21} />
                   </div>
+
                   <div>
-                    <span className="ta-eyebrow">YOUR RESTAURANT</span>
+                    <span className="ta-eyebrow">
+                      YOUR RESTAURANT
+                    </span>
+
                     <h2>{restaurant?.name}</h2>
+
                     <span className="ta-restaurant-subtitle">
                       Partner workspace
                     </span>
@@ -601,10 +703,13 @@ const visibleRecentOrders = orders.filter(
                 <div className="ta-restaurant-controls">
                   <span
                     className={`ta-open-status ${
-                      restaurant?.is_open ? "is-open" : "is-closed"
+                      restaurant?.is_open
+                        ? "is-open"
+                        : "is-closed"
                     }`}
                   >
                     <span />
+
                     {restaurant?.is_open
                       ? "Open for orders"
                       : "Currently closed"}
@@ -630,24 +735,53 @@ const visibleRecentOrders = orders.filter(
 
               <Link
                 href="/restaurant-admin/orders"
-                className={`ta-new-orders-alert ${newOrders.length > 0 ? "has-new-orders" : "is-clear"}`}
+                className={`ta-new-orders-alert ${
+                  newOrders.length > 0
+                    ? "has-new-orders"
+                    : "is-clear"
+                }`}
                 aria-live="polite"
               >
-                <span className="ta-new-orders-icon"><Bell size={21} /></span>
-                <span className="ta-new-orders-copy">
-                  <strong>{newOrders.length > 0 ? "Orders need attention" : "You’re all caught up"}</strong>
-                  <small>{newOrders.length > 0 ? "Orders waiting to be marked Ready" : "No orders waiting for preparation"}</small>
+                <span className="ta-new-orders-icon">
+                  <Bell size={21} />
                 </span>
-                <span className="ta-new-orders-count">{newOrders.length}</span>
-                <ArrowUpRight size={18} className="ta-new-orders-arrow" />
+
+                <span className="ta-new-orders-copy">
+                  <strong>
+                    {newOrders.length > 0
+                      ? "Orders need attention"
+                      : "You’re all caught up"}
+                  </strong>
+
+                  <small>
+                    {newOrders.length > 0
+                      ? "Orders waiting to be marked Ready"
+                      : "No orders waiting for preparation"}
+                  </small>
+                </span>
+
+                <span className="ta-new-orders-count">
+                  {newOrders.length}
+                </span>
+
+                <ArrowUpRight
+                  size={18}
+                  className="ta-new-orders-arrow"
+                />
               </Link>
 
               <section className="ta-stats-section">
                 <div className="ta-section-header">
                   <div>
-                    <span className="ta-eyebrow">LIVE SNAPSHOT</span>
-                    <h2>Today at a glance<span>.</span></h2>
+                    <span className="ta-eyebrow">
+                      LIVE SNAPSHOT
+                    </span>
+
+                    <h2>
+                      Today at a glance<span>.</span>
+                    </h2>
                   </div>
+
                   <span className="ta-date-label">
                     {new Date().toLocaleDateString("en-IN", {
                       weekday: "short",
@@ -666,42 +800,65 @@ const visibleRecentOrders = orders.filter(
                         <ShoppingBag size={19} />
                       </div>
                     </div>
-                    <strong className="ta-stat-value">{todayOrders.length}</strong>
-                    <span className="ta-stat-foot">Orders received today</span>
+
+                    <strong className="ta-stat-value">
+                      {todayOrders.length}
+                    </strong>
+
+                    <span className="ta-stat-foot">
+                      Orders received today
+                    </span>
                   </article>
 
                   <article className="ta-stat-card">
                     <div className="ta-stat-top">
                       <span>Pending orders</span>
+
                       <div className="ta-stat-icon ta-icon-warm">
                         <Clock3 size={19} />
                       </div>
                     </div>
-                    <strong className="ta-stat-value">{pendingOrders.length}</strong>
-                    <span className="ta-stat-foot">Waiting to be completed</span>
+
+                    <strong className="ta-stat-value">
+                      {pendingOrders.length}
+                    </strong>
+
+                    <span className="ta-stat-foot">
+                      Waiting to be completed
+                    </span>
                   </article>
 
                   <article className="ta-stat-card">
                     <div className="ta-stat-top">
                       <span>Completed orders</span>
+
                       <div className="ta-stat-icon ta-icon-green">
                         <CheckCircle2 size={19} />
                       </div>
                     </div>
-                    <strong className="ta-stat-value">{completed.length}</strong>
-                    <span className="ta-stat-foot">Completed today</span>
+
+                    <strong className="ta-stat-value">
+                      {completed.length}
+                    </strong>
+
+                    <span className="ta-stat-foot">
+                      Completed today
+                    </span>
                   </article>
 
                   <article className="ta-stat-card ta-stat-sales">
                     <div className="ta-stat-top">
                       <span>Completed sales</span>
+
                       <div className="ta-stat-icon ta-icon-dark">
                         <CircleDollarSign size={19} />
                       </div>
                     </div>
+
                     <strong className="ta-stat-value ta-sales-value">
                       {money(sales)}
                     </strong>
+
                     <span className="ta-stat-foot">
                       From completed orders today
                     </span>
@@ -713,41 +870,126 @@ const visibleRecentOrders = orders.filter(
                 <div className="ta-section-header">
                   <div>
                     <span className="ta-eyebrow">YOUR TOOLS</span>
-                    <h2>Run your restaurant<span>.</span></h2>
+
+                    <h2>
+                      Run your restaurant<span>.</span>
+                    </h2>
                   </div>
                 </div>
 
                 <div className="ta-tools-grid">
-                  <Link className="ta-tool-card" href="/restaurant-admin/products">
-                    <div className="ta-tool-icon"><Package size={23} /></div>
-                    <span className="ta-tool-arrow"><ArrowUpRight size={18} /></span>
+                  <Link
+                    className="ta-tool-card"
+                    href="/restaurant-admin/products"
+                  >
+                    <div className="ta-tool-icon">
+                      <Package size={23} />
+                    </div>
+
+                    <span className="ta-tool-arrow">
+                      <ArrowUpRight size={18} />
+                    </span>
+
                     <h3>Product management</h3>
-                    <p>Add dishes, update prices and manage menu availability.</p>
+
+                    <p>
+                      Add dishes, update prices and manage menu
+                      availability.
+                    </p>
+
                     <div className="ta-tool-bottom">
                       <span>{products.length} products</span>
-                      <span className="ta-tool-link">Open workspace <ChevronRight size={15} /></span>
+
+                      <span className="ta-tool-link">
+                        Open workspace <ChevronRight size={15} />
+                      </span>
                     </div>
                   </Link>
 
-                  <Link className="ta-tool-card" href="/restaurant-admin/orders">
-                    <div className="ta-tool-icon"><ClipboardList size={23} /></div>
-                    <span className="ta-tool-arrow"><ArrowUpRight size={18} /></span>
+                  <Link
+                    className="ta-tool-card"
+                    href="/restaurant-admin/orders"
+                  >
+                    <div className="ta-tool-icon">
+                      <ClipboardList size={23} />
+                    </div>
+
+                    <span className="ta-tool-arrow">
+                      <ArrowUpRight size={18} />
+                    </span>
+
                     <h3>Order management</h3>
-                    <p>Review incoming orders and follow their progress.</p>
+
+                    <p>
+                      Review incoming orders and follow their
+                      progress.
+                    </p>
+
                     <div className="ta-tool-bottom">
-                      <span>{visibleRecentOrders.length} recent orders</span>
-                      <span className="ta-tool-link">Open workspace <ChevronRight size={15} /></span>
+                      <span>
+                        {visibleRecentOrders.length} recent orders
+                      </span>
+
+                      <span className="ta-tool-link">
+                        Open workspace <ChevronRight size={15} />
+                      </span>
                     </div>
                   </Link>
 
-                  <Link className="ta-tool-card" href="/restaurant-admin/qr">
-                    <div className="ta-tool-icon"><QrCode size={23} /></div>
-                    <span className="ta-tool-arrow"><ArrowUpRight size={18} /></span>
+                  {/* NEW: Offers management card */}
+                  <Link
+                    className="ta-tool-card"
+                    href="/restaurant-admin/offers"
+                  >
+                    <div className="ta-tool-icon">
+                      <Tag size={23} />
+                    </div>
+
+                    <span className="ta-tool-arrow">
+                      <ArrowUpRight size={18} />
+                    </span>
+
+                    <h3>Offers & discounts</h3>
+
+                    <p>
+                      Create promotional offers and manage
+                      restaurant discounts.
+                    </p>
+
+                    <div className="ta-tool-bottom">
+                      <span>Promotions</span>
+
+                      <span className="ta-tool-link">
+                        Manage offers <ChevronRight size={15} />
+                      </span>
+                    </div>
+                  </Link>
+
+                  <Link
+                    className="ta-tool-card"
+                    href="/restaurant-admin/qr"
+                  >
+                    <div className="ta-tool-icon">
+                      <QrCode size={23} />
+                    </div>
+
+                    <span className="ta-tool-arrow">
+                      <ArrowUpRight size={18} />
+                    </span>
+
                     <h3>QR ordering</h3>
-                    <p>Manage table QR codes and your dine-in ordering setup.</p>
+
+                    <p>
+                      Manage table QR codes and your dine-in
+                      ordering setup.
+                    </p>
+
                     <div className="ta-tool-bottom">
                       <span>Dine-in experience</span>
-                      <span className="ta-tool-link">Open workspace <ChevronRight size={15} /></span>
+
+                      <span className="ta-tool-link">
+                        Open workspace <ChevronRight size={15} />
+                      </span>
                     </div>
                   </Link>
                 </div>
@@ -757,22 +999,37 @@ const visibleRecentOrders = orders.filter(
                 <div className="ta-section-header">
                   <div>
                     <span className="ta-eyebrow">THE LATEST</span>
-                    <h2>Recent orders<span>.</span></h2>
+
+                    <h2>
+                      Recent orders<span>.</span>
+                    </h2>
                   </div>
-                  <Link href="/restaurant-admin/orders" className="ta-view-all">
+
+                  <Link
+                    href="/restaurant-admin/orders"
+                    className="ta-view-all"
+                  >
                     View all orders <ArrowUpRight size={15} />
                   </Link>
                 </div>
 
                 {visibleRecentOrders.length === 0 ? (
                   <div className="ta-empty-orders">
-                    <div className="ta-empty-icon"><ClipboardList size={25} /></div>
+                    <div className="ta-empty-icon">
+                      <ClipboardList size={25} />
+                    </div>
+
                     <h3>Your next order starts here.</h3>
+
                     <p>
-                      New customer and QR orders will appear here when they
-                      are saved in your orders table.
+                      New customer and QR orders will appear here
+                      when they are saved in your orders table.
                     </p>
-                    <Link href="/restaurant-admin/products" className="ta-secondary-button">
+
+                    <Link
+                      href="/restaurant-admin/products"
+                      className="ta-secondary-button"
+                    >
                       Check your menu <ArrowUpRight size={15} />
                     </Link>
                   </div>
@@ -789,43 +1046,63 @@ const visibleRecentOrders = orders.filter(
                           <th>PAYMENT</th>
                         </tr>
                       </thead>
-                      <tbody>
-                        {visibleRecentOrders.slice(0, 8).map((order) => {
-                          const state = (order.status || "pending").toLowerCase();
 
-                          return (
-                            <tr key={order.id}>
-                              <td>
-                                <strong>#{order.order_number || order.id.slice(0, 8)}</strong>
-                              </td>
-                              <td>
-                                <span className="ta-order-type">
-                                  {order.order_type || "Order"}
-                                </span>
-                              </td>
-                              <td>{formatTime(order.created_at)}</td>
-                              <td>
-                                <span
-                                  className={`ta-order-status status-${state.replace(
-                                    /[^a-z0-9_-]/g,
-                                    ""
-                                  )}`}
-                                >
-                                  <span />
-                                  {state.replace(/_/g, " ")}
-                                </span>
-                              </td>
-                              <td>
-                                <strong>{money(Number(order.total_amount || 0))}</strong>
-                              </td>
-                              <td>
-                                <span className="ta-payment-label">
-                                  {order.payment_status || "—"}
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        })}
+                      <tbody>
+                        {visibleRecentOrders
+                          .slice(0, 8)
+                          .map((order) => {
+                            const state = (
+                              order.status || "pending"
+                            ).toLowerCase();
+
+                            return (
+                              <tr key={order.id}>
+                                <td>
+                                  <strong>
+                                    #
+                                    {order.order_number ||
+                                      order.id.slice(0, 8)}
+                                  </strong>
+                                </td>
+
+                                <td>
+                                  <span className="ta-order-type">
+                                    {order.order_type || "Order"}
+                                  </span>
+                                </td>
+
+                                <td>
+                                  {formatTime(order.created_at)}
+                                </td>
+
+                                <td>
+                                  <span
+                                    className={`ta-order-status status-${state.replace(
+                                      /[^a-z0-9_-]/g,
+                                      ""
+                                    )}`}
+                                  >
+                                    <span />
+                                    {state.replace(/_/g, " ")}
+                                  </span>
+                                </td>
+
+                                <td>
+                                  <strong>
+                                    {money(
+                                      Number(order.total_amount || 0)
+                                    )}
+                                  </strong>
+                                </td>
+
+                                <td>
+                                  <span className="ta-payment-label">
+                                    {order.payment_status || "—"}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
                       </tbody>
                     </table>
                   </div>
@@ -833,16 +1110,17 @@ const visibleRecentOrders = orders.filter(
               </section>
 
               <footer className="ta-footer">
-                <span><strong>THO’AM.</strong> Restaurant partner workspace</span>
+                <span>
+                  <strong>THO’AM.</strong> Restaurant partner
+                  workspace
+                </span>
+
                 <span>Good food. Good moments.</span>
               </footer>
             </>
           )}
         </div>
       </section>
-      
     </main>
-    
   );
-  
 }

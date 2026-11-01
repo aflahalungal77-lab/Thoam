@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -12,22 +13,10 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import { supabase } from "@/lib/supabase";
-
 import {
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
-  Clock3,
-  LoaderCircle,
-  MapPin,
-  Minus,
-  Plus,
-  ShoppingBag,
-  ShoppingCart,
-  Truck,
-  UtensilsCrossed,
-  Wallet,
-  XCircle,
+  ArrowLeft, ArrowRight, CheckCircle2, Clock3, LoaderCircle,
+  MapPin, Minus, Plus, ShoppingBag, ShoppingCart, Truck,
+  UtensilsCrossed, Wallet, XCircle, Tag, Percent
 } from "lucide-react";
 
 type Item = {
@@ -48,6 +37,23 @@ type Restaurant = {
   status: string;
 };
 
+type Offer = {
+  id: string;
+  restaurant_id: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  scope: "order" | "products";
+  discount_type: "percentage" | "fixed";
+  discount_value: number;
+  product_ids: string[];
+  min_order_amount: number;
+  max_discount: number | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  is_active: boolean;
+};
+
 function formatPrice(value: number) {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -56,20 +62,45 @@ function formatPrice(value: number) {
   }).format(value);
 }
 
+function calculateOffer(offer: Offer, items: Item[], subtotal: number) {
+  if (subtotal < Number(offer.min_order_amount || 0)) return 0;
+
+  let eligible = subtotal;
+
+  if (offer.scope === "products") {
+    eligible = items.reduce((sum, item) => {
+      return offer.product_ids?.includes(item.id)
+        ? sum + item.price * item.quantity
+        : sum;
+    }, 0);
+  }
+
+  if (eligible <= 0) return 0;
+
+  let discount =
+    offer.discount_type === "percentage"
+      ? eligible * Number(offer.discount_value) / 100
+      : Number(offer.discount_value);
+
+  if (offer.max_discount !== null) {
+    discount = Math.min(discount, Number(offer.max_discount));
+  }
+
+  return Math.round(Math.min(discount, eligible) * 100) / 100;
+}
+
 function CheckoutInner() {
   const params = useSearchParams();
   const router = useRouter();
-
   const slug = params.get("restaurant") || "";
 
   const [items, setItems] = useState<Item[]>([]);
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
-
+  const [offers, setOffers] = useState<Offer[]>([]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
-
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -77,17 +108,33 @@ function CheckoutInner() {
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
   const subtotal = useMemo(
-    () =>
-      items.reduce(
-        (sum, item) => sum + Number(item.price) * item.quantity,
-        0
-      ),
+    () => items.reduce((sum, item) => sum + item.price * item.quantity, 0),
     [items]
   );
 
   const deliveryFee = Number(restaurant?.delivery_fee ?? 0);
   const platformFee = 1;
-  const total = subtotal + deliveryFee + platformFee;
+
+  const bestOffer = useMemo(() => {
+    const now = Date.now();
+
+    return offers
+      .filter((offer) => {
+        if (!offer.is_active) return false;
+        if (offer.starts_at && new Date(offer.starts_at).getTime() > now) return false;
+        if (offer.ends_at && new Date(offer.ends_at).getTime() <= now) return false;
+        return true;
+      })
+      .map((offer) => ({
+        offer,
+        discount: calculateOffer(offer, items, subtotal),
+      }))
+      .filter((entry) => entry.discount > 0)
+      .sort((a, b) => b.discount - a.discount)[0] || null;
+  }, [offers, items, subtotal]);
+
+  const discount = bestOffer?.discount || 0;
+  const total = Math.max(0, subtotal - discount + deliveryFee + platformFee);
 
   const showMessage = useCallback(
     (text: string, type: "error" | "info" = "error") => {
@@ -106,11 +153,7 @@ function CheckoutInner() {
 
       try {
         if (!supabase || !slug) {
-          if (active) {
-            showMessage(
-              "Checkout load cheyyan kazhinjilla. Restaurant menu-il ninnu veendum try cheyyuka."
-            );
-          }
+          showMessage("Checkout load cheyyan kazhinjilla. Menu-il ninnu try cheyyuka.");
           return;
         }
 
@@ -120,11 +163,7 @@ function CheckoutInner() {
         } = await supabase.auth.getUser();
 
         if (authError || !user) {
-          router.replace(
-            `/auth?next=${encodeURIComponent(
-              `/checkout?restaurant=${slug}`
-            )}`
-          );
+          router.replace(`/auth?next=${encodeURIComponent(`/checkout?restaurant=${slug}`)}`);
           return;
         }
 
@@ -139,32 +178,22 @@ function CheckoutInner() {
           .maybeSingle();
 
         if (!active) return;
-
-        if (profile?.phone) {
-          setPhone(profile.phone);
-        }
+        if (profile?.phone) setPhone(profile.phone);
 
         const { data: restaurantData, error: restaurantError } =
           await supabase
             .from("restaurants")
-            .select(
-              "id,name,slug,is_open,delivery_enabled,delivery_fee,status"
-            )
+            .select("id,name,slug,is_open,delivery_enabled,delivery_fee,status")
             .eq("slug", slug)
             .eq("status", "approved")
             .maybeSingle();
 
         if (restaurantError || !restaurantData) {
-          showMessage(
-            "Restaurant kandethan kazhinjilla, allenkil restaurant approved alla."
-          );
+          showMessage("Restaurant kandethan kazhinjilla.");
           return;
         }
 
-        if (!active) return;
-
         const savedCart = localStorage.getItem(`thoam-cart-${slug}`);
-
         let parsedCart: Record<string, number> = {};
 
         try {
@@ -174,31 +203,41 @@ function CheckoutInner() {
         }
 
         const cartEntries = Object.entries(parsedCart).filter(
-          ([, quantity]) =>
-            Number.isFinite(Number(quantity)) && Number(quantity) > 0
+          ([, quantity]) => Number.isFinite(Number(quantity)) && Number(quantity) > 0
         );
 
         if (!cartEntries.length) {
-          showMessage(
-            "Ninte cart empty aanu. Menu-il poyi food items add cheyyuka.",
-            "info"
-          );
+          showMessage("Cart empty aanu. Menu-il ninnu food add cheyyuka.", "info");
           return;
         }
 
         const productIds = cartEntries.map(([id]) => id);
 
-        const { data: products, error: productsError } = await supabase
-          .from("products")
-          .select(
-            "id,name,price,image_url,is_available,restaurant_id"
-          )
-          .eq("restaurant_id", restaurantData.id)
-          .in("id", productIds);
+        const [
+          { data: products, error: productsError },
+          { data: offerData, error: offerError },
+        ] = await Promise.all([
+          supabase
+            .from("products")
+            .select("id,name,price,image_url,is_available,restaurant_id")
+            .eq("restaurant_id", restaurantData.id)
+            .in("id", productIds),
+
+          supabase
+            .from("offers")
+            .select("*")
+            .eq("restaurant_id", restaurantData.id)
+            .eq("is_active", true),
+        ]);
 
         if (productsError) {
-          showMessage("Products load cheyyan kazhinjilla. Veendum try cheyyuka.");
+          showMessage("Products load cheyyan kazhinjilla.");
           return;
+        }
+
+        if (offerError) {
+          console.error("Offer loading failed:", offerError);
+          // Checkout can still proceed without offers.
         }
 
         if (!active) return;
@@ -212,37 +251,30 @@ function CheckoutInner() {
             image_url: product.image_url || null,
             quantity: Number(parsedCart[product.id] || 0),
           }))
-          .filter(
-            (product: Item) =>
-              product.quantity > 0 &&
-              Number.isFinite(product.price) &&
-              product.price >= 0
+          .filter((product: Item) =>
+            product.quantity > 0 &&
+            Number.isFinite(product.price) &&
+            product.price >= 0
           );
 
         setRestaurant(restaurantData as Restaurant);
         setItems(availableProducts);
+        setOffers((offerData || []) as Offer[]);
 
         if (!availableProducts.length) {
-          showMessage(
-            "Cart-ilulla food items ippol available alla. Menu refresh cheythu veendum select cheyyuka."
-          );
+          showMessage("Cart-ilulla items available alla.");
         } else if (availableProducts.length < cartEntries.length) {
-          showMessage(
-            "Cart-il chila items available alla. Available items maathram order-il ulppeduthiyittundu.",
-            "info"
-          );
+          showMessage("Available items maathram order-il ulppeduthiyittundu.", "info");
         }
-      } catch {
-        if (active) {
-          showMessage("Unexpected error. Page refresh cheythu veendum try cheyyuka.");
-        }
+      } catch (error) {
+        console.error(error);
+        if (active) showMessage("Unexpected error. Page refresh cheyyuka.");
       } finally {
         if (active) setLoading(false);
       }
     }
 
-    loadCheckout();
-
+    void loadCheckout();
     return () => {
       active = false;
     };
@@ -260,9 +292,7 @@ function CheckoutInner() {
 
       localStorage.setItem(
         `thoam-cart-${slug}`,
-        JSON.stringify(
-          Object.fromEntries(updated.map((item) => [item.id, item.quantity]))
-        )
+        JSON.stringify(Object.fromEntries(updated.map((item) => [item.id, item.quantity])))
       );
 
       return updated;
@@ -275,29 +305,22 @@ function CheckoutInner() {
     event.preventDefault();
     setMessage("");
 
-    if (!supabase) {
-      showMessage("Supabase configure cheythittilla.");
-      return;
-    }
-
-    if (!restaurant || items.length === 0) {
+    if (!supabase || !restaurant || !items.length) {
       showMessage("Cart empty aanu, allenkil restaurant unavailable aanu.");
       return;
     }
 
     if (!restaurant.is_open) {
-      showMessage("Restaurant ippol closed aanu. Open aakumbol try cheyyuka.");
+      showMessage("Restaurant ippol closed aanu.");
       return;
     }
 
     if (!restaurant.delivery_enabled) {
-      showMessage("Ee restaurant delivery orders ippol accept cheyyunnilla.");
+      showMessage("Ee restaurant delivery orders accept cheyyunnilla.");
       return;
     }
 
-    const normalizedPhone = phone.trim();
-
-    if (normalizedPhone.replace(/\D/g, "").length < 10) {
+    if (phone.trim().replace(/\D/g, "").length < 10) {
       showMessage("Valid phone number enter cheyyuka.");
       return;
     }
@@ -321,11 +344,7 @@ function CheckoutInner() {
       } = await supabase.auth.getSession();
 
       if (sessionError || !session) {
-        router.replace(
-          `/auth?next=${encodeURIComponent(
-            `/checkout?restaurant=${slug}`
-          )}`
-        );
+        router.replace(`/auth?next=${encodeURIComponent(`/checkout?restaurant=${slug}`)}`);
         return;
       }
 
@@ -339,9 +358,10 @@ function CheckoutInner() {
           restaurantId: restaurant.id,
           orderType: "delivery",
           customerName: name.trim(),
-          customerPhone: normalizedPhone,
+          customerPhone: phone.trim(),
           deliveryAddress: address.trim(),
           notes: notes.trim(),
+          offerId: bestOffer?.offer.id || null,
           items: items.map((item) => ({
             productId: item.id,
             quantity: item.quantity,
@@ -356,13 +376,10 @@ function CheckoutInner() {
       }
 
       localStorage.removeItem(`thoam-cart-${slug}`);
-
       setOrderNumber(String(result.order.order_number));
-    } catch (error: unknown) {
+    } catch (error) {
       showMessage(
-        error instanceof Error
-          ? error.message
-          : "Order place cheyyan kazhinjilla. Veendum try cheyyuka."
+        error instanceof Error ? error.message : "Order place cheyyan kazhinjilla."
       );
     } finally {
       setBusy(false);
@@ -373,17 +390,14 @@ function CheckoutInner() {
     return (
       <>
         <Header />
-        <main className="thoam-checkout">
+        <main className="tc-page">
           <div className="tc-loading">
-            <span className="tc-loading-icon">
-              <LoaderCircle size={28} />
-            </span>
+            <LoaderCircle className="tc-spin" size={30} />
             <h2>Preparing your checkout</h2>
             <p>Your restaurant and cart details are loading.</p>
-            <div className="tc-skeleton" />
-            <div className="tc-skeleton tc-skeleton-small" />
           </div>
         </main>
+        <CheckoutStyles />
       </>
     );
   }
@@ -392,46 +406,25 @@ function CheckoutInner() {
     return (
       <>
         <Header />
-
-        <main className="thoam-checkout">
+        <main className="tc-page">
           <section className="tc-success">
-            <div className="tc-success-icon">
-              <CheckCircle2 size={42} strokeWidth={1.6} />
-            </div>
-
+            <div className="tc-success-icon"><CheckCircle2 size={42} /></div>
             <span className="tc-eyebrow">ORDER CONFIRMED</span>
-
             <h1>Thank you!</h1>
-
-            <p className="tc-success-description">
-              Your order has been placed successfully
-              {restaurant?.name ? ` with ${restaurant.name}` : ""}.
-            </p>
-
+            <p>Your order has been placed successfully with {restaurant?.name}.</p>
             <div className="tc-order-number">
               <span>YOUR ORDER NUMBER</span>
               <strong>#{orderNumber}</strong>
             </div>
-
-            <div className="tc-cod-confirmation">
-              <Wallet size={21} />
-              <div>
-                <strong>Cash on Delivery</strong>
-                <p>Pay in cash when your order arrives.</p>
-              </div>
+            <div className="tc-cod">
+              <Wallet size={22} />
+              <div><strong>Cash on Delivery</strong><p>Pay in cash when your order arrives.</p></div>
             </div>
-
-            <div className="tc-success-actions">
-              <Link className="tc-primary-button" href="/my-orders">
-                View my orders <ArrowRight size={17} />
-              </Link>
-
-              <Link className="tc-secondary-button" href="/restaurants">
-                Browse restaurants
-              </Link>
-            </div>
+            <Link className="tc-primary" href="/my-orders">View my orders <ArrowRight size={17} /></Link>
+            <Link className="tc-secondary" href="/restaurants">Browse restaurants</Link>
           </section>
         </main>
+        <CheckoutStyles />
       </>
     );
   }
@@ -439,1177 +432,205 @@ function CheckoutInner() {
   return (
     <>
       <Header />
-
-      <main className="thoam-checkout">
+      <main className="tc-page">
         <div className="tc-topbar">
-          <Link
-            className="tc-back-link"
-            href={slug ? `/restaurants/${slug}` : "/restaurants"}
-          >
-            <ArrowLeft size={16} />
-            <span>Back to menu</span>
+          <Link href={slug ? `/restaurants/${slug}` : "/restaurants"}>
+            <ArrowLeft size={16} /> Back to menu
           </Link>
-
-          <div className="tc-secure-label">
-            <Wallet size={15} />
-            <span>Cash on Delivery</span>
-          </div>
+          <span><Wallet size={15} /> Cash on Delivery</span>
         </div>
 
-        <section className="tc-heading">
+        <header className="tc-heading">
           <span className="tc-eyebrow">ALMOST THERE</span>
           <h1>Checkout<span>.</span></h1>
           <p>Good food is just a few steps away.</p>
-        </section>
+        </header>
 
         {message && (
-          <div
-            className={`tc-alert ${
-              messageType === "info" ? "tc-alert-info" : ""
-            }`}
-            role="alert"
-          >
-            {messageType === "info" ? (
-              <ShoppingBag size={19} />
-            ) : (
-              <XCircle size={19} />
-            )}
-            <span>{message}</span>
+          <div className={`tc-alert ${messageType === "info" ? "tc-info" : ""}`}>
+            {messageType === "info" ? <ShoppingBag size={18} /> : <XCircle size={18} />}
+            {message}
           </div>
         )}
 
         <form className="tc-layout" onSubmit={submitOrder}>
           <div className="tc-main-column">
             <section className="tc-card">
-              <div className="tc-card-heading">
-                <div className="tc-step">01</div>
-                <div>
-                  <h2>Delivery details</h2>
-                  <p>Where should we deliver your food?</p>
-                </div>
-              </div>
-
-              <div className="tc-form-fields">
-                <label className="tc-field">
-                  <span>Full name <b>*</b></span>
-                  <input
-                    required
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    maxLength={100}
-                    placeholder="Enter your full name"
-                    autoComplete="name"
-                  />
+              <div className="tc-card-title"><span>01</span><div><h2>Delivery details</h2><p>Where should we deliver your food?</p></div></div>
+              <div className="tc-fields">
+                <label>Full name *
+                  <input required value={name} onChange={(e) => setName(e.target.value)} maxLength={100} autoComplete="name" placeholder="Enter your full name" />
                 </label>
-
-                <label className="tc-field">
-                  <span>Phone number <b>*</b></span>
-                  <input
-                    required
-                    type="tel"
-                    inputMode="tel"
-                    value={phone}
-                    onChange={(event) => setPhone(event.target.value)}
-                    maxLength={20}
-                    placeholder="Your contact number"
-                    autoComplete="tel"
-                  />
-                  <small>We may contact you about your order.</small>
+                <label>Phone number *
+                  <input required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} autoComplete="tel" placeholder="Your contact number" />
                 </label>
-
-                <label className="tc-field">
-                  <span>Delivery address <b>*</b></span>
-                  <textarea
-                    required
-                    value={address}
-                    onChange={(event) => setAddress(event.target.value)}
-                    rows={4}
-                    maxLength={600}
-                    placeholder="House name, road, area, landmark and PIN code"
-                    autoComplete="street-address"
-                  />
+                <label>Delivery address *
+                  <textarea required value={address} onChange={(e) => setAddress(e.target.value)} rows={4} maxLength={600} placeholder="House name, road, area, landmark and PIN code" />
                 </label>
-
-                <label className="tc-field">
-                  <span>
-                    Delivery instructions <em>OPTIONAL</em>
-                  </span>
-                  <textarea
-                    value={notes}
-                    onChange={(event) => setNotes(event.target.value)}
-                    rows={2}
-                    maxLength={500}
-                    placeholder="Any special instructions for delivery?"
-                  />
+                <label>Delivery instructions <small>OPTIONAL</small>
+                  <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} placeholder="Any special instructions?" />
                 </label>
               </div>
             </section>
 
-            <section className="tc-card tc-payment-card">
-              <div className="tc-card-heading">
-                <div className="tc-step">02</div>
-                <div>
-                  <h2>Payment method</h2>
-                  <p>Simple, safe and convenient.</p>
-                </div>
+            <section className="tc-card">
+              <div className="tc-card-title"><span>02</span><div><h2>Payment method</h2><p>Simple, safe and convenient.</p></div></div>
+              <div className="tc-payment">
+                <Wallet size={24} />
+                <div><strong>Cash on Delivery</strong><small>Pay when your food arrives.</small></div>
+                <CheckCircle2 size={20} />
               </div>
-
-              <div className="tc-payment-option">
-                <div className="tc-payment-icon">
-                  <Wallet size={23} />
-                </div>
-
-                <div className="tc-payment-copy">
-                  <strong>Cash on Delivery</strong>
-                  <span>Pay when your food arrives.</span>
-                </div>
-
-                <div className="tc-radio-selected">
-                  <CheckCircle2 size={20} />
-                </div>
-              </div>
-
-              <p className="tc-payment-note">
-                <CheckCircle2 size={15} />
-                No online payment required.
-              </p>
+              <p className="tc-muted">No online payment required.</p>
             </section>
           </div>
 
-          <aside className="tc-summary-column">
-            <section className="tc-card tc-summary-card">
-              <div className="tc-summary-heading">
-                <div>
-                  <span className="tc-eyebrow">YOUR ORDER</span>
-                  <h2>Order summary</h2>
-                </div>
-
-                <div className="tc-cart-icon">
-                  <ShoppingCart size={20} />
-                </div>
+          <aside className="tc-side">
+            <section className="tc-card tc-summary">
+              <div className="tc-summary-title">
+                <div><span className="tc-eyebrow">YOUR ORDER</span><h2>Order summary</h2></div>
+                <ShoppingCart size={22} />
               </div>
 
               {restaurant && (
                 <div className="tc-restaurant">
-                  <div className="tc-restaurant-icon">
-                    <UtensilsCrossed size={19} />
-                  </div>
-
-                  <div className="tc-restaurant-copy">
-                    <strong>{restaurant.name}</strong>
-                    <span>
-                      {restaurant.is_open ? "Accepting orders" : "Currently closed"}
-                    </span>
-                  </div>
-
-                  <div
-                    className={`tc-status-dot ${
-                      restaurant.is_open ? "" : "tc-status-closed"
-                    }`}
-                  />
+                  <UtensilsCrossed size={20} />
+                  <div><strong>{restaurant.name}</strong><small>{restaurant.is_open ? "Accepting orders" : "Currently closed"}</small></div>
                 </div>
               )}
 
-              <div className="tc-order-items">
+              <div className="tc-items">
                 {items.map((item) => (
-                  <div className="tc-order-item" key={item.id}>
+                  <div className="tc-item" key={item.id}>
                     <div className="tc-product-image">
-                      {item.image_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.image_url} alt={item.name} />
-                      ) : (
-                        <UtensilsCrossed size={23} />
-                      )}
+                      {item.image_url ? <img src={item.image_url} alt={item.name} /> : <UtensilsCrossed size={20} />}
                     </div>
-
-                    <div className="tc-product-details">
+                    <div className="tc-product">
                       <strong>{item.name}</strong>
-                      <span>{formatPrice(Number(item.price))} each</span>
-
-                      <div className="tc-quantity-control">
-                        <button
-                          type="button"
-                          aria-label={`Decrease ${item.name} quantity`}
-                          onClick={() => updateQuantity(item.id, -1)}
-                        >
-                          <Minus size={13} />
-                        </button>
-
-                        <span>{item.quantity}</span>
-
-                        <button
-                          type="button"
-                          aria-label={`Increase ${item.name} quantity`}
-                          onClick={() => updateQuantity(item.id, 1)}
-                        >
-                          <Plus size={13} />
-                        </button>
+                      <small>{formatPrice(item.price)} each</small>
+                      <div className="tc-quantity">
+                        <button type="button" onClick={() => updateQuantity(item.id, -1)} aria-label={`Decrease ${item.name}`}><Minus size={13} /></button>
+                        {item.quantity}
+                        <button type="button" onClick={() => updateQuantity(item.id, 1)} aria-label={`Increase ${item.name}`}><Plus size={13} /></button>
                       </div>
                     </div>
-
-                    <strong className="tc-item-total">
-                      {formatPrice(Number(item.price) * item.quantity)}
-                    </strong>
+                    <strong>{formatPrice(item.price * item.quantity)}</strong>
                   </div>
                 ))}
-
-                {items.length === 0 && (
-                  <div className="tc-empty-cart">
-                    <ShoppingBag size={28} />
-                    <p>Your cart is empty.</p>
-                    <Link href={slug ? `/restaurants/${slug}` : "/restaurants"}>
-                      Browse menu <ArrowRight size={14} />
-                    </Link>
-                  </div>
-                )}
               </div>
 
-              <div className="tc-price-breakdown">
-                <div className="tc-price-row">
-                  <span>Items subtotal</span>
-                  <span>{formatPrice(subtotal)}</span>
-                </div>
-
-                <div className="tc-price-row">
-                  <span>
-                    <Truck size={15} />
-                    Delivery fee
-                  </span>
-                  <span>{formatPrice(deliveryFee)}</span>
-                </div>
-
-                <div className="tc-price-row">
-                  <span>Platform fee</span>
-                  <span>{formatPrice(platformFee)}</span>
-                </div>
-
-                <div className="tc-total-row">
-                  <div>
-                    <strong>Total amount</strong>
-                    <span>Inclusive of listed fees</span>
+              {bestOffer && (
+                <div className="tc-offer">
+                  <div className="tc-offer-icon"><Tag size={20} /></div>
+                  <div className="tc-offer-copy">
+                    <strong>{bestOffer.offer.title}</strong>
+                    <small>
+                      {bestOffer.offer.discount_type === "percentage"
+                        ? `${bestOffer.offer.discount_value}% discount`
+                        : `${formatPrice(bestOffer.offer.discount_value)} off`}
+                      {bestOffer.offer.scope === "products" ? " on selected items" : " on your order"}
+                    </small>
+                    {bestOffer.offer.description && <small>{bestOffer.offer.description}</small>}
                   </div>
-                  <strong>{formatPrice(total)}</strong>
+                  <span className="tc-applied">APPLIED</span>
                 </div>
+              )}
+
+              <div className="tc-breakdown">
+                <div><span>Items subtotal</span><strong>{formatPrice(subtotal)}</strong></div>
+                {discount > 0 && <div className="tc-discount"><span><Percent size={14} /> Offer discount</span><strong>−{formatPrice(discount)}</strong></div>}
+                <div><span><Truck size={14} /> Delivery fee</span><strong>{formatPrice(deliveryFee)}</strong></div>
+                <div><span>Platform fee</span><strong>{formatPrice(platformFee)}</strong></div>
+                <div className="tc-total"><span>Total amount</span><strong>{formatPrice(total)}</strong></div>
               </div>
 
-              <button
-                className="tc-place-order"
-                type="submit"
-                disabled={
-                  busy ||
-                  loading ||
-                  items.length === 0 ||
-                  !restaurant ||
-                  !restaurant.is_open ||
-                  !restaurant.delivery_enabled
-                }
-              >
-                {busy ? (
-                  <>
-                    <LoaderCircle className="tc-spin" size={19} />
-                    Placing your order...
-                  </>
-                ) : (
-                  <>
-                    Place COD order
-                    <ArrowRight size={19} />
-                  </>
-                )}
+              <button className="tc-place" type="submit" disabled={busy || !items.length || !restaurant || !restaurant.is_open || !restaurant.delivery_enabled}>
+                {busy ? <><LoaderCircle className="tc-spin" size={18} /> Placing order...</> : <>Place COD order <ArrowRight size={18} /></>}
               </button>
-
-              <div className="tc-trust-note">
-                <CheckCircle2 size={15} />
-                <span>
-                  Your final order total is verified by the server.
-                </span>
-              </div>
-
-              <div className="tc-delivery-note">
-                <Clock3 size={16} />
-                <span>Delivery time depends on the restaurant.</span>
-              </div>
+              <p className="tc-note"><CheckCircle2 size={14} /> Final discount and total verified by the server.</p>
             </section>
 
-            <div className="tc-help-card">
-              <MapPin size={19} />
-              <div>
-                <strong>Check your address</strong>
-                <p>
-                  Include your area and a nearby landmark to help the delivery
-                  person find you.
-                </p>
-              </div>
-            </div>
+            <div className="tc-help"><MapPin size={18} /><div><strong>Check your address</strong><p>Include your area and nearby landmark.</p></div></div>
           </aside>
         </form>
 
-        <footer className="tc-footer">
-          <span>THO’AM</span>
-          <span>Good food. Made simple.</span>
-        </footer>
+        <footer className="tc-footer"><strong>THO’AM</strong><span>Good food. Made simple.</span></footer>
       </main>
-
-<style jsx>{`
-  .thoam-checkout {
-    --tc-black: #111111;
-    --tc-muted: #777777;
-    --tc-border: #eaeaea;
-    --tc-surface: #ffffff;
-    --tc-soft: #f7f7f7;
-    width: 100%;
-    max-width: 1180px;
-    min-height: 80vh;
-    margin: 0 auto;
-    padding: 34px 24px 24px;
-    color: var(--tc-black);
-    font-family: inherit;
-  }
-
-  .tc-topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 38px;
-  }
-
-  .tc-back-link,
-  .tc-secure-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-    color: #555;
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none;
-  }
-
-  .tc-back-link:hover {
-    color: #000;
-  }
-
-  .tc-secure-label {
-    padding: 10px 14px;
-    border: 1px solid var(--tc-border);
-    border-radius: 30px;
-    background: #fff;
-  }
-
-  .tc-heading {
-    margin-bottom: 32px;
-  }
-
-  .tc-eyebrow {
-    color: #888;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 2px;
-  }
-
-  .tc-heading h1,
-  .tc-success h1 {
-    margin: 9px 0;
-    font-size: clamp(36px, 5vw, 54px);
-    font-weight: 850;
-    letter-spacing: -2.8px;
-    line-height: 1.08;
-  }
-
-  .tc-heading h1 span {
-    color: #999;
-  }
-
-  .tc-heading p,
-  .tc-success-description {
-    margin: 10px 0 0;
-    color: var(--tc-muted);
-    font-size: 14px;
-    line-height: 1.7;
-  }
-
-  .tc-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(340px, .85fr);
-    align-items: start;
-    gap: 24px;
-  }
-
-  .tc-main-column,
-  .tc-summary-column {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    min-width: 0;
-  }
-
-  .tc-card {
-    padding: 27px;
-    border: 1px solid var(--tc-border);
-    border-radius: 18px;
-    background: var(--tc-surface);
-    box-shadow: 0 5px 24px rgba(0, 0, 0, .025);
-  }
-
-  .tc-card-heading {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 25px;
-  }
-
-  .tc-step {
-    display: grid;
-    width: 42px;
-    height: 42px;
-    flex-shrink: 0;
-    place-items: center;
-    border-radius: 12px;
-    background: #111;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 800;
-  }
-
-  .tc-card-heading h2,
-  .tc-summary-heading h2 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 800;
-    letter-spacing: -.5px;
-  }
-
-  .tc-card-heading p {
-    margin: 5px 0 0;
-    color: var(--tc-muted);
-    font-size: 12px;
-  }
-
-  .tc-form-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 19px;
-  }
-
-  .tc-field {
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
-  }
-
-  .tc-field > span {
-    color: #292929;
-    font-size: 12px;
-    font-weight: 750;
-  }
-
-  .tc-field b {
-    color: #d33;
-  }
-
-  .tc-field em {
-    margin-left: 5px;
-    color: #999;
-    font-size: 9px;
-    font-style: normal;
-    letter-spacing: .8px;
-  }
-
-  .tc-field input,
-  .tc-field textarea {
-    width: 100%;
-    min-height: 48px;
-    padding: 13px 15px;
-    border: 1px solid #e5e5e5;
-    border-radius: 10px;
-    outline: none;
-    background: #fafafa;
-    color: #111;
-    font: inherit;
-    font-size: 13px;
-    transition: border-color .2s, background .2s, box-shadow .2s;
-  }
-
-  .tc-field textarea {
-    min-height: 95px;
-    resize: vertical;
-  }
-
-  .tc-field input:focus,
-  .tc-field textarea:focus {
-    border-color: #222;
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(0, 0, 0, .055);
-  }
-
-  .tc-field input::placeholder,
-  .tc-field textarea::placeholder {
-    color: #aaa;
-  }
-
-  .tc-field small {
-    color: #999;
-    font-size: 11px;
-  }
-
-  .tc-payment-card {
-    padding-bottom: 23px;
-  }
-
-  .tc-payment-option {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 17px;
-    border: 1px solid #dedede;
-    border-radius: 13px;
-    background: #fafafa;
-  }
-
-  .tc-payment-icon,
-  .tc-cart-icon,
-  .tc-restaurant-icon {
-    display: grid;
-    flex-shrink: 0;
-    place-items: center;
-    width: 43px;
-    height: 43px;
-    border-radius: 12px;
-    background: #111;
-    color: #fff;
-  }
-
-  .tc-payment-copy {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .tc-payment-copy strong {
-    font-size: 13px;
-  }
-
-  .tc-payment-copy span {
-    color: #888;
-    font-size: 11px;
-  }
-
-  .tc-radio-selected {
-    color: #111;
-  }
-
-  .tc-payment-note {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    margin: 15px 0 0;
-    color: #777;
-    font-size: 11px;
-  }
-
-  .tc-summary-card {
-    position: sticky;
-    top: 20px;
-    padding: 24px;
-  }
-
-  .tc-summary-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 23px;
-  }
-
-  .tc-summary-heading h2 {
-    margin-top: 6px;
-  }
-
-  .tc-cart-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 13px;
-  }
-
-  .tc-restaurant {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px;
-    border: 1px solid var(--tc-border);
-    border-radius: 12px;
-    background: #fafafa;
-  }
-
-  .tc-restaurant-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-  }
-
-  .tc-restaurant-copy {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-  }
-
-  .tc-restaurant-copy strong {
-    overflow: hidden;
-    font-size: 12px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .tc-restaurant-copy span {
-    color: #888;
-    font-size: 10px;
-  }
-
-  .tc-status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #159653;
-  }
-
-  .tc-status-closed {
-    background: #d33;
-  }
-
-  .tc-order-items {
-    display: flex;
-    flex-direction: column;
-    gap: 17px;
-    padding: 21px 0;
-  }
-
-  .tc-order-item {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    min-width: 0;
-  }
-
-  .tc-product-image {
-    display: grid;
-    width: 55px;
-    height: 55px;
-    flex-shrink: 0;
-    overflow: hidden;
-    place-items: center;
-    border: 1px solid #eee;
-    border-radius: 11px;
-    background: #f5f5f5;
-    color: #888;
-  }
-
-  .tc-product-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .tc-product-details {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: 5px;
-    min-width: 0;
-  }
-
-  .tc-product-details > strong {
-    overflow: hidden;
-    font-size: 12px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .tc-product-details > span {
-    color: #888;
-    font-size: 10px;
-  }
-
-  .tc-item-total {
-    flex-shrink: 0;
-    font-size: 12px;
-  }
-
-  .tc-quantity-control {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    width: fit-content;
-    margin-top: 3px;
-  }
-
-  .tc-quantity-control button {
-    display: grid;
-    width: 25px;
-    height: 25px;
-    place-items: center;
-    border: 1px solid #e5e5e5;
-    border-radius: 7px;
-    background: #fff;
-    color: #111;
-    cursor: pointer;
-    transition: .2s;
-  }
-
-  .tc-quantity-control button:hover {
-    border-color: #111;
-    background: #111;
-    color: #fff;
-  }
-
-  .tc-quantity-control span {
-    min-width: 10px;
-    text-align: center;
-    font-size: 11px;
-    font-weight: 750;
-  }
-
-  .tc-price-breakdown {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    padding: 19px 0;
-    border-top: 1px solid #eee;
-  }
-
-  .tc-price-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    color: #777;
-    font-size: 12px;
-  }
-
-  .tc-price-row > span:first-child {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-  }
-
-  .tc-price-row > span:last-child {
-    color: #222;
-    font-weight: 650;
-  }
-
-  .tc-total-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 5px;
-    padding-top: 17px;
-    border-top: 1px dashed #ddd;
-  }
-
-  .tc-total-row > div {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .tc-total-row strong {
-    font-size: 14px;
-    font-weight: 850;
-  }
-
-  .tc-total-row > strong {
-    font-size: 19px;
-    letter-spacing: -.5px;
-  }
-
-  .tc-total-row span {
-    color: #999;
-    font-size: 10px;
-  }
-
-  .tc-place-order,
-  .tc-primary-button {
-    display: flex;
-    width: 100%;
-    min-height: 52px;
-    align-items: center;
-    justify-content: center;
-    gap: 11px;
-    border: 1px solid #111;
-    border-radius: 11px;
-    background: #111;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 750;
-    text-decoration: none;
-    cursor: pointer;
-    transition: transform .2s, background .2s;
-  }
-
-  .tc-place-order:hover:not(:disabled),
-  .tc-primary-button:hover {
-    transform: translateY(-2px);
-    background: #333;
-  }
-
-  .tc-place-order:disabled {
-    opacity: .5;
-    cursor: not-allowed;
-  }
-
-  .tc-trust-note,
-  .tc-delivery-note {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    margin-top: 13px;
-    color: #888;
-    font-size: 10px;
-    text-align: center;
-  }
-
-  .tc-help-card {
-    display: flex;
-    gap: 13px;
-    padding: 18px;
-    border: 1px solid var(--tc-border);
-    border-radius: 14px;
-    background: #fafafa;
-    color: #555;
-  }
-
-  .tc-help-card > svg {
-    flex-shrink: 0;
-  }
-
-  .tc-help-card strong {
-    color: #222;
-    font-size: 12px;
-  }
-
-  .tc-help-card p {
-    margin: 5px 0 0;
-    color: #888;
-    font-size: 11px;
-    line-height: 1.6;
-  }
-
-  .tc-alert {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-    padding: 14px 16px;
-    border: 1px solid #f1caca;
-    border-radius: 11px;
-    background: #fff7f7;
-    color: #b42323;
-    font-size: 12px;
-    line-height: 1.5;
-  }
-
-  .tc-alert-info {
-    border-color: #e5e5e5;
-    background: #f8f8f8;
-    color: #555;
-  }
-
-  .tc-empty-cart {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    padding: 25px 10px;
-    color: #999;
-    text-align: center;
-  }
-
-  .tc-empty-cart p {
-    margin: 0;
-    font-size: 12px;
-  }
-
-  .tc-empty-cart a {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #111;
-    font-size: 12px;
-    font-weight: 700;
-    text-decoration: none;
-  }
-
-  .tc-loading {
-    display: flex;
-    min-height: 60vh;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-  }
-
-  .tc-loading-icon {
-    display: grid;
-    width: 60px;
-    height: 60px;
-    place-items: center;
-    border-radius: 18px;
-    background: #111;
-    color: #fff;
-  }
-
-  .tc-loading h2 {
-    margin: 20px 0 5px;
-    font-size: 20px;
-  }
-
-  .tc-loading p {
-    color: #888;
-    font-size: 12px;
-  }
-
-  .tc-skeleton {
-    width: 220px;
-    height: 10px;
-    margin-top: 20px;
-    border-radius: 20px;
-    background: #eee;
-    animation: tc-pulse 1.3s infinite alternate;
-  }
-
-  .tc-skeleton-small {
-    width: 150px;
-    margin-top: 9px;
-  }
-
-  .tc-spin {
-    animation: tc-rotate 1s linear infinite;
-  }
-
-  @keyframes tc-rotate {
-    to { transform: rotate(360deg); }
-  }
-
-  @keyframes tc-pulse {
-    to { opacity: .35; }
-  }
-
-  .tc-success {
-    display: flex;
-    max-width: 540px;
-    min-height: 65vh;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-    padding: 45px 25px;
-    text-align: center;
-  }
-
-  .tc-success-icon {
-    display: grid;
-    width: 82px;
-    height: 82px;
-    margin-bottom: 25px;
-    place-items: center;
-    border: 1px solid #ddd;
-    border-radius: 25px;
-    background: #f8f8f8;
-    color: #111;
-  }
-
-  .tc-success h1 {
-    margin-top: 12px;
-  }
-
-  .tc-order-number {
-    display: flex;
-    width: 100%;
-    flex-direction: column;
-    gap: 9px;
-    margin: 28px 0 18px;
-    padding: 20px;
-    border: 1px dashed #ccc;
-    border-radius: 14px;
-    background: #fafafa;
-  }
-
-  .tc-order-number span {
-    color: #888;
-    font-size: 10px;
-    font-weight: 750;
-    letter-spacing: 1.5px;
-  }
-
-  .tc-order-number strong {
-    font-size: 29px;
-    letter-spacing: -1px;
-  }
-
-  .tc-cod-confirmation {
-    display: flex;
-    width: 100%;
-    align-items: center;
-    gap: 13px;
-    padding: 17px;
-    border: 1px solid #e5e5e5;
-    border-radius: 13px;
-    text-align: left;
-  }
-
-  .tc-cod-confirmation strong {
-    font-size: 13px;
-  }
-
-  .tc-cod-confirmation p {
-    margin: 5px 0 0;
-    color: #888;
-    font-size: 11px;
-  }
-
-  .tc-success-actions {
-    display: flex;
-    width: 100%;
-    flex-direction: column;
-    gap: 11px;
-    margin-top: 22px;
-  }
-
-  .tc-secondary-button {
-    display: flex;
-    min-height: 48px;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #ddd;
-    border-radius: 11px;
-    color: #222;
-    font-size: 12px;
-    font-weight: 700;
-    text-decoration: none;
-    transition: .2s;
-  }
-
-  .tc-secondary-button:hover {
-    border-color: #111;
-  }
-
-  .tc-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 45px;
-    padding: 22px 0;
-    border-top: 1px solid #eee;
-    color: #999;
-    font-size: 10px;
-  }
-
-  .tc-footer span:first-child {
-    color: #111;
-    font-size: 13px;
-    font-weight: 900;
-    letter-spacing: 2px;
-  }
-
-  @media (max-width: 850px) {
-    .thoam-checkout {
-      padding: 25px 18px;
-    }
-
-    .tc-layout {
-      grid-template-columns: 1fr;
-    }
-
-    .tc-summary-card {
-      position: static;
-    }
-  }
-
-  @media (max-width: 520px) {
-    .thoam-checkout {
-      padding: 20px 14px;
-    }
-
-    .tc-topbar {
-      margin-bottom: 30px;
-    }
-
-    .tc-card {
-      padding: 19px;
-      border-radius: 15px;
-    }
-
-    .tc-heading {
-      margin-bottom: 25px;
-    }
-
-    .tc-heading h1 {
-      font-size: 39px;
-    }
-
-    .tc-card-heading {
-      gap: 12px;
-      margin-bottom: 21px;
-    }
-
-    .tc-card-heading h2,
-    .tc-summary-heading h2 {
-      font-size: 16px;
-    }
-
-    .tc-secure-label {
-      padding: 8px 10px;
-      font-size: 11px;
-    }
-
-    .tc-back-link {
-      font-size: 11px;
-    }
-
-    .tc-summary-card {
-      padding: 18px;
-    }
-
-    .tc-footer {
-      margin-top: 30px;
-    }
-
-    .tc-success {
-      padding: 35px 8px;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .thoam-checkout *,
-    .thoam-checkout *::before,
-    .thoam-checkout *::after {
-      scroll-behavior: auto !important;
-      animation-duration: .01ms !important;
-      transition-duration: .01ms !important;
-    }
-  }
-`}</style>
-
+      <CheckoutStyles />
     </>
+  );
+}
+
+function CheckoutStyles() {
+  return (
+    <style jsx global>{`
+      .tc-page{--black:#111;--muted:#777;--border:#e9e9e9;max-width:1180px;min-height:80vh;margin:auto;padding:32px 24px;color:#111}
+      .tc-topbar,.tc-topbar a,.tc-topbar>span{display:flex;align-items:center;justify-content:space-between;gap:9px}
+      .tc-topbar a,.tc-topbar>span{font-size:13px;color:#555;text-decoration:none;font-weight:650}
+      .tc-topbar>span{border:1px solid var(--border);border-radius:30px;padding:10px 14px}
+      .tc-heading{margin:38px 0 28px}.tc-eyebrow{font-size:10px;font-weight:850;letter-spacing:2px;color:#888}
+      .tc-heading h1{font-size:clamp(38px,5vw,55px);letter-spacing:-3px;margin:8px 0;font-weight:900}.tc-heading h1 span{color:#999}
+      .tc-heading p,.tc-card-title p{color:#888;font-size:13px;margin:5px 0}
+      .tc-layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(330px,.85fr);gap:23px;align-items:start}
+      .tc-main-column,.tc-side{display:flex;flex-direction:column;gap:19px;min-width:0}
+      .tc-card{padding:25px;border:1px solid var(--border);border-radius:18px;background:#fff;box-shadow:0 8px 30px #00000006}
+      .tc-card-title{display:flex;gap:14px;align-items:center;margin-bottom:24px}
+      .tc-card-title>span{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#111;color:white;font-weight:800}
+      .tc-card-title h2,.tc-summary-title h2{font-size:18px;margin:0;font-weight:850}
+      .tc-fields{display:flex;flex-direction:column;gap:18px}.tc-fields label{display:flex;flex-direction:column;gap:8px;font-size:12px;font-weight:750}
+      .tc-fields input,.tc-fields textarea{width:100%;padding:13px 14px;border:1px solid #e5e5e5;border-radius:10px;background:#fafafa;color:#111;font:inherit;font-size:13px;outline:none}
+      .tc-fields input:focus,.tc-fields textarea:focus{border-color:#111;background:white;box-shadow:0 0 0 3px #0000000a}
+      .tc-fields textarea{resize:vertical}.tc-fields small{font-size:9px;color:#999}
+      .tc-payment{display:flex;align-items:center;gap:13px;border:1px solid #ddd;border-radius:12px;padding:16px;background:#fafafa}
+      .tc-payment>div{flex:1;display:flex;flex-direction:column;gap:5px}.tc-payment strong{font-size:13px}.tc-payment small{font-size:11px;color:#888}
+      .tc-muted{font-size:11px;color:#888}.tc-summary{position:sticky;top:18px}
+      .tc-summary-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}.tc-summary-title h2{margin-top:6px}
+      .tc-restaurant{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid var(--border);border-radius:12px;background:#fafafa}
+      .tc-restaurant>div{display:flex;flex-direction:column;gap:4px}.tc-restaurant strong{font-size:12px}.tc-restaurant small{font-size:10px;color:#888}
+      .tc-items{display:flex;flex-direction:column;gap:16px;padding:20px 0}
+      .tc-item{display:flex;align-items:center;gap:10px;font-size:12px}.tc-item>strong{white-space:nowrap}
+      .tc-product-image{width:53px;height:53px;flex-shrink:0;border-radius:10px;overflow:hidden;background:#f5f5f5;display:grid;place-items:center}
+      .tc-product-image img{width:100%;height:100%;object-fit:cover}
+      .tc-product{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}.tc-product strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .tc-product small{color:#888;font-size:10px}.tc-quantity{display:flex;align-items:center;gap:10px;margin-top:3px}
+      .tc-quantity button{width:24px;height:24px;border:1px solid #ddd;border-radius:7px;background:white;display:grid;place-items:center;cursor:pointer}
+      .tc-quantity button:hover{background:#111;color:#fff;border-color:#111}
+      .tc-offer{display:flex;align-items:center;gap:11px;padding:14px;border:1px solid #d9e7dd;background:#f7fbf8;border-radius:12px}
+      .tc-offer-icon{width:36px;height:36px;display:grid;place-items:center;background:#111;color:white;border-radius:10px;flex-shrink:0}
+      .tc-offer-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}.tc-offer-copy strong{font-size:12px}.tc-offer-copy small{font-size:10px;color:#777}
+      .tc-applied{font-size:9px;font-weight:850;letter-spacing:1px;color:#28663d}
+      .tc-breakdown{display:flex;flex-direction:column;gap:13px;padding:18px 0;border-top:1px solid #eee}
+      .tc-breakdown>div{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;color:#777}
+      .tc-breakdown>div span{display:flex;align-items:center;gap:6px}.tc-breakdown strong{color:#222}
+      .tc-breakdown .tc-discount,.tc-breakdown .tc-discount strong{color:#237343}
+      .tc-breakdown .tc-total{border-top:1px dashed #ddd;padding-top:16px;margin-top:4px;color:#111;font-weight:850}
+      .tc-total strong{font-size:19px;color:#111}
+      .tc-place,.tc-primary{width:100%;min-height:51px;display:flex;align-items:center;justify-content:center;gap:10px;background:#111;color:white;border:0;border-radius:11px;font-weight:800;font-size:13px;text-decoration:none;cursor:pointer}
+      .tc-place:hover,.tc-primary:hover{background:#333}.tc-place:disabled{opacity:.5;cursor:not-allowed}
+      .tc-note{display:flex;justify-content:center;align-items:center;gap:7px;color:#888;font-size:10px}
+      .tc-help{display:flex;gap:12px;padding:17px;border:1px solid var(--border);border-radius:13px;background:#fafafa}
+      .tc-help strong{font-size:12px}.tc-help p{font-size:11px;color:#888;margin:5px 0 0}
+      .tc-alert{display:flex;gap:10px;padding:14px;margin-bottom:18px;border:1px solid #f0cccc;border-radius:10px;background:#fff7f7;color:#a22;font-size:12px}
+      .tc-info{background:#f8f8f8;border-color:#ddd;color:#555}
+      .tc-footer{display:flex;justify-content:space-between;border-top:1px solid #eee;margin-top:40px;padding:22px 0;color:#999;font-size:11px}
+      .tc-footer strong{letter-spacing:2px;color:#111}
+      .tc-loading,.tc-success{min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:13px}
+      .tc-loading p,.tc-success p{font-size:13px;color:#888}
+      .tc-success-icon{width:80px;height:80px;border-radius:24px;background:#f5f5f5;display:grid;place-items:center}
+      .tc-success h1{font-size:42px;margin:0}.tc-order-number{width:min(100%,420px);padding:20px;border:1px dashed #ccc;border-radius:13px;display:flex;flex-direction:column;gap:8px}
+      .tc-order-number span{font-size:10px;letter-spacing:1.5px;color:#888}.tc-order-number strong{font-size:28px}
+      .tc-cod{width:min(100%,420px);display:flex;align-items:center;gap:12px;text-align:left;padding:16px;border:1px solid #ddd;border-radius:12px}
+      .tc-cod p{margin:4px 0 0}.tc-secondary{color:#222;font-size:12px;text-decoration:none;padding:12px}
+      .tc-spin{animation:tcspin 1s linear infinite}@keyframes tcspin{to{transform:rotate(360deg)}}
+      @media(max-width:850px){.tc-layout{grid-template-columns:1fr}.tc-summary{position:static}}
+      @media(max-width:520px){.tc-page{padding:22px 14px}.tc-card{padding:18px}.tc-heading{margin:30px 0 22px}.tc-heading h1{font-size:40px}}
+      @media(prefers-reduced-motion:reduce){.tc-page *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+    `}</style>
   );
 }
 
 export default function CheckoutPage() {
   return (
-    <Suspense
-      fallback={
-        <>
-          <Header />
-          <main className="thoam-checkout">
-            <div className="tc-loading">
-              <LoaderCircle className="tc-spin" size={28} />
-              <h2>Loading checkout...</h2>
-            </div>
-          </main>
-        </>
-      }
-    >
+    <Suspense fallback={<><Header /><main className="tc-page"><div className="tc-loading"><LoaderCircle size={28} />Loading checkout...</div></main><CheckoutStyles /></>}>
       <CheckoutInner />
     </Suspense>
   );
