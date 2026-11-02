@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
     const detail = orderError?.message || "Could not create order.";
 
     const conflict =
-      /closed|unavailable|not enough stock|disabled delivery|offer/i.test(
+      /closed|unavailable|not enough stock|disabled delivery|offer|scheduled|serving time/i.test(
         detail
       );
 
