@@ -48,7 +48,7 @@ create policy "menu schedules public read"
       from public.products p
       join public.restaurants r on r.id = p.restaurant_id
       where p.id = product_id
-        and p.restaurant_id = restaurant_id
+        and p.restaurant_id = product_menu_schedules.restaurant_id
         and p.is_available = true
         and r.status = 'approved'
     )
