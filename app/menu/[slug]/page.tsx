@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 import { createClient } from "@/lib/supabase/server";
 import PublicMenu from "@/components/menu/PublicMenu";
@@ -9,96 +7,58 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-type MenuSchedule = {
-  product_id: string;
-  weekdays: number[];
-  starts_at: string;
-  ends_at: string;
-};
-
-function getIndiaClock() {
-  const parts = new Intl.DateTimeFormat("en-IN", {
-    timeZone: "Asia/Kolkata",
-    weekday: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(new Date());
-
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  const weekdayIndex: Record<string, number> = {
-    Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
-  };
-
-  return {
-    weekday: weekdayIndex[values.weekday] ?? 0,
-    time: `${values.hour}:${values.minute}`,
-  };
-}
-
-function isScheduledNow(schedule: MenuSchedule, weekday: number, time: string) {
-  // Windows are same-day intervals; overnight windows are intentionally not accepted.
-  const start = String(schedule.starts_at).slice(0, 5);
-  const end = String(schedule.ends_at).slice(0, 5);
-  return schedule.weekdays.includes(weekday) && time >= start && time < end;
-}
-
 export default async function PublicMenuPage({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
 
   const { data: restaurant, error: restaurantError } = await supabase
     .from("restaurants")
-    .select("id, name, slug, whatsapp_number, logo_url, description, delivery_fee, is_open, status")
+    .select(
+      "id, name, slug, whatsapp_number, logo_url, description, delivery_fee, is_open, status"
+    )
     .eq("slug", slug)
     .maybeSingle();
 
   if (restaurantError) {
     console.error("Restaurant query error:", restaurantError);
-    return <main className="menu-message"><h1>Unable to load menu</h1><p>Please try again later.</p></main>;
+    return (
+      <main className="menu-message">
+        <h1>Unable to load menu</h1>
+        <p>Please try again later.</p>
+      </main>
+    );
   }
 
-  if (!restaurant || restaurant.status !== "approved") {
-    return <main className="menu-message"><h1>Restaurant not found</h1><p>This restaurant menu may no longer be available.</p></main>;
+  if (!restaurant) {
+    return (
+      <main className="menu-message">
+        <h1>Restaurant not found</h1>
+        <p>This restaurant menu may no longer be available.</p>
+      </main>
+    );
   }
 
   if (!restaurant.whatsapp_number) {
-    return <main className="menu-message"><h1>{restaurant.name}</h1><p>Online WhatsApp ordering is not configured for this restaurant yet.</p></main>;
-  }
-
-  const [{ data: products, error: productsError }, { data: schedules, error: schedulesError }] =
-    await Promise.all([
-      supabase.from("products")
-        .select("id, name, description, price, image_url, category, is_available")
-        .eq("restaurant_id", restaurant.id)
-        .eq("is_available", true)
-        .order("name"),
-      supabase.from("product_menu_schedules")
-        .select("product_id, weekdays, starts_at, ends_at")
-        .eq("restaurant_id", restaurant.id)
-        .eq("is_enabled", true),
-    ]);
-
-  if (productsError || schedulesError) {
-    console.error("Public menu data error:", productsError ?? schedulesError);
-    return <main className="menu-message"><h1>Menu temporarily unavailable</h1><p>Please refresh the page and try again.</p></main>;
-  }
-
-  const clock = getIndiaClock();
-  const schedulesByProduct = new Map<string, MenuSchedule[]>();
-  for (const row of (schedules ?? []) as MenuSchedule[]) {
-    const current = schedulesByProduct.get(row.product_id) ?? [];
-    current.push(row);
-    schedulesByProduct.set(row.product_id, current);
-  }
-
-  const visibleProducts = (products ?? []).filter((product) => {
-    const windows = schedulesByProduct.get(product.id) ?? [];
-    return windows.length === 0 || windows.some((window) =>
-      isScheduledNow(window, clock.weekday, clock.time)
+    return (
+      <main className="menu-message">
+        <h1>{restaurant.name}</h1>
+        <p>
+          Online WhatsApp ordering is not configured for this restaurant yet.
+        </p>
+      </main>
     );
-  });
+  }
 
+  const { data: products, error: productsError } = await supabase
+    .from("products")
+    .select(
+      "id, name, description, price, image_url, category, is_available"
+    )
+    .eq("restaurant_id", restaurant.id)
+    .eq("is_available", true)
+    .order("name");
+
+  // Offers are configured by the restaurant owner; this page only displays currently valid ones.
   const now = new Date();
   const { data: offerRows, error: offersError } = await supabase
     .from("offers")
@@ -115,20 +75,34 @@ export default async function PublicMenuPage({ params }: Props) {
     return (!startsAt || startsAt <= now) && (!endsAt || endsAt >= now);
   });
 
+  if (productsError) {
+    console.error("Products query error:", productsError);
+    return (
+      <main className="menu-message">
+        <h1>Menu temporarily unavailable</h1>
+        <p>Please refresh the page and try again.</p>
+      </main>
+    );
+  }
+
   return (
-    <PublicMenu
-      restaurant={{
-        id: restaurant.id,
-        name: restaurant.name,
-        slug: restaurant.slug,
-        whatsapp_number: restaurant.whatsapp_number,
-        logo_url: restaurant.logo_url,
-        description: restaurant.description,
-        delivery_fee: restaurant.delivery_fee,
-        is_open: restaurant.is_open,
-      }}
-      products={visibleProducts as MenuProduct[]}
-      offers={activeOffers}
-    />
+    <>
+      <PublicMenu
+        restaurant={{
+          id: restaurant.id,
+          name: restaurant.name,
+          slug: restaurant.slug,
+          whatsapp_number: restaurant.whatsapp_number,
+          logo_url: restaurant.logo_url,
+          description: restaurant.description,
+          delivery_fee: restaurant.delivery_fee,
+          is_open: restaurant.is_open,
+        }}
+        products={(products ?? []) as MenuProduct[]}
+        offers={activeOffers}
+      />
+
+      
+    </>
   );
 }

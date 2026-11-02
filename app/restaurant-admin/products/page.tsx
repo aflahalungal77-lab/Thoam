@@ -244,12 +244,6 @@ export default function ProductsPage() {
         <ArrowLeft size={15} /> Dashboard
       </Link>
 
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
-        <Link href="/restaurant-admin/menu-schedule" className="ta-secondary-button">
-          <Package size={16} /> Time-based menu
-        </Link>
-      </div>
-
       <header className="ta-manage-heading">
         <div>
           <span className="ta-eyebrow">YOUR MENU WORKSPACE</span>
