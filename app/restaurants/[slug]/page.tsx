@@ -291,6 +291,10 @@ export default function RestaurantPage() {
 
   function addToCart(product: FoodProduct) {
     if (!restaurant?.is_open) return;
+    if (!isProductAvailableNow(product.id)) {
+      setMessage("This item is not available at the current time.");
+      return;
+    }
 
     changeQuantity(product, 1);
     setCartOpen(true);
