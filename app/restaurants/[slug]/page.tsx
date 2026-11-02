@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -264,11 +264,11 @@ export default function RestaurantPage() {
     }
   }
 
-  function isProductAvailableNow(productId: string) {
+  const isProductAvailableNow = useCallback((productId: string) => {
     return scheduleReady && isWithinMenuSchedule(
       menuSchedules, productId, indiaClock.weekday, indiaClock.time
     );
-  }
+  }, [scheduleReady, menuSchedules, indiaClock]);
 
   function changeQuantity(product: FoodProduct, amount: number) {
     if (amount > 0 && !restaurant?.is_open) return;
@@ -337,7 +337,7 @@ export default function RestaurantPage() {
       const matchesSchedule = isProductAvailableNow(product.id);
       return matchesSearch && matchesCategory && matchesFood && matchesSchedule;
     });
-  }, [products, search, category, foodFilter, menuSchedules, scheduleReady, indiaClock]);
+  }, [products, search, category, foodFilter, isProductAvailableNow]);
 
   const cartItems = products.filter(
     (product) => (cart[product.id] || 0) > 0
