@@ -463,6 +463,15 @@ export default function RestaurantAdmin() {
           </Link>
 
           <Link
+            href="/restaurant-admin/menu-schedule"
+            className="ta-nav-link ta-nav-link-schedule"
+          >
+            <Clock3 size={18} />
+            Menu Schedule
+            <ChevronRight size={15} className="ta-nav-arrow" />
+          </Link>
+
+          <Link
             href="/restaurant-admin/orders"
             className="ta-nav-link"
           >
@@ -1133,6 +1142,22 @@ export default function RestaurantAdmin() {
           )}
         </div>
       </section>
+
+      <style jsx global>{`
+        .ta-nav-link-schedule {
+          border: 1px solid #e8e7e2;
+          background: linear-gradient(135deg, #fff 0%, #f7f7f4 100%);
+        }
+        .ta-nav-link-schedule:hover {
+          border-color: #c9c8c0;
+          background: #f0f0ec;
+          transform: translateX(2px);
+        }
+        .ta-nav-link-schedule:focus-visible {
+          outline: 2px solid #171717;
+          outline-offset: 2px;
+        }
+      `}</style>
     </main>
   );
 }
