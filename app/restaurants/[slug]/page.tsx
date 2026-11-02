@@ -100,7 +100,7 @@ export default function RestaurantPage() {
   const [offers, setOffers] = useState<RestaurantOffer[]>([]);
   const [menuSchedules, setMenuSchedules] = useState<ProductMenuSchedule[]>([]);
   const [scheduleReady, setScheduleReady] = useState(false);
-  const [indiaClock, setIndiaClock] = useState(() => getIndiaClock());
+  const [indiaClock, setIndiaClock] = useState({ weekday: -1, time: "--:--" });
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [message, setMessage] = useState("");
@@ -110,7 +110,9 @@ export default function RestaurantPage() {
   const [cartOpen, setCartOpen] = useState(false);
 
   useEffect(() => {
-    const timer = window.setInterval(() => setIndiaClock(getIndiaClock()), 15_000);
+    const refreshClock = () => setIndiaClock(getIndiaClock());
+    refreshClock();
+    const timer = window.setInterval(refreshClock, 15_000);
     return () => window.clearInterval(timer);
   }, []);
 
