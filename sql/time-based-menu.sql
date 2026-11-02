@@ -65,7 +65,7 @@ comment on table public.product_menu_schedules is
 create or replace function public.prevent_overlapping_product_menu_schedules()
 returns trigger
 language plpgsql
-set search_path = public
+set search_path = pg_catalog, public
 as $$
 begin
   if not exists (
@@ -112,7 +112,7 @@ create or replace function public.enforce_product_menu_schedule()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public
 as $$
 declare
   v_restaurant_id uuid;
