@@ -199,10 +199,11 @@ export default function MenuSchedulePage() {
             .eq("id", editingId).eq("restaurant_id", restaurantId)
         : await supabase.from("product_menu_schedules").insert(values);
       if (result.error) throw result.error;
-      setMessageType("success");
-      setMessage(editingId ? "Schedule updated successfully." : "Schedule created successfully.");
+      const successMessage = editingId ? "Schedule updated successfully." : "Schedule created successfully.";
       resetForm();
       await load();
+      setMessageType("success");
+      setMessage(successMessage);
     } catch (error) {
       console.error("Menu schedule save failed:", error);
       setMessageType("error");
