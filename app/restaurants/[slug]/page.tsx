@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -42,6 +42,37 @@ type RestaurantOffer = {
   is_active: boolean;
 };
 
+type ProductMenuSchedule = {
+  product_id: string;
+  weekdays: number[];
+  starts_at: string;
+  ends_at: string;
+};
+
+function getIndiaClock() {
+  const parts = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata", weekday: "short", hour: "2-digit",
+    minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const weekdayMap: Record<string, number> = {
+    Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+  };
+  return { weekday: weekdayMap[values.weekday] ?? 0, time: `${values.hour}:${values.minute}` };
+}
+
+function isWithinMenuSchedule(
+  schedules: ProductMenuSchedule[], productId: string, weekday: number, time: string
+) {
+  const windows = schedules.filter((schedule) => schedule.product_id === productId);
+  if (windows.length === 0) return true;
+  return windows.some((schedule) => {
+    const start = String(schedule.starts_at).slice(0, 5);
+    const end = String(schedule.ends_at).slice(0, 5);
+    return schedule.weekdays.includes(weekday) && time >= start && time < end;
+  });
+}
+
 function isOfferCurrentlyValid(offer: RestaurantOffer) {
   const now = Date.now();
 
@@ -67,6 +98,9 @@ export default function RestaurantPage() {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [products, setProducts] = useState<FoodProduct[]>([]);
   const [offers, setOffers] = useState<RestaurantOffer[]>([]);
+  const [menuSchedules, setMenuSchedules] = useState<ProductMenuSchedule[]>([]);
+  const [scheduleReady, setScheduleReady] = useState(false);
+  const [indiaClock, setIndiaClock] = useState({ weekday: -1, time: "--:--" });
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [message, setMessage] = useState("");
@@ -74,6 +108,13 @@ export default function RestaurantPage() {
   const [category, setCategory] = useState("All");
   const [foodFilter, setFoodFilter] = useState<FoodFilter>("all");
   const [cartOpen, setCartOpen] = useState(false);
+
+  useEffect(() => {
+    const refreshClock = () => setIndiaClock(getIndiaClock());
+    refreshClock();
+    const timer = window.setInterval(refreshClock, 15_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -107,7 +148,7 @@ export default function RestaurantPage() {
 
         setRestaurant(restaurantData as Restaurant);
 
-        const [productsResult, offersResult] = await Promise.all([
+        const [productsResult, offersResult, schedulesResult] = await Promise.all([
           supabase
             .from("products")
             .select(
@@ -125,6 +166,12 @@ export default function RestaurantPage() {
             .eq("restaurant_id", restaurantData.id)
             .eq("is_active", true)
             .order("created_at", { ascending: false }),
+
+          supabase
+            .from("product_menu_schedules")
+            .select("product_id,weekdays,starts_at,ends_at")
+            .eq("restaurant_id", restaurantData.id)
+            .eq("is_enabled", true),
         ]);
 
         if (cancelled) return;
@@ -132,6 +179,16 @@ export default function RestaurantPage() {
         if (productsResult.error) throw productsResult.error;
 
         setProducts((productsResult.data || []) as FoodProduct[]);
+
+        if (schedulesResult.error) {
+          console.error("Unable to verify menu schedules:", schedulesResult.error);
+          setMenuSchedules([]);
+          setScheduleReady(false);
+          setMessage("Menu availability could not be verified. Please refresh and try again shortly.");
+        } else {
+          setMenuSchedules((schedulesResult.data || []) as ProductMenuSchedule[]);
+          setScheduleReady(true);
+        }
 
         if (!offersResult.error) {
           setOffers(
@@ -207,8 +264,18 @@ export default function RestaurantPage() {
     }
   }
 
+  const isProductAvailableNow = useCallback((productId: string) => {
+    return scheduleReady && isWithinMenuSchedule(
+      menuSchedules, productId, indiaClock.weekday, indiaClock.time
+    );
+  }, [scheduleReady, menuSchedules, indiaClock]);
+
   function changeQuantity(product: FoodProduct, amount: number) {
     if (amount > 0 && !restaurant?.is_open) return;
+    if (amount > 0 && !isProductAvailableNow(product.id)) {
+      setMessage("This item is outside its scheduled serving time.");
+      return;
+    }
 
     setMessage("");
 
@@ -226,6 +293,10 @@ export default function RestaurantPage() {
 
   function addToCart(product: FoodProduct) {
     if (!restaurant?.is_open) return;
+    if (!isProductAvailableNow(product.id)) {
+      setMessage("This item is not available at the current time.");
+      return;
+    }
 
     changeQuantity(product, 1);
     setCartOpen(true);
@@ -263,9 +334,10 @@ export default function RestaurantPage() {
         (foodFilter === "veg" && product.is_veg) ||
         (foodFilter === "nonveg" && !product.is_veg);
 
-      return matchesSearch && matchesCategory && matchesFood;
+      const matchesSchedule = isProductAvailableNow(product.id);
+      return matchesSearch && matchesCategory && matchesFood && matchesSchedule;
     });
-  }, [products, search, category, foodFilter]);
+  }, [products, search, category, foodFilter, isProductAvailableNow]);
 
   const cartItems = products.filter(
     (product) => (cart[product.id] || 0) > 0
@@ -282,6 +354,10 @@ export default function RestaurantPage() {
     0
   );
 
+  const unavailableCartItems = cartItems.filter(
+    (product) => !isProductAvailableNow(product.id)
+  );
+
   function checkout() {
     if (!supabase) {
       setMessage("Connect Supabase to place real orders.");
@@ -290,6 +366,16 @@ export default function RestaurantPage() {
 
     if (!restaurant?.is_open) {
       setMessage("This restaurant is currently closed.");
+      return;
+    }
+
+    if (!scheduleReady) {
+      setMessage("Menu availability could not be verified. Please refresh before checkout.");
+      return;
+    }
+
+    if (unavailableCartItems.length > 0) {
+      setMessage("Some cart items are outside their serving time. Remove them or choose currently available dishes.");
       return;
     }
 
@@ -429,6 +515,16 @@ export default function RestaurantPage() {
 
               {/* Menu */}
               <section className="premium-menu-section">
+                <div className="thoam-schedule-note">
+                  <Clock3 size={15} />
+                  <span>Menu timings follow India Standard Time (IST) and update automatically.</span>
+                  <strong>{indiaClock.time} IST</strong>
+                </div>
+                {!scheduleReady && (
+                  <div className="thoam-schedule-warning" role="alert">
+                    Menu timings are temporarily unavailable. Ordering is paused until availability can be verified.
+                  </div>
+                )}
                 <div className="premium-menu-heading">
                   <div>
                     <span className="premium-label">
@@ -1342,9 +1438,20 @@ export default function RestaurantPage() {
           }
         }
 
-        /* Mobile */
+        .thoam-schedule-note {
+          display:flex;align-items:center;gap:9px;margin:0 0 18px;padding:11px 13px;
+          border:1px solid #e9e8e3;border-radius:12px;background:#fafaf8;color:#5e5e58;
+          font-size:11px;line-height:1.4;
+        }
+        .thoam-schedule-note strong { margin-left:auto;color:#171717;white-space:nowrap;font-size:11px; }
+        .thoam-schedule-warning {
+          margin:0 0 16px;padding:12px 14px;border:1px solid #e7c8c8;border-radius:12px;
+          background:#fff8f8;color:#8f2525;font-size:12px;
+        }
 
         @media (max-width: 600px) {
+          .thoam-schedule-note { align-items:flex-start;flex-wrap:wrap;font-size:10px; }
+          .thoam-schedule-note strong { margin-left:24px; }
           .thoam-offers {
             margin: 19px 0 27px;
           }
