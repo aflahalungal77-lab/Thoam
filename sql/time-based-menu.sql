@@ -25,6 +25,10 @@ create index if not exists product_menu_schedules_lookup_idx
 
 alter table public.product_menu_schedules enable row level security;
 
+-- Explicit table grants; row-level security remains the tenant boundary.
+grant select on public.product_menu_schedules to anon, authenticated;
+grant insert, update, delete on public.product_menu_schedules to authenticated;
+
 drop policy if exists "menu schedules owner manage" on public.product_menu_schedules;
 create policy "menu schedules owner manage"
   on public.product_menu_schedules for all to authenticated
@@ -64,6 +68,14 @@ language plpgsql
 set search_path = public
 as $$
 begin
+  if not exists (
+    select 1 from public.products p
+    where p.id = new.product_id
+      and p.restaurant_id = new.restaurant_id
+  ) then
+    raise exception 'The selected product does not belong to this restaurant.';
+  end if;
+
   perform pg_advisory_xact_lock(
     hashtextextended(new.restaurant_id::text || ':' || new.product_id::text, 0)
   );
