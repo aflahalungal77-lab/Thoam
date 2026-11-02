@@ -56,7 +56,7 @@ export default function MenuSchedulePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState("");
-  const [clock, setClock] = useState(() => indiaClock());
+  const [clock, setClock] = useState({ weekday: -1, time: "--:--" });
 
   const load = useCallback(async () => {
     if (!supabase) {
@@ -120,7 +120,9 @@ export default function MenuSchedulePage() {
 
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
-    const timer = window.setInterval(() => setClock(indiaClock()), 15_000);
+    const refreshClock = () => setClock(indiaClock());
+    refreshClock();
+    const timer = window.setInterval(refreshClock, 15_000);
     return () => window.clearInterval(timer);
   }, []);
 
