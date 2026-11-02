@@ -56,3 +56,80 @@ create policy "menu schedules public read"
 
 comment on table public.product_menu_schedules is
   'Optional time windows for products. No enabled schedule rows means the product is available all day when is_available is true. Timezone: Asia/Kolkata.';
+
+
+-- Enforce scheduled availability inside PostgreSQL as well as in the UI.
+-- This protects service-role order endpoints from accepting out-of-window items.
+create or replace function public.enforce_product_menu_schedule()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant_id uuid;
+  v_local_now timestamp;
+  v_weekday smallint;
+  v_local_time time;
+  v_has_schedule boolean;
+  v_is_in_window boolean;
+begin
+  if new.product_id is null then
+    return new;
+  end if;
+
+  select o.restaurant_id into v_restaurant_id
+  from public.orders o
+  where o.id = new.order_id;
+
+  if v_restaurant_id is null then
+    raise exception 'Invalid order restaurant.';
+  end if;
+
+  if not exists (
+    select 1 from public.products p
+    where p.id = new.product_id
+      and p.restaurant_id = v_restaurant_id
+      and p.is_available = true
+  ) then
+    raise exception 'A selected menu item is unavailable.';
+  end if;
+
+  v_local_now := timezone('Asia/Kolkata', now());
+  v_weekday := extract(dow from v_local_now)::smallint;
+  v_local_time := v_local_now::time;
+
+  select exists (
+    select 1 from public.product_menu_schedules s
+    where s.product_id = new.product_id
+      and s.restaurant_id = v_restaurant_id
+      and s.is_enabled = true
+  ) into v_has_schedule;
+
+  if not v_has_schedule then
+    return new;
+  end if;
+
+  select exists (
+    select 1 from public.product_menu_schedules s
+    where s.product_id = new.product_id
+      and s.restaurant_id = v_restaurant_id
+      and s.is_enabled = true
+      and v_weekday = any(s.weekdays)
+      and v_local_time >= s.starts_at
+      and v_local_time < s.ends_at
+  ) into v_is_in_window;
+
+  if not v_is_in_window then
+    raise exception 'This item is not available at this time.';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists enforce_product_menu_schedule_before_insert
+  on public.order_items;
+create trigger enforce_product_menu_schedule_before_insert
+  before insert on public.order_items
+  for each row execute function public.enforce_product_menu_schedule();
