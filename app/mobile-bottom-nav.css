@@ -14,3 +14,18 @@
 @media(prefers-reduced-motion:no-preference){
   .thoam-bottom-nav__item{transition:color .18s ease,transform .18s ease}
 }
+
+/* Keep customer checkout actions clear of the fixed mobile navigation. */
+@media(max-width:640px){
+  .premium-cart-footer{
+    padding-bottom:calc(20px + 76px + env(safe-area-inset-bottom));
+  }
+
+  .tc-summary{
+    padding-bottom:calc(18px + 76px + env(safe-area-inset-bottom));
+  }
+
+  .tc-page{
+    padding-bottom:calc(100px + env(safe-area-inset-bottom));
+  }
+}
