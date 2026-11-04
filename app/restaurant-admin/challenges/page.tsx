@@ -19,6 +19,7 @@ export default function RestaurantChallengesPage(){
  const [progress,setProgress]=useState<Progress[]>([]);
  const [form,setForm]=useState<FormState>(blank);
  const [editing,setEditing]=useState<string|null>(null);
+ const [showForm,setShowForm]=useState(false);
  const [loading,setLoading]=useState(true);
  const [saving,setSaving]=useState(false);
  const [message,setMessage]=useState("");
@@ -41,8 +42,8 @@ export default function RestaurantChallengesPage(){
   finally{setLoading(false);}
  },[router]);
  useEffect(()=>{void load();},[load]);
- function newChallenge(){setEditing(null);setForm({...blank,starts_at:localInput(new Date().toISOString()),ends_at:localInput(new Date(Date.now()+30*86400000).toISOString())});setMessage("");}
- function edit(c:Challenge){setEditing(c.id);setForm({title:c.title,challenge_word:c.challenge_word,description:c.description||"",image_url:c.image_url||"",starts_at:localInput(c.starts_at),ends_at:localInput(c.ends_at),status:c.status,reward_title:c.reward_title||"",reward_description:c.reward_description||""});}
+ function newChallenge(){setEditing(null);setForm({...blank,starts_at:localInput(new Date().toISOString()),ends_at:localInput(new Date(Date.now()+30*86400000).toISOString())});setMessage("");setShowForm(true);}
+ function edit(c:Challenge){setEditing(c.id);setShowForm(true);setForm({title:c.title,challenge_word:c.challenge_word,description:c.description||"",image_url:c.image_url||"",starts_at:localInput(c.starts_at),ends_at:localInput(c.ends_at),status:c.status,reward_title:c.reward_title||"",reward_description:c.reward_description||""});}
  async function save(e:FormEvent){e.preventDefault();if(!supabase||saving)return;setMessage("");
   if(!form.title.trim()||!form.challenge_word.trim()||!form.starts_at||!form.ends_at){setMessage("Please complete the challenge name, word and dates.");return;}
   if(new Date(form.ends_at)<=new Date(form.starts_at)){setMessage("End date must be after start date.");return;}
@@ -50,7 +51,7 @@ export default function RestaurantChallengesPage(){
   setSaving(true);
   const payload={title:form.title.trim(),challenge_word:form.challenge_word.toUpperCase().replace(/[^A-Z0-9]/g,""),description:form.description.trim()||null,image_url:form.image_url.trim()||null,starts_at:new Date(form.starts_at).toISOString(),ends_at:new Date(form.ends_at).toISOString(),status:form.status,reward_title:form.reward_title.trim()||null,reward_description:form.reward_description.trim()||null,restaurant_id:restaurantId};
   const result=editing?await supabase.from("challenges").update(payload).eq("id",editing).eq("restaurant_id",restaurantId):await supabase.from("challenges").insert(payload);
-  if(result.error)setMessage(result.error.message);else{setForm(blank);setEditing(null);await load();}
+  if(result.error)setMessage(result.error.message);else{setForm(blank);setEditing(null);setShowForm(false);await load();}
   setSaving(false);
  }
  async function remove(c:Challenge){if(!supabase||!confirm("Delete this challenge and its progress? This cannot be undone."))return;const {error}=await supabase.from("challenges").delete().eq("id",c.id).eq("restaurant_id",restaurantId);if(error)setMessage(error.message);else await load();}
@@ -60,8 +61,8 @@ export default function RestaurantChallengesPage(){
   <Link href="/restaurant-admin" className="rc-back"><ArrowLeft size={15}/> Dashboard</Link>
   <header className="rc-head"><div><span className="rc-kicker">RESTAURANT PARTNER · REWARDS</span><h1>Challenges<span>.</span></h1><p>Create a challenge, set its reward and track customer progress.</p></div><button className="rc-primary" onClick={newChallenge}><Plus size={16}/> New challenge</button></header>
   {message&&<div className="rc-message" role="alert">{message}</div>}
-  {(editing!==null||form.title!=="")&&<form className="rc-form" onSubmit={save}>
-   <div className="rc-form-head"><div><span>{editing?"EDIT CHALLENGE":"CREATE CHALLENGE"}</span><h2>{editing?"Update challenge":"Challenge details"}</h2></div><button type="button" className="rc-cancel" onClick={()=>{setForm(blank);setEditing(null);}}>Cancel</button></div>
+  {showForm&&<form className="rc-form" onSubmit={save}>
+   <div className="rc-form-head"><div><span>{editing?"EDIT CHALLENGE":"CREATE CHALLENGE"}</span><h2>{editing?"Update challenge":"Challenge details"}</h2></div><button type="button" className="rc-cancel" onClick={()=>{setForm(blank);setEditing(null);setShowForm(false);}}>Cancel</button></div>
    <div className="rc-fields">
     <label>Challenge name<input required maxLength={120} value={form.title} onChange={e=>setForm({...form,title:e.target.value})} placeholder="Complete the restaurant name"/></label>
     <label>Required letters<input required maxLength={32} value={form.challenge_word} onChange={e=>setForm({...form,challenge_word:e.target.value})} placeholder="MANDHI"/><small>Repeated letters are required separately.</small></label>
