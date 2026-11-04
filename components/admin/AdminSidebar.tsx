@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Trophy } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 
 const links = [
   { href: "/thoam-admin", label: "Overview", icon: LayoutDashboard },
-  { href: "/thoam-admin/challenges", label: "Challenges", icon: Trophy },
 ];
 
 export default function AdminSidebar() {
