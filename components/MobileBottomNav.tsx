@@ -7,7 +7,7 @@ import { Home, Store, Trophy, ClipboardList } from "lucide-react";
 const items = [
   { label: "Home", href: "/", icon: Home },
   { label: "Restaurants", href: "/restaurants", icon: Store },
-  { label: "Challenges", href: null, icon: Trophy },
+  { label: "Challenges", href: "/challenges", icon: Trophy },
   { label: "My Orders", href: "/my-orders", icon: ClipboardList },
 ];
 
@@ -16,6 +16,7 @@ export default function MobileBottomNav() {
 
   // Keep this navigation exclusive to customer-facing pages.
   if (
+    pathname.startsWith("/thoam-admin") ||
     pathname.startsWith("/restaurant-admin") ||
     pathname.startsWith("/owner") ||
     pathname.startsWith("/restaurant-registration") ||
@@ -45,13 +46,7 @@ export default function MobileBottomNav() {
             <span className="thoam-bottom-nav__icon"><Icon size={20} strokeWidth={isActive(href) ? 2.2 : 1.8} /></span>
             <span className="thoam-bottom-nav__label">{label}</span>
           </Link>
-        ) : (
-          <div key={label} className="thoam-bottom-nav__item is-coming-soon" aria-disabled="true" title="Coming soon">
-            <span className="thoam-bottom-nav__icon"><Icon size={20} strokeWidth={1.8} /></span>
-            <span className="thoam-bottom-nav__label">{label}</span>
-            <span className="thoam-bottom-nav__soon">Soon</span>
-          </div>
-        )
+        ) : null
       )}
     </nav>
   );

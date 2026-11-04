@@ -25,6 +25,7 @@ import {
   Volume2,
   VolumeX,
   Tag,
+  Trophy,
 } from "lucide-react";
 
 type RestaurantData = {
@@ -487,6 +488,15 @@ export default function RestaurantAdmin() {
           >
             <Tag size={18} />
             Offers
+            <ChevronRight size={15} className="ta-nav-arrow" />
+          </Link>
+
+          <Link
+            href="/restaurant-admin/challenges"
+            className="ta-nav-link"
+          >
+            <Trophy size={18} />
+            Challenges
             <ChevronRight size={15} className="ta-nav-arrow" />
           </Link>
 

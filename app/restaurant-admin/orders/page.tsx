@@ -191,6 +191,31 @@ export default function OrdersPage() {
     }
   }
 
+  async function markCashCollected(id: string) {
+    const client = supabase;
+    if (!client || updatingId) return;
+    setUpdatingId(id);
+    setMsg("");
+    try {
+      const { error } = await client
+        .from("orders")
+        .update({ payment_status: "collected" })
+        .eq("id", id)
+        .eq("payment_status", "pending");
+      if (error) throw error;
+      setItems((current) =>
+        current.map((item) =>
+          item.id === id ? { ...item, payment_status: "collected" } : item
+        )
+      );
+      setMsg("Cash collection recorded. Eligible challenge letters are awarded automatically when the order is completed.");
+    } catch (error) {
+      setMsg(error instanceof Error ? error.message : "Could not record cash collection.");
+    } finally {
+      setUpdatingId("");
+    }
+  }
+
   // Delivered orders remain included in revenue calculations.
   // Cancelled/rejected orders are excluded.
 // Only delivered/completed orders count towards revenue.
@@ -464,12 +489,22 @@ const todayRevenue = revenueOrders
                     <div>
                       <span>Payment · COD</span>
                       <strong>
-                        {String(order.payment_status || "").toLowerCase() === "paid"
+                        {String(order.payment_status || "").toLowerCase() === "collected"
                           ? "Cash collected"
                           : isCancelled(status)
                             ? "—"
                             : "Collect on delivery"}
                       </strong>
+                      {String(order.payment_status || "").toLowerCase() === "pending" && !isCancelled(status) && (
+                        <button
+                          type="button"
+                          className="ta-payment-collect"
+                          disabled={Boolean(updatingId)}
+                          onClick={() => void markCashCollected(order.id)}
+                        >
+                          {updatingId === order.id ? "Saving…" : "Mark cash collected"}
+                        </button>
+                      )}
                     </div>
 
                     <div>

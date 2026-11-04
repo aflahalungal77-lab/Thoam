@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 import {
   ShieldCheck,
   Store,
@@ -331,6 +332,7 @@ export default function AdminPage() {
           </button>
         </div>
       </header>
+      <AdminSidebar />
 
       <main className="container admin-container">
         <div className="page-head admin-page-head">
