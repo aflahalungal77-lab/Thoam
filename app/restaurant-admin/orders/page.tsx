@@ -554,6 +554,26 @@ const todayRevenue = revenueOrders
           </div>
         )}
       </section>
+      <style jsx global>{`
+        .ta-order-meta>div{min-width:0}
+        .ta-payment-collect{
+          display:inline-flex;align-items:center;justify-content:center;gap:7px;
+          min-height:36px;margin-top:9px;padding:0 13px;border:1px solid #171717;
+          border-radius:9px;background:#171717;color:#fff;font-size:11px;
+          font-weight:800;line-height:1;cursor:pointer;
+          box-shadow:0 3px 0 rgba(0,0,0,.12);
+          transition:background .18s ease,border-color .18s ease,transform .18s ease,opacity .18s ease;
+        }
+        .ta-payment-collect:hover:not(:disabled){background:#3a3a3a;border-color:#3a3a3a;transform:translateY(-1px)}
+        .ta-payment-collect:active:not(:disabled){transform:translateY(0)}
+        .ta-payment-collect:focus-visible{outline:3px solid #a3a3a3;outline-offset:3px}
+        .ta-payment-collect:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+        @media(max-width:640px){
+          .ta-order-meta>div:has(.ta-payment-collect){grid-column:1/-1;padding:12px;border:1px solid #e8e8e8;border-radius:12px;background:#fafafa}
+          .ta-payment-collect{width:100%;min-height:42px;font-size:12px}
+        }
+        @media(prefers-reduced-motion:reduce){.ta-payment-collect{transition:none}}
+      `}</style>
     </main>
   );
 }
