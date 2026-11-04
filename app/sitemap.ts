@@ -10,6 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: siteUrl, changeFrequency: "weekly", priority: 1 },
     { url: `${siteUrl}/restaurants`, changeFrequency: "daily", priority: 0.9 },
     { url: `${siteUrl}/owner`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${siteUrl}/challenges`, changeFrequency: "daily", priority: 0.6 },
   ];
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
