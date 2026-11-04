@@ -50,9 +50,20 @@ create table if not exists public.challenge_letter_events (
 );
 create index if not exists challenge_letter_customer_idx on public.challenge_letter_events(customer_id,challenge_id);
 
+create table if not exists public.challenge_redemptions (
+ id uuid primary key default gen_random_uuid(),
+ progress_id uuid not null unique references public.challenge_progress(id) on delete restrict,
+ challenge_id uuid not null references public.challenges(id) on delete restrict,
+ customer_id uuid not null references auth.users(id) on delete restrict,
+ restaurant_id uuid not null references public.restaurants(id) on delete restrict,
+ redeemed_by uuid not null references auth.users(id) on delete restrict,
+ redeemed_at timestamptz not null default now()
+);
+create index if not exists challenge_redemptions_restaurant_idx on public.challenge_redemptions(restaurant_id,redeemed_at desc);
+
 alter table public.challenges enable row level security;
 alter table public.challenge_progress enable row level security;
-alter table public.challenge_letter_events enable row level security;
+alter table public.challenge_letter_events enable row level security;\nalter table public.challenge_redemptions enable row level security;
 
 drop policy if exists "Public can view live challenges" on public.challenges;
 drop policy if exists "Admins can view all challenges" on public.challenges;
@@ -74,6 +85,10 @@ drop policy if exists "Customers read own letter events" on public.challenge_let
 create policy "Customers read own letter events" on public.challenge_letter_events for select to authenticated using(customer_id=auth.uid());
 drop policy if exists "Owners read own letter events" on public.challenge_letter_events;
 create policy "Owners read own letter events" on public.challenge_letter_events for select to authenticated using(exists(select 1 from public.challenges c join public.profiles p on p.restaurant_id=c.restaurant_id where c.id=challenge_id and p.id=auth.uid() and p.role='restaurant_owner'));
+drop policy if exists "Customers read own redemptions" on public.challenge_redemptions;
+create policy "Customers read own redemptions" on public.challenge_redemptions for select to authenticated using(customer_id=auth.uid());
+drop policy if exists "Owners read own redemptions" on public.challenge_redemptions;
+create policy "Owners read own redemptions" on public.challenge_redemptions for select to authenticated using(restaurant_id=(select p.restaurant_id from public.profiles p where p.id=auth.uid() and p.role='restaurant_owner'));
 
 -- Atomically award one next required character per eligible order.
 create or replace function public.award_challenge_letters_for_order()
@@ -90,7 +105,7 @@ begin
  for c in
    select * from public.challenges
    where restaurant_id=new.restaurant_id and status='live'
-     and starts_at<=coalesce(new.updated_at,now()) and ends_at>=coalesce(new.updated_at,now())
+     and starts_at<=new.created_at and ends_at>=new.created_at
    order by created_at,id
  loop
    perform pg_advisory_xact_lock(hashtextextended(c.id::text||':'||new.customer_id::text,0));
@@ -139,6 +154,8 @@ begin
  for update;
  if not found then raise exception 'Challenge progress not found for this restaurant'; end if;
  if v_progress.reward_status<>'ready' then raise exception 'Reward is not ready or has already been redeemed'; end if;
+ insert into public.challenge_redemptions(progress_id,challenge_id,customer_id,restaurant_id,redeemed_by)
+ values(v_progress.id,v_progress.challenge_id,v_progress.customer_id,v_owner_restaurant,auth.uid());
  update public.challenge_progress set reward_status='redeemed',redeemed_at=now(),updated_at=now()
  where id=p_progress_id;
  return jsonb_build_object('success',true,'redeemed_at',now());
