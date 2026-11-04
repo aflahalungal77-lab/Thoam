@@ -42,10 +42,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const location = [data.area, data.city || "Malappuram"]
       .filter(Boolean)
       .join(", ");
-    const title = `${data.name} Menu in ${location}`;
+    const fullTitle = `${data.name} Menu in ${location}`;
+    const title = fullTitle.length <= 60 ? fullTitle : `${data.name} Menu | Tho'am`;
     const description = (
-      data.description?.trim() ||
-      `Explore the menu, browse available dishes and order from ${data.name} in ${location}, Kerala with Tho'am.`
+      `${data.description?.trim() ? data.description.trim() + " " : ""}Explore ${data.name}'s menu and order online in ${location} with Tho'am.`
     ).slice(0, 160);
     const canonicalPath = `/restaurants/${encodeURIComponent(slug)}`;
 
