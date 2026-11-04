@@ -82,6 +82,12 @@ export default function Restaurants() {
     );
   };
 
+  useEffect(() => {
+    requestLocation();
+    // Ask for location when the restaurant directory opens; users can deny and continue browsing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const filtered = useMemo(() => {
     const matches = items.filter((restaurant) => {
       const searchableText = [
@@ -122,7 +128,8 @@ export default function Restaurants() {
       .map(restaurant => ({ restaurant, distance: distanceKm(userLocation.latitude, userLocation.longitude, Number(restaurant.latitude), Number(restaurant.longitude)) }))
       .sort((a,b) => a.distance-b.distance);
     const within15km = located.filter(item => item.distance <= 15);
-    return (within15km.length ? within15km : located).map(item => item.restaurant);
+    if (within15km.length) return within15km.map(item => item.restaurant);
+    return located.length ? located.map(item => item.restaurant) : matches;
   }, [items, query, area, filter, userLocation]);
 
   const clearSearch = () => {
