@@ -258,8 +258,8 @@ export default function AdminPage() {
 
       if (error) throw error;
 
-      setMsg(`"${r.name}" and its associated data were permanently deleted.`);
       await load();
+      setMsg(`"${r.name}" and its associated data were permanently deleted.`);
     } catch (error: any) {
       setMsg(
         error?.message ||
