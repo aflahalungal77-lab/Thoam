@@ -21,6 +21,14 @@ import type { Restaurant } from "@/lib/types";
 
 type FilterType = "all" | "open" | "qr";
 
+function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const rad = (value: number) => (value * Math.PI) / 180;
+  const dLat = rad(lat2 - lat1);
+  const dLon = rad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export default function Restaurants() {
   const [items, setItems] = useState<Restaurant[]>([]);
   const [query, setQuery] = useState("");
@@ -66,12 +74,6 @@ export default function Restaurants() {
     };
   }, []);
 
-  const distanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const rad = (v: number) => v * Math.PI / 180;
-    const dLat = rad(lat2-lat1), dLon = rad(lon2-lon1);
-    const a = Math.sin(dLat/2)**2 + Math.cos(rad(lat1))*Math.cos(rad(lat2))*Math.sin(dLon/2)**2;
-    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  };
   const requestLocation = () => {
     if (!navigator.geolocation) { setLocationStatus("unsupported"); return; }
     setLocationStatus("loading");
@@ -125,7 +127,7 @@ export default function Restaurants() {
     });
     if (!userLocation) return matches;
     const located = matches.filter(r => r.latitude != null && r.longitude != null)
-      .map(restaurant => ({ restaurant, distance: distanceKm(userLocation.latitude, userLocation.longitude, Number(restaurant.latitude), Number(restaurant.longitude)) }))
+      .map(restaurant => ({ restaurant, distance: calculateDistanceKm(userLocation.latitude, userLocation.longitude, Number(restaurant.latitude), Number(restaurant.longitude)) }))
       .sort((a,b) => a.distance-b.distance);
     const within15km = located.filter(item => item.distance <= 15);
     if (within15km.length) return within15km.map(item => item.restaurant);
@@ -408,7 +410,7 @@ export default function Restaurants() {
                     <div className="restaurant-card-title-row">
                       <h3>{restaurant.name}</h3>
                     </div>
-                    {userLocation && restaurant.latitude != null && restaurant.longitude != null && <p className="restaurant-distance">{distanceKm(userLocation.latitude,userLocation.longitude,Number(restaurant.latitude),Number(restaurant.longitude)).toFixed(1)} km away</p>}
+                    {userLocation && restaurant.latitude != null && restaurant.longitude != null && <p className="restaurant-distance">{calculateDistanceKm(userLocation.latitude,userLocation.longitude,Number(restaurant.latitude),Number(restaurant.longitude)).toFixed(1)} km away</p>}
 
                     <div className="restaurant-card-location">
                       <MapPin size={14} />
