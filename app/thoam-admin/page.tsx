@@ -243,7 +243,7 @@ export default function AdminPage() {
     if (!supabase) return;
 
     const confirmed = confirm(
-      `Permanently delete "${r.name}"?\n\nThis cannot be undone. Historical orders or related products may prevent deletion if your database has foreign-key restrictions.\n\nContinue?`
+      `Permanently delete "${r.name}" and all its associated data?\\n\\nThis removes its products, tables, challenges, challenge progress, redemptions, and historical orders. This action cannot be undone.\\n\\nContinue?`
     );
 
     if (!confirmed) return;
@@ -252,13 +252,13 @@ export default function AdminPage() {
     setMsg("");
 
     try {
-      const { error } = await supabase
-        .from("restaurants")
-        .delete()
-        .eq("id", r.id);
+      const { error } = await supabase.rpc("admin_delete_restaurant", {
+        p_restaurant_id: r.id,
+      });
 
       if (error) throw error;
 
+      setMsg(`"${r.name}" and its associated data were permanently deleted.`);
       await load();
     } catch (error: any) {
       setMsg(
