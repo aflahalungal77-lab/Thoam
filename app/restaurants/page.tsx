@@ -21,6 +21,14 @@ import type { Restaurant } from "@/lib/types";
 
 type FilterType = "all" | "open" | "qr";
 
+function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const rad = (value: number) => (value * Math.PI) / 180;
+  const dLat = rad(lat2 - lat1);
+  const dLon = rad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export default function Restaurants() {
   const [items, setItems] = useState<Restaurant[]>([]);
   const [query, setQuery] = useState("");
@@ -28,6 +36,8 @@ export default function Restaurants() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "ready" | "denied" | "unsupported">("idle");
 
   useEffect(() => {
     let active = true;
@@ -41,7 +51,7 @@ export default function Restaurants() {
       const { data, error } = await supabase
         .from("restaurants")
         .select(
-          "id,name,slug,description,area,city,logo_url,is_open,delivery_enabled,qr_enabled"
+          "id,name,slug,description,area,city,logo_url,is_open,delivery_enabled,qr_enabled,latitude,longitude"
         )
         .eq("status", "approved")
         .order("name");
@@ -64,8 +74,24 @@ export default function Restaurants() {
     };
   }, []);
 
+  const requestLocation = () => {
+    if (!navigator.geolocation) { setLocationStatus("unsupported"); return; }
+    setLocationStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      pos => { setUserLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }); setLocationStatus("ready"); },
+      error => setLocationStatus(error.code === error.PERMISSION_DENIED ? "denied" : "idle"),
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+    );
+  };
+
+  useEffect(() => {
+    requestLocation();
+    // Ask for location when the restaurant directory opens; users can deny and continue browsing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const filtered = useMemo(() => {
-    return items.filter((restaurant) => {
+    const matches = items.filter((restaurant) => {
       const searchableText = [
         restaurant.name,
         restaurant.area,
@@ -99,7 +125,14 @@ export default function Restaurants() {
 
       return matchesQuery && matchesArea && matchesFilter;
     });
-  }, [items, query, area, filter]);
+    if (!userLocation) return matches;
+    const located = matches.filter(r => r.latitude != null && r.longitude != null)
+      .map(restaurant => ({ restaurant, distance: calculateDistanceKm(userLocation.latitude, userLocation.longitude, Number(restaurant.latitude), Number(restaurant.longitude)) }))
+      .sort((a,b) => a.distance-b.distance);
+    const within15km = located.filter(item => item.distance <= 15);
+    if (within15km.length) return within15km.map(item => item.restaurant);
+    return located.length ? located.map(item => item.restaurant) : matches;
+  }, [items, query, area, filter, userLocation]);
 
   const clearSearch = () => {
     setQuery("");
@@ -140,6 +173,9 @@ export default function Restaurants() {
               <MapPin size={14} />
               <span>Discover local favourites around you</span>
             </div>
+            <button type="button" onClick={requestLocation} disabled={locationStatus === "loading"} className="restaurants-location-button"><MapPin size={15} /> {locationStatus === "loading" ? "Finding your location..." : locationStatus === "ready" ? "Location enabled · Nearby first" : "Use my location"}</button>
+            {locationStatus === "denied" && <p className="restaurants-location-help">Location permission was denied. Enable it in browser settings, or browse all restaurants.</p>}
+            {locationStatus === "unsupported" && <p className="restaurants-location-help">Location is not supported by this browser. You can still browse all restaurants.</p>}
           </div>
 
           <div className="restaurants-hero-decoration" aria-hidden="true">
@@ -160,7 +196,7 @@ export default function Restaurants() {
               <div className="restaurants-section-kicker">
                 FIND YOUR NEXT FAVOURITE
               </div>
-              <h2>Explore restaurants</h2>
+              <h2>{userLocation ? "Restaurants near you" : "Explore restaurants"}</h2>
               <p>
                 Find a place, browse the options, and discover your next meal.
               </p>
@@ -374,6 +410,7 @@ export default function Restaurants() {
                     <div className="restaurant-card-title-row">
                       <h3>{restaurant.name}</h3>
                     </div>
+                    {userLocation && restaurant.latitude != null && restaurant.longitude != null && <p className="restaurant-distance">{calculateDistanceKm(userLocation.latitude,userLocation.longitude,Number(restaurant.latitude),Number(restaurant.longitude)).toFixed(1)} km away</p>}
 
                     <div className="restaurant-card-location">
                       <MapPin size={14} />
@@ -442,6 +479,12 @@ export default function Restaurants() {
           <span>Local food, connected.</span>
         </footer>
       </main>
+      <style jsx global>{`
+        .restaurants-location-button{display:inline-flex;align-items:center;gap:9px;margin-top:18px;min-height:42px;padding:0 15px;border:1px solid #171717;border-radius:999px;background:#171717;color:#fff;font:700 12px Arial,sans-serif;cursor:pointer}
+        .restaurants-location-button:disabled{opacity:.65;cursor:wait}
+        .restaurants-location-help{max-width:430px;margin:9px 0 0;color:#777;font-size:11px;line-height:1.6}
+        .restaurant-distance{margin:5px 0 0;color:#555;font-size:11px;font-weight:700}
+      `}</style>
     </>
   );
 }

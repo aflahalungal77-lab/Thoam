@@ -82,6 +82,21 @@ export async function POST(request: Request) {
     const whatsappNumber = String(body.whatsappNumber ?? "").replace(/\D/g, "");
     const description = String(body.description ?? "").trim();
     const logoUrl = String(body.logoUrl ?? "").trim();
+    const latitude = body.latitude == null ? null : Number(body.latitude);
+    const longitude = body.longitude == null ? null : Number(body.longitude);
+    if (
+      (latitude === null) !== (longitude === null) ||
+      (latitude !== null &&
+        (longitude === null ||
+          !Number.isFinite(latitude) ||
+          latitude < -90 ||
+          latitude > 90 ||
+          !Number.isFinite(longitude) ||
+          longitude < -180 ||
+          longitude > 180))
+    ) {
+      return jsonError("Invalid restaurant location coordinates.", 400);
+    }
 
     if (!ownerName || !restaurantName || !slug || !whatsappNumber) {
       return jsonError("Please complete all required fields.", 400);
@@ -210,6 +225,8 @@ export async function POST(request: Request) {
         whatsapp_number: whatsappNumber,
         description: description || null,
         logo_url: logoUrl || null,
+        latitude,
+        longitude,
         is_open: true,
         status: "pending",
       })
