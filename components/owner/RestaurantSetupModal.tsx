@@ -15,6 +15,7 @@ import {
   ExternalLink,
   Sparkles,
   X,
+  MapPin,
 } from "lucide-react";
 
 type Props = {
@@ -28,10 +29,18 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [logoPreview, setLogoPreview] = useState("");
+  const [restaurantLocation, setRestaurantLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locationMessage, setLocationMessage] = useState("");
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  function captureRestaurantLocation() {
+    setLocationMessage("");
+    if (!navigator.geolocation) { setLocationMessage("Location is not supported by this browser."); return; }
+    navigator.geolocation.getCurrentPosition(pos => { setRestaurantLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }); setLocationMessage("Restaurant location saved for nearby discovery."); }, () => setLocationMessage("Could not get location. Allow location access and try again."), { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+  }
 
   function handleRestaurantName(value: string) {
     setRestaurantName(value);
@@ -176,6 +185,8 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
           slug: cleanSlug,
           whatsappNumber: cleanWhatsappNumber,
           logoUrl,
+          latitude: restaurantLocation?.latitude ?? null,
+          longitude: restaurantLocation?.longitude ?? null,
         }),
       });
 
@@ -457,6 +468,12 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
               </p>
             </div>
 
+            <div className="section-heading section-heading-spaced"><span className="section-number">04</span><div><h2>Restaurant location</h2><p>Help nearby customers discover your restaurant.</p></div></div>
+            <div className="field-group">
+              <button type="button" className="submit-button" onClick={captureRestaurantLocation} style={{ marginTop: 0, justifyContent: "center", background: "#fff", color: "#171717" }}><MapPin size={17} /> {restaurantLocation ? "Update restaurant location" : "Use this device at the restaurant"}</button>
+              {locationMessage && <p className="field-description" role="status">{locationMessage}</p>}
+              <p className="field-description">Use this while physically at the restaurant. You can skip it for now.</p>
+            </div>
             {error && (
               <div
                 role="alert"
