@@ -5,6 +5,8 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { ArrowRight, CalendarDays, Check, Clock3, Gift, MapPin, Sparkles, Trophy } from "lucide-react";
 
+type Progress = { challenge_id:string; progress_count:number; collected_letters:string[]; reward_status:string };
+
 type Challenge = {
   id: string; title: string; challenge_word: string; description: string | null;
   image_url: string | null; reward_title: string | null; reward_description: string | null;
@@ -21,6 +23,7 @@ function dateLabel(value:string){return new Intl.DateTimeFormat("en-IN",{day:"nu
 
 export default function ChallengesPage(){
   const [items,setItems]=useState<Challenge[]>([]);
+  const [progress,setProgress]=useState<Record<string,Progress>>({});
   const [selected,setSelected]=useState<string>("");
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState("");
@@ -37,7 +40,17 @@ export default function ChallengesPage(){
         .eq("status","live").lte("starts_at",now).gte("ends_at",now).order("ends_at",{ascending:true});
       if(!alive)return;
       if(error){setError("Unable to load live challenges. Please try again later.");}
-      else{const rows=(data||[]) as unknown as Challenge[];setItems(rows);setSelected(rows[0]?.id||"");}
+      else{
+        const rows=(data||[]) as unknown as Challenge[];
+        setItems(rows);setSelected(rows[0]?.id||"");
+        const {data:{user}}=await supabase.auth.getUser();
+        if(user){
+          const {data:earned}=await supabase.from("challenge_progress")
+            .select("challenge_id,progress_count,collected_letters,reward_status")
+            .eq("customer_id",user.id);
+          if(alive){const map:Record<string,Progress>={};(earned||[]).forEach((p:any)=>{map[p.challenge_id]=p;});setProgress(map);}
+        }
+      }
       setLoading(false);
     }
     void load();
@@ -57,6 +70,9 @@ export default function ChallengesPage(){
   },[items,location]);
   const current=ordered.find(x=>x.id===selected)||ordered[0]||null;
   const letters=current?.challenge_word.replace(/[^a-z0-9]/gi,"").toUpperCase().split("")||[];
+  const currentProgress=current?progress[current.id]:undefined;
+  const earnedLetters=currentProgress?.collected_letters||[];
+  const progressCount=currentProgress?.progress_count||0;
 
   return <main className="ch-page">
     <header className="ch-top"><Link href="/" className="ch-brand">Tho’am<span>.</span></Link><span className="ch-top-tag">REWARDS & EXPERIENCES</span></header>
@@ -82,9 +98,9 @@ export default function ChallengesPage(){
         <div className="ch-current-image" style={current.image_url?{backgroundImage:"url("+JSON.stringify(current.image_url)+")"}:undefined}><span>{current.restaurant?.name||"Tho’am"}</span></div>
         <div className="ch-current-info"><span className="ch-restaurant-name">{current.restaurant?.name||"Partner restaurant"}</span><h3>{current.title}</h3><p>{current.description||"Collect every letter to complete this challenge."}</p><div className="ch-reward"><Gift size={16}/><div><b>{current.reward_title||"Challenge reward"}</b><span>{current.reward_description||"Reward details will be announced by the restaurant."}</span></div></div></div>
       </div>
-      <div className="ch-progress-head"><span>Your progress</span><b>0 / {letters.length}</b></div><div className="ch-progress-track"><span/></div>
-      <div className="ch-letters-label">LETTERS TO COLLECT</div><div className="ch-letters">{letters.map((letter,i)=><span key={i}>{letter}</span>)}</div>
-      <p className="ch-progress-note">Letter collection will appear here when challenge rewards are connected to eligible orders.</p>
+      <div className="ch-progress-head"><span>Your progress</span><b>{progressCount} / {letters.length}</b></div><div className="ch-progress-track"><span style={{width:(letters.length?Math.min(100,progressCount/letters.length*100):0)+"%"}}/></div>
+      <div className="ch-letters-label">COLLECTED LETTERS</div><div className="ch-letters">{letters.map((letter,i)=><span key={i} className={i<progressCount?"earned":""}>{i<progressCount?earnedLetters[i]||letter:"·"}</span>)}</div>
+      <p className="ch-progress-note">{currentProgress?.reward_status==="ready"?"Challenge completed! Visit the restaurant to claim your reward.":currentProgress?.reward_status==="redeemed"?"Your reward has been marked as redeemed.":progressCount>0?"Your letters are saved automatically from eligible completed and paid delivery orders.":"Sign in and place eligible delivery orders to start collecting letters. Guest QR orders are not eligible."}</p>
     </section>}
 
     <section className="ch-how"><div className="ch-eyebrow">SIMPLE & REWARDING</div><h2>How challenges work</h2><div className="ch-steps"><div><b>01</b><strong>Choose a challenge</strong><span>Pick a live challenge from a nearby restaurant.</span></div><div><b>02</b><strong>Place eligible orders</strong><span>Collect letters as you order during the challenge.</span></div><div><b>03</b><strong>Complete & win</strong><span>Finish the name and claim the reward.</span></div></div></section>
@@ -131,7 +147,7 @@ export default function ChallengesPage(){
       .ch-progress-head{display:flex;justify-content:space-between;margin:25px 0 9px;font-size:12px}.ch-progress-head b{font-variant-numeric:tabular-nums}
       .ch-progress-track{height:8px;border-radius:99px;background:#414141;overflow:hidden}.ch-progress-track span{display:block;width:0;height:100%;background:#fff}
       .ch-letters-label{margin-top:19px;color:#aaa;font-size:9px;font-weight:900;letter-spacing:.16em}.ch-letters{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
-      .ch-letters span{display:grid;place-items:center;width:35px;height:38px;border-radius:8px;background:#fff;color:#111;font-size:16px;font-weight:950}
+      .ch-letters span{display:grid;place-items:center;width:35px;height:38px;border-radius:8px;background:#414141;color:#aaa;font-size:16px;font-weight:950}.ch-letters span.earned{background:#fff;color:#111}
       .ch-progress-note{margin:13px 0 0;color:#aaa;font-size:10px;line-height:1.5}
       .ch-how{padding-bottom:65px}.ch-how h2{margin-bottom:19px}
       .ch-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
