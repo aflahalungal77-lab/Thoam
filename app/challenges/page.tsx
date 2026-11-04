@@ -42,7 +42,9 @@ export default function ChallengesPage(){
       if(error){setError("Unable to load live challenges. Please try again later.");}
       else{
         const rows=(data||[]) as unknown as Challenge[];
-        setItems(rows);setSelected(rows[0]?.id||"");
+        setItems(rows);
+        const savedChallenge = window.localStorage.getItem("thoam-current-challenge");
+        setSelected(savedChallenge && rows.some((row) => row.id === savedChallenge) ? savedChallenge : "");
         const {data:{user}}=await supabase.auth.getUser();
         if(user){
           const {data:earned}=await supabase.from("challenge_progress")
@@ -68,7 +70,10 @@ export default function ChallengesPage(){
       return da-db;
     });
   },[items,location]);
-  const current=ordered.find(x=>x.id===selected)||ordered[0]||null;
+  const current=selected ? ordered.find(x=>x.id===selected)||null : null;
+  useEffect(()=>{
+    if(selected) window.localStorage.setItem("thoam-current-challenge",selected);
+  },[selected]);
   const letters=current?.challenge_word.replace(/[^a-z0-9]/gi,"").toUpperCase().split("")||[];
   const currentProgress=current?progress[current.id]:undefined;
   const earnedLetters=currentProgress?.collected_letters||[];
@@ -92,6 +97,7 @@ export default function ChallengesPage(){
       })}</div>}
     </section>
 
+    {!current && ordered.length>0 && !loading && <section className="ch-current-empty"><Trophy size={20}/><div><strong>No current challenge selected</strong><span>Choose a challenge above to see its personal progress and collected letters here.</span></div></section>}
     {current&&<section className="ch-current">
       <div className="ch-current-head"><div><div className="ch-eyebrow light">YOUR PICK</div><h2>Current selected challenge</h2></div><span className="ch-selected-tag"><Check size={12}/> SELECTED</span></div>
       <div className="ch-current-main">
@@ -123,17 +129,19 @@ export default function ChallengesPage(){
       .ch-live-dot,.ch-live-pill{display:inline-flex;align-items:center;gap:7px;font-size:9px;font-weight:900;letter-spacing:.12em}
       .ch-live-dot{padding:8px 11px;border-radius:99px;background:#e9f6ec;color:#28633a}
       .ch-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-      .ch-live-card{overflow:hidden;border:1px solid #e7e7e4;border-radius:17px;background:#fff;transition:border-color .2s,transform .2s}
+      .ch-live-card{overflow:hidden;border:1px solid #e7e7e4;border-radius:14px;background:#fff;transition:border-color .2s,transform .2s}
       .ch-live-card.chosen{border-color:#111;box-shadow:0 12px 35px #0000000c}
-      .ch-card-image{height:190px;background:linear-gradient(135deg,#292929,#777);background-size:cover;background-position:center;display:flex;align-items:end;padding:15px}
+      .ch-card-image{height:142px;background:linear-gradient(135deg,#292929,#777);background-size:cover;background-position:center;display:flex;align-items:end;padding:15px}
       .ch-card-image span,.ch-current-image span{padding:7px 10px;border-radius:7px;background:#ffffffed;color:#111;font-size:10px;font-weight:900}
-      .ch-card-body{padding:18px}.ch-card-meta{display:flex;justify-content:space-between;align-items:center;color:#777;font-size:10px}
+      .ch-card-body{padding:14px}.ch-card-meta{display:flex;justify-content:space-between;align-items:center;color:#777;font-size:10px}
       .ch-card-meta>span:last-child{display:flex;align-items:center;gap:4px}
       .ch-live-pill{color:#23673b;letter-spacing:.04em}.ch-live-pill i{width:6px;height:6px;border-radius:50%;background:#2c9c53}
-      .ch-card-body h3{font-size:21px;letter-spacing:-.04em;margin:12px 0 6px}.ch-card-body>p{min-height:42px;color:#777;font-size:12px;line-height:1.6;margin:0}
+      .ch-card-body h3{font-size:18px;letter-spacing:-.04em;margin:12px 0 6px}.ch-card-body>p{min-height:34px;color:#777;font-size:12px;line-height:1.6;margin:0}
       .ch-card-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:17px;padding-top:14px;border-top:1px solid #eee}
       .ch-card-foot>span{display:flex;align-items:center;gap:5px;color:#777;font-size:10px}
       .ch-card-foot button{display:flex;align-items:center;gap:6px;border:0;border-radius:99px;background:#111;color:#fff;padding:10px 13px;font-size:10px;font-weight:800;cursor:pointer}
+      .ch-current-empty{max-width:1072px;margin:0 auto 48px;padding:22px 25px;display:flex;align-items:center;gap:14px;border:1px dashed #bdbdb8;border-radius:15px;background:#fff;color:#555}
+      .ch-current-empty div{display:flex;flex-direction:column;gap:4px}.ch-current-empty strong{font-size:13px;color:#111}.ch-current-empty span{font-size:11px;color:#777;line-height:1.5}
       .ch-empty{min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;border:1px dashed #d5d5d1;border-radius:16px;color:#777;text-align:center;font-size:12px;padding:24px}
       .ch-empty strong{color:#222;font-size:15px}.ch-location-note{display:flex;gap:7px;align-items:center;color:#777;font-size:11px;margin:0 0 12px}
       .ch-current{max-width:1072px;margin:0 auto 55px;padding:28px;border-radius:23px;background:#111;color:#fff;box-shadow:0 22px 55px #00000017}
@@ -153,7 +161,7 @@ export default function ChallengesPage(){
       .ch-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
       .ch-steps>div{padding:19px;border:1px solid #e5e5e1;border-radius:14px;background:#fff;display:flex;flex-direction:column;gap:8px}
       .ch-steps b{color:#999;font-size:10px;letter-spacing:.1em}.ch-steps strong{font-size:13px}.ch-steps span{color:#777;font-size:11px;line-height:1.6}
-      @media(max-width:700px){.ch-hero{padding:43px 19px 34px}.ch-section,.ch-how{padding-left:19px;padding-right:19px}.ch-list{grid-template-columns:1fr}.ch-card-image{height:165px}.ch-current{margin:0 15px 42px;padding:20px;border-radius:18px}.ch-current-main{grid-template-columns:104px 1fr;gap:14px}.ch-current-image{height:120px}.ch-current-info h3{font-size:20px}.ch-current-info>p{font-size:11px}.ch-current-head h2{font-size:19px}.ch-steps{grid-template-columns:1fr}.ch-hero h1{font-size:49px}}
+      @media(max-width:700px){.ch-hero{padding:43px 19px 34px}.ch-section,.ch-how{padding-left:19px;padding-right:19px}.ch-list{grid-template-columns:1fr}.ch-card-image{height:125px}.ch-current-empty{margin:0 15px 42px}.ch-current{margin:0 15px 42px;padding:20px;border-radius:18px}.ch-current-main{grid-template-columns:104px 1fr;gap:14px}.ch-current-image{height:120px}.ch-current-info h3{font-size:20px}.ch-current-info>p{font-size:11px}.ch-current-head h2{font-size:19px}.ch-steps{grid-template-columns:1fr}.ch-hero h1{font-size:49px}}
       @media(prefers-reduced-motion:reduce){.ch-live-card{transition:none}}
     `}</style>
   </main>;
