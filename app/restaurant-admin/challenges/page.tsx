@@ -59,7 +59,7 @@ export default function RestaurantChallengesPage(){
  const names=new Map(rows.map(c=>[c.id,c.title]));
  return <main className="rc-page">
   <Link href="/restaurant-admin" className="rc-back"><ArrowLeft size={15}/> Dashboard</Link>
-  <header className="rc-head"><div><span className="rc-kicker">RESTAURANT PARTNER · REWARDS</span><h1>Challenges<span>.</span></h1><p>Create a challenge, set its reward and track customer progress.</p></div><button className="rc-primary" onClick={newChallenge}><Plus size={16}/> New challenge</button></header>
+  <header className="rc-head"><div><span className="rc-kicker">RESTAURANT PARTNER · REWARDS</span><h1>Challenges<span>.</span></h1><p>Create a challenge, set its reward and track customer progress.</p></div><button type="button" className="rc-primary" onClick={newChallenge}><Plus size={16}/> New challenge</button></header>
   {message&&<div className="rc-message" role="alert">{message}</div>}
   {showForm&&<form className="rc-form" onSubmit={save}>
    <div className="rc-form-head"><div><span>{editing?"EDIT CHALLENGE":"CREATE CHALLENGE"}</span><h2>{editing?"Update challenge":"Challenge details"}</h2></div><button type="button" className="rc-cancel" onClick={()=>{setForm(blank);setEditing(null);setShowForm(false);}}>Cancel</button></div>
