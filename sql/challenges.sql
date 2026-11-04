@@ -63,7 +63,8 @@ create index if not exists challenge_redemptions_restaurant_idx on public.challe
 
 alter table public.challenges enable row level security;
 alter table public.challenge_progress enable row level security;
-alter table public.challenge_letter_events enable row level security;\nalter table public.challenge_redemptions enable row level security;
+alter table public.challenge_letter_events enable row level security;
+alter table public.challenge_redemptions enable row level security;
 
 drop policy if exists "Public can view live challenges" on public.challenges;
 drop policy if exists "Admins can view all challenges" on public.challenges;
