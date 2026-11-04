@@ -45,6 +45,9 @@ export const metadata: Metadata = {
   description:
     "Discover local restaurants in Malappuram, explore digital menus and order your favourite food with Tho'am. Enjoy online and QR-based dine-in ordering.",
   applicationName: "Tho'am",
+  verification: {
+    google: "iuj_nVFI-zoVIQsPuPFhyWE57Vi58gl1pQFiT94gW7Y",
+  },
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
