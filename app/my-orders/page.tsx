@@ -35,7 +35,7 @@ const dateTime = (v?: string) => {
 };
 const shortDate = (v?: string) => v ? new Date(v).toLocaleDateString("en-IN", { timeZone: TZ, day: "numeric", month: "short" }) : "—";
 const label = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-const currentStep = (s: string) => {
+const currentStep = (s: string, isDineIn = false) => {
   const v = norm(s);
   if (["cancelled", "rejected"].includes(v)) return -1;
   const i = steps.findIndex((x) => x.key === v);
@@ -128,7 +128,7 @@ export default function MyOrders() {
             <div className="mo-card-main"><div className="mo-restaurant"><strong>{o.restaurant?.name || "Tho'am restaurant"}</strong><span>{o.order_type === "dine_in" ? "Dine-in order" : "Delivery order"} · {shortDate(o.created_at)}</span></div>
               <div className="mo-card-total"><strong>{money(o.total_amount)}</strong><span>{o.order_items?.length || 0} items</span></div></div>
             <div className="mo-card-bottom"><span className="mo-card-date"><Clock3 size={13} /> Placed {dateTime(o.created_at)}</span><span className="mo-track-link">Track order <ChevronRight size={16} /></span></div>
-            {!cancelled && <div className="mo-mini-progress"><span style={{ width: Math.max(8, (currentStep(s) + 1) / 5 * 100) + "%" }} /></div>}
+            {!cancelled && <div className="mo-mini-progress"><span style={{ width: Math.max(8, (currentStep(s, o.order_type === "dine_in") + 1) / 5 * 100) + "%" }} /></div>}
           </button>;
         })}</div>
       </section>}
@@ -142,11 +142,11 @@ export default function MyOrders() {
           {["cancelled", "rejected"].includes(norm(selected.status)) ? <div className="mo-cancelled"><span><X size={18} /></span><div><strong>Order {label(norm(selected.status)).toLowerCase()}</strong><p>Please contact the restaurant if you need more information.</p></div></div> :
             <div className="mo-live-banner"><span className="mo-live-dot" /><div><strong>{norm(selected.status) === "delivered" ? "Order completed" : "Live order updates"}</strong><p>{norm(selected.status) === "delivered" ? "Your order has reached its destination." : "This timeline updates when the restaurant changes your order status."}</p></div></div>}
           <div className="mo-timeline">{steps.filter((x) => selected.order_type !== "dine_in" || x.key !== "out_for_delivery").map((step, index, arr) => {
-            const idx = currentStep(selected.status);
+            const idx = currentStep(selected.status, selected.order_type === "dine_in");
             const isDone = idx >= index && idx >= 0;
             const isCurrent = idx === index;
             const history = selected.history?.find((h) => norm(h.new_status) === step.key);
-            const time = step.key === "placed" ? selected.created_at : history?.created_at;
+            const time = step.key === "placed" ? selected.created_at : history?.created_at || (isCurrent ? selected.updated_at : undefined);
             const Icon = step.icon;
             return <div className={"mo-step " + (isDone ? "is-done " : "") + (isCurrent ? "is-current" : "")} key={step.key}>
               <div className="mo-step-rail"><span className="mo-step-icon">{isDone ? <Check size={16} /> : <Icon size={16} />}</span>{index < arr.length - 1 && <i />}</div>
