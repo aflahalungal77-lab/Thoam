@@ -38,6 +38,7 @@ const label = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUp
 const currentStep = (s: string, isDineIn = false) => {
   const v = norm(s);
   if (["cancelled", "rejected"].includes(v)) return -1;
+  if (isDineIn && v === "delivered") return 3;
   const i = steps.findIndex((x) => x.key === v);
   return i < 0 ? 0 : i;
 };
