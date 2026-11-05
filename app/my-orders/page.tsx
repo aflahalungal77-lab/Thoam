@@ -167,7 +167,7 @@ export default function MyOrders() {
       </section>
     </div>}
 
-    <style jsx global>{"
+    <style jsx global>{`
       .thoam-myorders{max-width:940px;padding-bottom:100px;color:#171717}
       .mo-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:52px 0 27px}
       .mo-eyebrow{display:block;color:#85857d;font-size:9px;font-weight:850;letter-spacing:2px}
@@ -241,6 +241,6 @@ export default function MyOrders() {
       }
       @media(max-width:370px){.mo-card-bottom{align-items:flex-start;flex-direction:column}.mo-status-pill{font-size:8px;padding:6px 8px}}
       @media(prefers-reduced-motion:reduce){.mo-order-card,.mo-step-icon,.mo-mini-progress{transition:none}.mo-loader,.mo-spin{animation:none}}
-    "}</style>
+    `}</style>
   </>;
 }
