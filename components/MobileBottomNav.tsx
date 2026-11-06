@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Store, Trophy, ClipboardList } from "lucide-react";
+import { useLanguage } from "@/components/LanguageProvider";
 
 const items = [
   { label: "Home", href: "/", icon: Home },
@@ -44,7 +45,7 @@ export default function MobileBottomNav() {
             aria-current={isActive(href) ? "page" : undefined}
           >
             <span className="thoam-bottom-nav__icon"><Icon size={20} strokeWidth={isActive(href) ? 2.2 : 1.8} /></span>
-            <span className="thoam-bottom-nav__label">{label}</span>
+            <span className="thoam-bottom-nav__label">{t(label)}</span>
           </Link>
         ) : null
       )}
