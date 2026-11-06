@@ -1,6 +1,8 @@
 
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -61,6 +63,7 @@ function isToday(dateValue?: string) {
 }
 
 export default function OrdersPage() {
+  const { t } = useLanguage();
   const router = useRouter();
 
   const [items, setItems] = useState<any[]>([]);
@@ -286,9 +289,9 @@ const todayRevenue = revenueOrders
 
       <header className="ta-manage-heading">
         <div>
-          <span className="ta-eyebrow">ORDER WORKSPACE</span>
-          <h1>Order management<span>.</span></h1>
-          <p>Keep every order moving in the right direction.</p>
+          <span className="ta-eyebrow">{t("ORDER WORKSPACE")}</span>
+          <h1>{t("Order management.")}<span>.</span></h1>
+          <p>{t("Keep every order moving in the right direction.")}</p>
         </div>
 
         <button
@@ -319,11 +322,11 @@ const todayRevenue = revenueOrders
       <section className="ta-revenue-grid">
         <article className="ta-revenue-card">
           <div className="ta-revenue-card-top">
-            <span>Total revenue</span>
+            <span>{t("Total revenue")}</span>
             <IndianRupee size={19} />
           </div>
           <strong>{money(totalRevenue)}</strong>
-          <small>All-time · Delivered orders only</small>
+          <small>{t("All-time · Delivered orders only")}</small>
         </article>
 
         <article className="ta-revenue-card ta-revenue-today">
@@ -338,15 +341,15 @@ const todayRevenue = revenueOrders
 
       <section className="ta-product-summary">
         <div>
-          <span>Total orders</span>
+          <span>{t("Total orders")}</span>
           <strong>{items.length}</strong>
         </div>
         <div>
-          <span>Active orders</span>
+          <span>{t("Active orders")}</span>
           <strong>{activeCount}</strong>
         </div>
         <div>
-          <span>Delivered orders</span>
+          <span>{t("Delivered orders")}</span>
           <strong>{deliveredCount}</strong>
         </div>
       </section>
@@ -354,7 +357,7 @@ const todayRevenue = revenueOrders
       <section className="ta-orders-workspace">
         <div className="ta-menu-heading">
           <div>
-            <span className="ta-eyebrow">YOUR RESTAURANT</span>
+            <span className="ta-eyebrow">{t("YOUR RESTAURANT")}</span>
             <h2>Orders <span>({filtered.length})</span></h2>
           </div>
         </div>
@@ -369,7 +372,7 @@ const todayRevenue = revenueOrders
                 {newOrders.length} new{" "}
                 {newOrders.length === 1 ? "order" : "orders"} waiting
               </strong>
-              <span>Newly placed orders need your attention.</span>
+              <span>{t("Newly placed orders need your attention.")}</span>
             </div>
             <span className="ta-placed-count">
               {newOrders.length}
@@ -383,8 +386,8 @@ const todayRevenue = revenueOrders
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search order, status or payment..."
-              aria-label="Search orders"
+              placeholder={t("Search order, status or payment...")}
+              aria-label={t("Search orders")}
             />
           </label>
 
@@ -394,17 +397,17 @@ const todayRevenue = revenueOrders
             onChange={(e) => setFilter(e.target.value)}
             aria-label="Filter orders"
           >
-            <option>All</option>
-            <option>New</option>
-            <option>Active</option>
-            <option>Cancelled</option>
+            <option>{t("All")}</option>
+            <option>{t("New")}</option>
+            <option>{t("Active")}</option>
+            <option>{t("Cancelled")}</option>
           </select>
         </div>
 
         {loading ? (
           <div className="ta-menu-empty">
             <LoaderCircle size={28} className="ta-refreshing" />
-            <h3>Loading orders...</h3>
+            <h3>{t("Loading orders...")}</h3>
           </div>
         ) : filtered.length === 0 ? (
           <div className="ta-menu-empty">
@@ -462,14 +465,14 @@ const todayRevenue = revenueOrders
 
                   <div className="ta-order-meta">
                     <div>
-                      <span>Order type</span>
+                      <span>{t("Order type")}</span>
                       <strong>
                         {String(order.order_type || "Order").replace(/_/g, " ")}
                       </strong>
                     </div>
 
                     <div>
-                      <span>Placed</span>
+                      <span>{t("Placed")}</span>
                       <strong>
                         {order.created_at
                           ? new Date(order.created_at).toLocaleString(
@@ -487,7 +490,7 @@ const todayRevenue = revenueOrders
                     </div>
 
                     <div>
-                      <span>Payment · COD</span>
+                      <span>{t("Payment · COD")}</span>
                       <strong>
                         {String(order.payment_status || "").toLowerCase() === "collected"
                           ? "Cash collected"
@@ -508,7 +511,7 @@ const todayRevenue = revenueOrders
                     </div>
 
                     <div>
-                      <span>Total</span>
+                      <span>{t("Total")}</span>
                       <strong className="ta-order-total">
                         {money(Number(order.total_amount || 0))}
                       </strong>
