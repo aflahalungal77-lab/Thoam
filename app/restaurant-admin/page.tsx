@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -54,6 +56,7 @@ type OrderData = {
 };
 
 export default function RestaurantAdmin() {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [restaurant, setRestaurant] =
@@ -427,8 +430,8 @@ export default function RestaurantAdmin() {
         <section className="ta-main">
           <div className="ta-loading">
             <RefreshCw size={26} className="ta-refreshing" />
-            <h2>Getting things ready</h2>
-            <p>Loading your restaurant workspace...</p>
+            <h2>{t("Getting things ready")}</h2>
+            <p>{t("Loading your restaurant workspace...")}</p>
           </div>
         </section>
       </main>
@@ -442,11 +445,11 @@ export default function RestaurantAdmin() {
           <span className="ta-brand-icon">T.</span>
           <span>
             Tho’am
-            <small>RESTAURANT PARTNER</small>
+            <small>{t("RESTAURANT PARTNER")}</small>
           </span>
         </Link>
 
-        <div className="ta-nav-label">WORKSPACE</div>
+        <div className="ta-nav-label">{t("WORKSPACE")}</div>
 
         <nav className="ta-nav">
           <a href="#overview" className="ta-nav-link active">
@@ -525,7 +528,7 @@ export default function RestaurantAdmin() {
               <UtensilsCrossed size={19} />
             </div>
 
-            <strong>Your restaurant.</strong>
+            <strong>{t("Your restaurant.")}</strong>
 
             <p>
               Your menu, orders and daily performance in one place.
@@ -550,8 +553,8 @@ export default function RestaurantAdmin() {
               <img src={String(restaurant.logo_url)} alt={`${restaurant.name} logo`} style={{ width: 46, height: 46, borderRadius: 12, objectFit: "contain", border: "1px solid #e5e5e5", background: "#fff" }} />
             ) : null}
             <div style={{ display: "grid", gap: 3, minWidth: 0 }}>
-              <span className="ta-topbar-label">THO’AM / PARTNER</span>
-              <span className="ta-topbar-title">{restaurant?.name || "Dashboard"}</span>
+              <span className="ta-topbar-label">{t("THO’AM / PARTNER")}</span>
+              <span className="ta-topbar-title">{restaurant?.name || t("Dashboard")}</span>
             </div>
           </div>
 
@@ -587,8 +590,8 @@ export default function RestaurantAdmin() {
               className="ta-refresh"
               onClick={() => void loadDashboard(true)}
               disabled={loading || refreshing}
-              aria-label="Refresh dashboard"
-              title="Refresh dashboard"
+              aria-label={t("Refresh dashboard")}
+              title={t("Refresh dashboard")}
             >
               <RefreshCw
                 size={17}
@@ -601,8 +604,8 @@ export default function RestaurantAdmin() {
             </div>
 
             <div className="ta-user-info">
-              <strong>Restaurant partner</strong>
-              <span>{user?.email || "Your account"}</span>
+              <strong>{t("Restaurant partner")}</strong>
+              <span>{user?.email || t("Your account")}</span>
             </div>
           </div>
         </header>
@@ -614,9 +617,9 @@ export default function RestaurantAdmin() {
                 <ShieldAlert size={26} />
               </div>
 
-              <span className="ta-eyebrow">ACCOUNT SETUP</span>
+              <span className="ta-eyebrow">{t("ACCOUNT SETUP")}</span>
 
-              <h1>Let’s get you set up.</h1>
+              <h1>{t("Let’s get you set up.")}</h1>
 
               <p>{message}</p>
 
@@ -699,8 +702,8 @@ export default function RestaurantAdmin() {
                   </span>
 
                   <div className="ta-art-caption">
-                    <span>YOUR PARTNER DASHBOARD</span>
-                    <strong>Everything, at a glance.</strong>
+                    <span>{t("YOUR PARTNER DASHBOARD")}</span>
+                    <strong>{t("Everything, at a glance.")}</strong>
                   </div>
                 </div>
               </section>
@@ -809,7 +812,7 @@ export default function RestaurantAdmin() {
                     </span>
 
                     <h2>
-                      Today at a glance<span>.</span>
+                      {t("Today at a glance")}<span>.</span>
                     </h2>
                   </div>
 
@@ -843,7 +846,7 @@ export default function RestaurantAdmin() {
 
                   <article className="ta-stat-card">
                     <div className="ta-stat-top">
-                      <span>Pending orders</span>
+                      <span>{t("Pending orders")}</span>
 
                       <div className="ta-stat-icon ta-icon-warm">
                         <Clock3 size={19} />
@@ -861,7 +864,7 @@ export default function RestaurantAdmin() {
 
                   <article className="ta-stat-card">
                     <div className="ta-stat-top">
-                      <span>Completed orders</span>
+                      <span>{t("Completed orders")}</span>
 
                       <div className="ta-stat-icon ta-icon-green">
                         <CheckCircle2 size={19} />
@@ -879,7 +882,7 @@ export default function RestaurantAdmin() {
 
                   <article className="ta-stat-card ta-stat-sales">
                     <div className="ta-stat-top">
-                      <span>Completed sales</span>
+                      <span>{t("Completed sales")}</span>
 
                       <div className="ta-stat-icon ta-icon-dark">
                         <CircleDollarSign size={19} />
@@ -900,10 +903,10 @@ export default function RestaurantAdmin() {
               <section className="ta-tools-section">
                 <div className="ta-section-header">
                   <div>
-                    <span className="ta-eyebrow">YOUR TOOLS</span>
+                    <span className="ta-eyebrow">{t("YOUR TOOLS")}</span>
 
                     <h2>
-                      Run your restaurant<span>.</span>
+                      {t("Run your restaurant")}<span>.</span>
                     </h2>
                   </div>
                 </div>
@@ -921,7 +924,7 @@ export default function RestaurantAdmin() {
                       <ArrowUpRight size={18} />
                     </span>
 
-                    <h3>Product management</h3>
+                    <h3>{t("Product management")}</h3>
 
                     <p>
                       Add dishes, update prices and manage menu
@@ -949,7 +952,7 @@ export default function RestaurantAdmin() {
                       <ArrowUpRight size={18} />
                     </span>
 
-                    <h3>Order management</h3>
+                    <h3>{t("Order management")}</h3>
 
                     <p>
                       Review incoming orders and follow their
@@ -980,7 +983,7 @@ export default function RestaurantAdmin() {
                       <ArrowUpRight size={18} />
                     </span>
 
-                    <h3>Offers & discounts</h3>
+                    <h3>{t("Offers & discounts")}</h3>
 
                     <p>
                       Create promotional offers and manage
@@ -988,7 +991,7 @@ export default function RestaurantAdmin() {
                     </p>
 
                     <div className="ta-tool-bottom">
-                      <span>Promotions</span>
+                      <span>{t("Promotions")}</span>
 
                       <span className="ta-tool-link">
                         Manage offers <ChevronRight size={15} />
@@ -1008,7 +1011,7 @@ export default function RestaurantAdmin() {
                       <ArrowUpRight size={18} />
                     </span>
 
-                    <h3>QR ordering</h3>
+                    <h3>{t("QR ordering")}</h3>
 
                     <p>
                       Manage table QR codes and your dine-in
@@ -1016,7 +1019,7 @@ export default function RestaurantAdmin() {
                     </p>
 
                     <div className="ta-tool-bottom">
-                      <span>Dine-in experience</span>
+                      <span>{t("Dine-in experience")}</span>
 
                       <span className="ta-tool-link">
                         Open workspace <ChevronRight size={15} />
