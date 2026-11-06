@@ -198,9 +198,12 @@ html[lang="ml"] .thoam-language-switcher {
     min-width: 0;
   }
 
-  .grid-3,
   .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid-3 {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .section-heading,
