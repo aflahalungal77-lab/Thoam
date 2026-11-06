@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { useCallback, useEffect, useState, type FormEvent, type ChangeEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,6 +17,7 @@ const categories = [
 ];
 
 export default function ProductsPage() {
+  const { t } = useLanguage();
   const router = useRouter();
 
   const [rid, setRid] = useState("");
@@ -246,9 +249,9 @@ export default function ProductsPage() {
 
       <header className="ta-manage-heading">
         <div>
-          <span className="ta-eyebrow">YOUR MENU WORKSPACE</span>
-          <h1>Product management<span>.</span></h1>
-          <p>Every dish, every detail, all in one place.</p>
+          <span className="ta-eyebrow">{t("YOUR MENU WORKSPACE")}</span>
+          <h1>{t("Product management.")}<span>.</span></h1>
+          <p>{t("Every dish, every detail, all in one place.")}</p>
         </div>
 
         <div className="ta-manage-heading-icon">
@@ -265,15 +268,15 @@ export default function ProductsPage() {
 
       <section className="ta-product-summary">
         <div>
-          <span>Total products</span>
+          <span>{t("Total products")}</span>
           <strong>{items.length}</strong>
         </div>
         <div>
-          <span>Available</span>
+          <span>{t("Available")}</span>
           <strong>{items.filter((p) => p.is_available).length}</strong>
         </div>
         <div>
-          <span>Unavailable</span>
+          <span>{t("Unavailable")}</span>
           <strong>{items.filter((p) => !p.is_available).length}</strong>
         </div>
       </section>
@@ -282,8 +285,8 @@ export default function ProductsPage() {
         <section className="ta-manage-panel ta-add-product">
           <div className="ta-panel-heading">
             <div>
-              <span className="ta-eyebrow">MENU EDITOR</span>
-              <h2>Add a dish</h2>
+              <span className="ta-eyebrow">{t("MENU EDITOR")}</span>
+              <h2>{t("Add a dish")}</h2>
             </div>
             <div className="ta-panel-icon"><Plus size={20} /></div>
           </div>
@@ -295,7 +298,7 @@ export default function ProductsPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Malabar chicken biriyani"
+                placeholder={t("e.g. Malabar chicken biriyani")}
                 maxLength={120}
               />
             </label>
@@ -329,13 +332,13 @@ export default function ProductsPage() {
                 onChange={(e) => setDesc(e.target.value)}
                 rows={3}
                 maxLength={500}
-                placeholder="Describe ingredients or what makes this dish special..."
+                placeholder={t("Describe ingredients or what makes this dish special...")}
               />
               <span className="ta-character-count">{desc.length}/500</span>
             </label>
 
             <div className="ta-field">
-              <span>Food image</span>
+              <span>{t("Food image")}</span>
 
               <label className="ta-upload-box">
                 {imageUrl ? (
@@ -344,8 +347,8 @@ export default function ProductsPage() {
                   <div className="ta-upload-placeholder">
                     {uploading ? <LoaderCircle className="ta-refreshing" /> : <ImageIcon size={29} />}
                     <strong>{uploading ? "Uploading image..." : "Upload a food photo"}</strong>
-                    <span>JPG, PNG or WebP · Up to 5 MB</span>
-                    {!uploading && <span className="ta-upload-cta"><Upload size={14} /> Choose image</span>}
+                    <span>{t("JPG, PNG or WebP · Up to 5 MB")}</span>
+                    {!uploading && <span className="ta-upload-cta"><Upload size={14} /> {t("Choose image")}</span>}
                   </div>
                 )}
 
@@ -376,8 +379,8 @@ export default function ProductsPage() {
               />
               <span className="ta-veg-indicator" />
               <span>
-                <strong>Vegetarian dish</strong>
-                <small>Mark this item as vegetarian.</small>
+                <strong>{t("Vegetarian dish")}</strong>
+                <small>{t("Mark this item as vegetarian.")}</small>
               </span>
             </label>
 
@@ -394,8 +397,8 @@ export default function ProductsPage() {
         <section className="ta-menu-section">
           <div className="ta-menu-heading">
             <div>
-              <span className="ta-eyebrow">YOUR RESTAURANT</span>
-              <h2>Menu items <span>({items.length})</span></h2>
+              <span className="ta-eyebrow">{t("YOUR RESTAURANT")}</span>
+              <h2>{t("Menu items")} <span>({items.length})</span></h2>
             </div>
           </div>
 
@@ -405,8 +408,8 @@ export default function ProductsPage() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search your menu..."
-                aria-label="Search products"
+                placeholder={t("Search your menu...")}
+                aria-label={t("Search products")}
               />
             </label>
 
@@ -416,17 +419,17 @@ export default function ProductsPage() {
               onChange={(e) => setFilter(e.target.value)}
               aria-label="Filter products"
             >
-              <option>All</option>
-              <option>Available</option>
-              <option>Unavailable</option>
+              <option>{t("All")}</option>
+              <option>{t("Available")}</option>
+              <option>{t("Unavailable")}</option>
             </select>
           </div>
 
           {visibleItems.length === 0 ? (
             <div className="ta-menu-empty">
               <Package size={30} />
-              <h3>{items.length ? "No matching dishes" : "Your menu starts here."}</h3>
-              <p>{items.length ? "Try another search or filter." : "Add your first dish using the menu editor."}</p>
+              <h3>{items.length ? t("No matching dishes") : t("Your menu starts here.")}</h3>
+              <p>{items.length ? t("Try another search or filter.") : t("Add your first dish using the menu editor.")}</p>
             </div>
           ) : (
             <div className="ta-product-grid">
@@ -456,7 +459,7 @@ export default function ProductsPage() {
 
                     <div className="ta-product-card-bottom">
                       <strong>₹{Number(product.price).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</strong>
-                      <span>{product.is_available ? "On menu" : "Hidden"}</span>
+                      <span>{product.is_available ? t("On menu") : t("Hidden")}</span>
                     </div>
 
                     <div className="ta-product-actions">
@@ -479,7 +482,7 @@ export default function ProductsPage() {
                         onClick={() => void remove(product)}
                         disabled={Boolean(busyId)}
                         aria-label={`Delete ${product.name}`}
-                        title="Delete product"
+                        title={t("Delete product")}
                       >
                         <Trash2 size={15} />
                       </button>
