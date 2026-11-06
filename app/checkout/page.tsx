@@ -1,6 +1,8 @@
 
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import {
   FormEvent,
   Suspense,
@@ -90,6 +92,7 @@ function calculateOffer(offer: Offer, items: Item[], subtotal: number) {
 }
 
 function CheckoutInner() {
+  const { t } = useLanguage();
   const params = useSearchParams();
   const router = useRouter();
   const slug = params.get("restaurant") || "";
@@ -393,8 +396,8 @@ function CheckoutInner() {
         <main className="tc-page">
           <div className="tc-loading">
             <LoaderCircle className="tc-spin" size={30} />
-            <h2>Preparing your checkout</h2>
-            <p>Your restaurant and cart details are loading.</p>
+            <h2>{t("Preparing your checkout")}</h2>
+            <p>{t("Your restaurant and cart details are loading.")}</p>
           </div>
         </main>
         <CheckoutStyles />
@@ -409,19 +412,19 @@ function CheckoutInner() {
         <main className="tc-page">
           <section className="tc-success">
             <div className="tc-success-icon"><CheckCircle2 size={42} /></div>
-            <span className="tc-eyebrow">ORDER CONFIRMED</span>
-            <h1>Thank you!</h1>
+            <span className="tc-eyebrow">{t("ORDER CONFIRMED")}</span>
+            <h1>{t("Thank you!")}</h1>
             <p>Your order has been placed successfully with {restaurant?.name}.</p>
             <div className="tc-order-number">
-              <span>YOUR ORDER NUMBER</span>
+              <span>{t("YOUR ORDER NUMBER")}</span>
               <strong>#{orderNumber}</strong>
             </div>
             <div className="tc-cod">
               <Wallet size={22} />
-              <div><strong>Cash on Delivery</strong><p>Pay in cash when your order arrives.</p></div>
+              <div><strong>{t("Cash on Delivery")}</strong><p>{t("Pay in cash when your order arrives.")}</p></div>
             </div>
-            <Link className="tc-primary" href="/my-orders">View my orders <ArrowRight size={17} /></Link>
-            <Link className="tc-secondary" href="/restaurants">Browse restaurants</Link>
+            <Link className="tc-primary" href="/my-orders">{t("View my orders")} <ArrowRight size={17} /></Link>
+            <Link className="tc-secondary" href="/restaurants">{t("Browse restaurants")}</Link>
           </section>
         </main>
         <CheckoutStyles />
@@ -441,9 +444,9 @@ function CheckoutInner() {
         </div>
 
         <header className="tc-heading">
-          <span className="tc-eyebrow">ALMOST THERE</span>
-          <h1>Checkout<span>.</span></h1>
-          <p>Good food is just a few steps away.</p>
+          <span className="tc-eyebrow">{t("ALMOST THERE")}</span>
+          <h1>{t("Checkout")}<span>.</span></h1>
+          <p>{t("Good food is just a few steps away.")}</p>
         </header>
 
         {message && (
@@ -456,38 +459,38 @@ function CheckoutInner() {
         <form className="tc-layout" onSubmit={submitOrder}>
           <div className="tc-main-column">
             <section className="tc-card">
-              <div className="tc-card-title"><span>01</span><div><h2>Delivery details</h2><p>Where should we deliver your food?</p></div></div>
+              <div className="tc-card-title"><span>01</span><div><h2>{t("Delivery details")}</h2><p>{t("Where should we deliver your food?")}</p></div></div>
               <div className="tc-fields">
                 <label>Full name *
-                  <input required value={name} onChange={(e) => setName(e.target.value)} maxLength={100} autoComplete="name" placeholder="Enter your full name" />
+                  <input required value={name} onChange={(e) => setName(e.target.value)} maxLength={100} autoComplete="name" placeholder={t("Enter your full name")} />
                 </label>
                 <label>Phone number *
-                  <input required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} autoComplete="tel" placeholder="Your contact number" />
+                  <input required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} autoComplete="tel" placeholder={t("Your contact number")} />
                 </label>
                 <label>Delivery address *
-                  <textarea required value={address} onChange={(e) => setAddress(e.target.value)} rows={4} maxLength={600} placeholder="House name, road, area, landmark and PIN code" />
+                  <textarea required value={address} onChange={(e) => setAddress(e.target.value)} rows={4} maxLength={600} placeholder={t("House name, road, area, landmark and PIN code")} />
                 </label>
-                <label>Delivery instructions <small>OPTIONAL</small>
-                  <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} placeholder="Any special instructions?" />
+                <label>{t("Delivery instructions")} <small>{t("OPTIONAL")}</small>
+                  <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} placeholder={t("Any special instructions?")} />
                 </label>
               </div>
             </section>
 
             <section className="tc-card">
-              <div className="tc-card-title"><span>02</span><div><h2>Payment method</h2><p>Simple, safe and convenient.</p></div></div>
+              <div className="tc-card-title"><span>02</span><div><h2>{t("Payment method")}</h2><p>{t("Simple, safe and convenient.")}</p></div></div>
               <div className="tc-payment">
                 <Wallet size={24} />
-                <div><strong>Cash on Delivery</strong><small>Pay when your food arrives.</small></div>
+                <div><strong>Cash on Delivery</strong><small>{t("Pay when your food arrives.")}</small></div>
                 <CheckCircle2 size={20} />
               </div>
-              <p className="tc-muted">No online payment required.</p>
+              <p className="tc-muted">{t("No online payment required.")}</p>
             </section>
           </div>
 
           <aside className="tc-side">
             <section className="tc-card tc-summary">
               <div className="tc-summary-title">
-                <div><span className="tc-eyebrow">YOUR ORDER</span><h2>Order summary</h2></div>
+                <div><span className="tc-eyebrow">{t("YOUR ORDER")}</span><h2>{t("Order summary")}</h2></div>
                 <ShoppingCart size={22} />
               </div>
 
@@ -527,33 +530,33 @@ function CheckoutInner() {
                       {bestOffer.offer.discount_type === "percentage"
                         ? `${bestOffer.offer.discount_value}% discount`
                         : `${formatPrice(bestOffer.offer.discount_value)} off`}
-                      {bestOffer.offer.scope === "products" ? " on selected items" : " on your order"}
+                      {bestOffer.offer.scope === "products" ? t(" on selected items") : t(" on your order")}
                     </small>
                     {bestOffer.offer.description && <small>{bestOffer.offer.description}</small>}
                   </div>
-                  <span className="tc-applied">APPLIED</span>
+                  <span className="tc-applied">{t("APPLIED")}</span>
                 </div>
               )}
 
               <div className="tc-breakdown">
-                <div><span>Items subtotal</span><strong>{formatPrice(subtotal)}</strong></div>
-                {discount > 0 && <div className="tc-discount"><span><Percent size={14} /> Offer discount</span><strong>−{formatPrice(discount)}</strong></div>}
-                <div><span><Truck size={14} /> Delivery fee</span><strong>{formatPrice(deliveryFee)}</strong></div>
-                <div><span>Platform fee</span><strong>{formatPrice(platformFee)}</strong></div>
-                <div className="tc-total"><span>Total amount</span><strong>{formatPrice(total)}</strong></div>
+                <div><span>{t("Items subtotal")}</span><strong>{formatPrice(subtotal)}</strong></div>
+                {discount > 0 && <div className="tc-discount"><span><Percent size={14} /> {t("Offer discount")}</span><strong>−{formatPrice(discount)}</strong></div>}
+                <div><span><Truck size={14} /> {t("Delivery fee")}</span><strong>{formatPrice(deliveryFee)}</strong></div>
+                <div><span>{t("Platform fee")}</span><strong>{formatPrice(platformFee)}</strong></div>
+                <div className="tc-total"><span>{t("Total amount")}</span><strong>{formatPrice(total)}</strong></div>
               </div>
 
               <button className="tc-place" type="submit" disabled={busy || !items.length || !restaurant || !restaurant.is_open || !restaurant.delivery_enabled}>
-                {busy ? <><LoaderCircle className="tc-spin" size={18} /> Placing order...</> : <>Place COD order <ArrowRight size={18} /></>}
+                {busy ? <><LoaderCircle className="tc-spin" size={18} /> {t("Placing order...")}</> : <>{t("Place COD order")} <ArrowRight size={18} /></>}
               </button>
-              <p className="tc-note"><CheckCircle2 size={14} /> Final discount and total verified by the server.</p>
+              <p className="tc-note"><CheckCircle2 size={14} /> {t("Final discount and total verified by the server.")}</p>
             </section>
 
-            <div className="tc-help"><MapPin size={18} /><div><strong>Check your address</strong><p>Include your area and nearby landmark.</p></div></div>
+            <div className="tc-help"><MapPin size={18} /><div><strong>{t("Check your address")}</strong><p>{t("Include your area and nearby landmark.")}</p></div></div>
           </aside>
         </form>
 
-        <footer className="tc-footer"><strong>THO’AM</strong><span>Good food. Made simple.</span></footer>
+        <footer className="tc-footer"><strong>THO’AM</strong><span>{t("Good food. Made simple.")}</span></footer>
       </main>
       <CheckoutStyles />
     </>
@@ -630,7 +633,7 @@ function CheckoutStyles() {
 
 export default function CheckoutPage() {
   return (
-    <Suspense fallback={<><Header /><main className="tc-page"><div className="tc-loading"><LoaderCircle size={28} />Loading checkout...</div></main><CheckoutStyles /></>}>
+    <Suspense fallback={<><Header /><main className="tc-page"><div className="tc-loading"><LoaderCircle size={28} />{t("Loading checkout...")}</div></main><CheckoutStyles /></>}>
       <CheckoutInner />
     </Suspense>
   );
