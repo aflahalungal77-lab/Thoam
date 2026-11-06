@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderCircle, Store } from "lucide-react";
@@ -7,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import RestaurantSetupModal from "@/components/owner/RestaurantSetupModal";
 
 export default function RestaurantRegistrationPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [message, setMessage] = useState("");
@@ -79,8 +82,8 @@ export default function RestaurantRegistrationPage() {
       <main className="auth-wrap">
         <section className="auth-card" role="status">
           <LoaderCircle size={26} className="spin" />
-          <h1>Preparing registration</h1>
-          <p className="muted">Checking your owner account…</p>
+          <h1>{t("Preparing registration")}</h1>
+          <p className="muted">{t("Checking your owner account…")}</p>
         </section>
       </main>
     );
@@ -91,7 +94,7 @@ export default function RestaurantRegistrationPage() {
       <main className="auth-wrap">
         <section className="auth-card">
           <div className="brand-mark"><Store size={22} /></div>
-          <h1>Restaurant registration</h1>
+          <h1>{t("Restaurant registration")}</h1>
           <p className="muted" role="alert">{message}</p>
           <button
             type="button"
