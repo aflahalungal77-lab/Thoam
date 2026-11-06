@@ -1,8 +1,12 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
 import "./mobile-bottom-nav.css";
 import ServiceWorker from "@/components/ServiceWorker";
 import MobileBottomNav from "@/components/MobileBottomNav";
+import { LanguageProvider } from "@/components/LanguageProvider";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import "@/components/LanguageGlobalStyles.css";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://thoam.vercel.app").replace(/\/+$/, "");
 
@@ -92,13 +96,16 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
+  const initialLanguage = cookieStore.get("thoam-language")?.value === "ml" ? "ml" : "en";
+
   return (
-    <html lang="en">
+    <html lang={initialLanguage}>
       <head>
         <script
           type="application/ld+json"
@@ -106,9 +113,12 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <ServiceWorker />
-        {children}
-        <MobileBottomNav />
+        <LanguageProvider initialLanguage={initialLanguage}>
+          <ServiceWorker />
+          {children}
+          <MobileBottomNav />
+          <LanguageSwitcher />
+        </LanguageProvider>
       </body>
     </html>
   );

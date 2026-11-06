@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import Image from "next/image";
 
 export interface MenuProduct {
@@ -20,6 +22,7 @@ interface Props {
 }
 
 export default function MenuProductCard({ product, quantity, onAdd, onRemove }: Props) {
+  const { t } = useLanguage();
   return (
     <article className="product-card">
       <div className="product-image">
@@ -33,9 +36,9 @@ export default function MenuProductCard({ product, quantity, onAdd, onRemove }: 
             unoptimized
           />
         ) : (
-          <div className="image-placeholder" aria-label="Food image unavailable">
+          <div className="image-placeholder" aria-label={t("Food image unavailable")}>
             <span aria-hidden="true">🍽</span>
-            <span>Image coming soon</span>
+            <span>{t("Image coming soon")}</span>
           </div>
         )}
         {product.category && <span className="product-category">{product.category}</span>}
@@ -45,17 +48,17 @@ export default function MenuProductCard({ product, quantity, onAdd, onRemove }: 
       <div className="product-info">
         <div className="product-title-row">
           <h3 title={product.name}>{product.name}</h3>
-          <span className="fresh-dot" aria-label={product.is_available ? "Available" : "Unavailable"} />
+          <span className="fresh-dot" aria-label={product.is_available ? t("Available") : t("Unavailable")} />
         </div>
         {product.description && <p className="product-description">{product.description}</p>}
         <div className="product-bottom">
           <div className="price-block">
-            <span className="price-label">PRICE</span>
+            <span className="price-label">{t("PRICE")}</span>
             <span className="product-price">₹{Number(product.price).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</span>
           </div>
           {quantity === 0 ? (
             <button type="button" disabled={!product.is_available} onClick={() => onAdd(product)} className="add-button">
-              {product.is_available ? <>Add <span className="add-symbol">+</span></> : "Unavailable"}
+              {product.is_available ? <>{t("Add")} <span className="add-symbol">+</span></>  : t("Unavailable")}
             </button>
           ) : (
             <div className="quantity-control" aria-label={`Quantity of ${product.name}`}>

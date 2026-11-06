@@ -3,22 +3,24 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard } from "lucide-react";
+import { useLanguage } from "@/components/LanguageProvider";
 
 const links = [
   { href: "/thoam-admin", label: "Overview", icon: LayoutDashboard },
 ];
 
 export default function AdminSidebar() {
+  const { t } = useLanguage();
   const pathname = usePathname();
   return (
     <>
       <aside className="thoam-admin-side">
         <div className="thoam-admin-side-brand">THO’AM <span>ADMIN</span></div>
-        <div className="thoam-admin-side-label">WORKSPACE</div>
+        <div className="thoam-admin-side-label">{t("WORKSPACE")}</div>
         {links.map(({ href, label, icon: Icon }) => {
           const active = href === "/thoam-admin" ? pathname === href : pathname.startsWith(href);
           return <Link key={href} href={href} className={active ? "thoam-admin-side-link active" : "thoam-admin-side-link"}>
-            <Icon size={17} /> <span>{label}</span>
+            <Icon size={17} /> <span>{t(label)}</span>
           </Link>;
         })}
       </aside>

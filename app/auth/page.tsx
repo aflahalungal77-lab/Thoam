@@ -1,6 +1,8 @@
 
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { FormEvent, Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -8,6 +10,7 @@ import { ArrowLeft, Chrome, LoaderCircle } from "lucide-react";
 import { supabase, supabaseConfigured } from "@/lib/supabase";
 
 function AuthForm() {
+  const { t } = useLanguage();
   const params = useSearchParams();
 
   const role = params.get("role") === "owner" ? "owner" : "customer";
@@ -226,7 +229,7 @@ function AuthForm() {
                   autoComplete="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
+                  placeholder={t("Your name")}
                 />
               </label>
             )}
@@ -239,7 +242,7 @@ function AuthForm() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder={t("Email address")}
               />
             </label>
 
@@ -254,7 +257,7 @@ function AuthForm() {
                 }
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 6 characters"
+                placeholder={t("At least 6 characters")}
               />
             </label>
 
@@ -264,7 +267,7 @@ function AuthForm() {
               disabled={busy}
             >
               {busy && <LoaderCircle size={16} className="spin" />}
-              {isSignup ? "Create account" : "Sign in"}
+              {isSignup ? t("Create account") : t("Sign in")}
             </button>
           </form>
 
@@ -298,7 +301,7 @@ function AuthForm() {
                 textDecoration: "underline",
               }}
             >
-              {isSignup ? "Sign in" : "Create account"}
+              {isSignup ? t("Sign in") : t("Create account")}
             </button>
           </p>
 
@@ -322,11 +325,12 @@ function AuthForm() {
 }
 
 export default function AuthPage() {
+  const { t } = useLanguage();
   return (
     <Suspense
       fallback={
         <main className="auth-wrap">
-          <section className="auth-card">Loading sign in…</section>
+          <section className="auth-card">{t("Loading sign in…")}</section>
         </main>
       }
     >

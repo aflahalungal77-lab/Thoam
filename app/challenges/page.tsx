@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -22,6 +24,7 @@ function distanceKm(a:number,b:number,c:number,d:number){
 function dateLabel(value:string){return new Intl.DateTimeFormat("en-IN",{day:"numeric",month:"short",year:"numeric",timeZone:"Asia/Kolkata"}).format(new Date(value));}
 
 export default function ChallengesPage(){
+  const { t } = useLanguage();
   const [items,setItems]=useState<Challenge[]>([]);
   const [progress,setProgress]=useState<Record<string,Progress>>({});
   const [selected,setSelected]=useState<string>("");
@@ -80,36 +83,36 @@ export default function ChallengesPage(){
   const progressCount=currentProgress?.progress_count||0;
 
   return <main className="ch-page">
-    <header className="ch-top"><Link href="/" className="ch-brand">Tho’am<span>.</span></Link><span className="ch-top-tag">REWARDS & EXPERIENCES</span></header>
-    <section className="ch-hero"><div className="ch-kicker"><Trophy size={14}/> THE THO’AM CHALLENGE CLUB</div><h1>Order. Collect.<br/><span>Win rewards.</span></h1><p>Take part in challenges from restaurants around you and collect letters with eligible orders.</p><div className="ch-hero-count"><Sparkles size={15}/> {ordered.length} live {ordered.length===1?"challenge":"challenges"} right now</div></section>
+    <header className="ch-top"><Link href="/" className="ch-brand">Tho’am<span>.</span></Link><span className="ch-top-tag">{t("REWARDS & EXPERIENCES")}</span></header>
+    <section className="ch-hero"><div className="ch-kicker"><Trophy size={14}/> {t("THE THO’AM CHALLENGE CLUB")}</div><h1>{t("Order. Collect.")}<br/><span>{t("Win rewards.")}</span></h1><p>{t("Take part in challenges from restaurants around you and collect letters with eligible orders.")}</p><div className="ch-hero-count"><Sparkles size={15}/> {ordered.length} live {ordered.length===1?"challenge":"challenges"} right now</div></section>
 
     <section className="ch-section">
-      <div className="ch-section-head"><div><div className="ch-eyebrow">DISCOVER & JOIN</div><h2>Live challenges</h2><p>From restaurants near you</p></div><span className="ch-live-dot">LIVE</span></div>
+      <div className="ch-section-head"><div><div className="ch-eyebrow">{t("DISCOVER & JOIN")}</div><h2>{t("Live challenges")}</h2><p>{t("From restaurants near you")}</p></div><span className="ch-live-dot">LIVE</span></div>
       {locationMessage&&<p className="ch-location-note"><MapPin size={14}/>{locationMessage}</p>}
-      {loading?<div className="ch-empty">Finding live challenges…</div>:error?<div className="ch-empty">{error}</div>:ordered.length===0?<div className="ch-empty"><Trophy size={24}/><strong>No live challenges yet</strong><span>Check back soon. New restaurant challenges will appear here.</span></div>:
+      {loading?<div className="ch-empty">{t("Finding live challenges…")}</div>:error?<div className="ch-empty">{error}</div>:ordered.length===0?<div className="ch-empty"><Trophy size={24}/><strong>{t("No live challenges yet")}</strong><span>{t("Check back soon. New restaurant challenges will appear here.")}</span></div>:
       <div className="ch-list">{ordered.map(ch=>{
         const active=current?.id===ch.id;
         const dist=location&&ch.restaurant?.latitude!=null&&ch.restaurant.longitude!=null?distanceKm(location.lat,location.lng,ch.restaurant.latitude,ch.restaurant.longitude):null;
         return <article key={ch.id} className={active?"ch-live-card chosen":"ch-live-card"}>
-          <div className="ch-card-image" style={ch.image_url?{backgroundImage:"linear-gradient(180deg,transparent,rgba(0,0,0,.3)),url("+JSON.stringify(ch.image_url)+")"}:undefined}><span>{ch.restaurant?.name||"Tho’am Partner"}</span></div>
-          <div className="ch-card-body"><div className="ch-card-meta"><span className="ch-live-pill"><i/> Live now</span>{dist!==null&&<span><MapPin size={12}/>{dist.toFixed(1)} km</span>}</div><h3>{ch.title}</h3><p>{ch.description||"Collect letters with eligible orders and unlock a reward."}</p><div className="ch-card-foot"><span><CalendarDays size={13}/> Until {dateLabel(ch.ends_at)}</span><button onClick={()=>setSelected(ch.id)}>{active?"Selected":"View challenge"} <ArrowRight size={14}/></button></div></div>
+          <div className="ch-card-image" style={ch.image_url?{backgroundImage:"linear-gradient(180deg,transparent,rgba(0,0,0,.3)),url("+JSON.stringify(ch.image_url)+")"}:undefined}><span>{ch.restaurant?.name||t("Tho’am Partner")}</span></div>
+          <div className="ch-card-body"><div className="ch-card-meta"><span className="ch-live-pill"><i/> {t("Live now")}</span>{dist!==null&&<span><MapPin size={12}/>{dist.toFixed(1)} km</span>}</div><h3>{ch.title}</h3><p>{ch.description||t("Collect letters with eligible orders and unlock a reward.")}</p><div className="ch-card-foot"><span><CalendarDays size={13}/> {t("Until")} {dateLabel(ch.ends_at)}</span><button onClick={()=>setSelected(ch.id)}>{active?t("Selected"):t("View challenge")} <ArrowRight size={14}/></button></div></div>
         </article>;
       })}</div>}
     </section>
 
-    {!current && ordered.length>0 && !loading && <section className="ch-current-empty"><Trophy size={20}/><div><strong>No current challenge selected</strong><span>Choose a challenge above to see its personal progress and collected letters here.</span></div></section>}
+    {!current && ordered.length>0 && !loading && <section className="ch-current-empty"><Trophy size={20}/><div><strong>{t("No current challenge selected")}</strong><span>{t("Choose a challenge above to see its personal progress and collected letters here.")}</span></div></section>}
     {current&&<section className="ch-current">
-      <div className="ch-current-head"><div><div className="ch-eyebrow light">YOUR PICK</div><h2>Current selected challenge</h2></div><span className="ch-selected-tag"><Check size={12}/> SELECTED</span></div>
+      <div className="ch-current-head"><div><div className="ch-eyebrow light">{t("YOUR PICK")}</div><h2>{t("Current selected challenge")}</h2></div><span className="ch-selected-tag"><Check size={12}/> SELECTED</span></div>
       <div className="ch-current-main">
         <div className="ch-current-image" style={current.image_url?{backgroundImage:"url("+JSON.stringify(current.image_url)+")"}:undefined}><span>{current.restaurant?.name||"Tho’am"}</span></div>
-        <div className="ch-current-info"><span className="ch-restaurant-name">{current.restaurant?.name||"Partner restaurant"}</span><h3>{current.title}</h3><p>{current.description||"Collect every letter to complete this challenge."}</p><div className="ch-reward"><Gift size={16}/><div><b>{current.reward_title||"Challenge reward"}</b><span>{current.reward_description||"Reward details will be announced by the restaurant."}</span></div></div></div>
+        <div className="ch-current-info"><span className="ch-restaurant-name">{current.restaurant?.name||t("Partner restaurant")}</span><h3>{current.title}</h3><p>{current.description||t("Collect every letter to complete this challenge.")}</p><div className="ch-reward"><Gift size={16}/><div><b>{current.reward_title||t("Challenge reward")}</b><span>{current.reward_description||t("Reward details will be announced by the restaurant.")}</span></div></div></div>
       </div>
-      <div className="ch-progress-head"><span>Your progress</span><b>{progressCount} / {letters.length}</b></div><div className="ch-progress-track"><span style={{width:(letters.length?Math.min(100,progressCount/letters.length*100):0)+"%"}}/></div>
-      <div className="ch-letters-label">COLLECTED LETTERS</div><div className="ch-letters">{letters.map((letter,i)=><span key={i} className={i<progressCount?"earned":""}>{i<progressCount?earnedLetters[i]||letter:"·"}</span>)}</div>
-      <p className="ch-progress-note">{currentProgress?.reward_status==="ready"?"Challenge completed! Visit the restaurant to claim your reward.":currentProgress?.reward_status==="redeemed"?"Your reward has been marked as redeemed.":progressCount>0?"Your letters are saved automatically from eligible completed and paid delivery orders.":"Sign in and place eligible delivery orders to start collecting letters. Guest QR orders are not eligible."}</p>
+      <div className="ch-progress-head"><span>{t("Your progress")}</span><b>{progressCount} / {letters.length}</b></div><div className="ch-progress-track"><span style={{width:(letters.length?Math.min(100,progressCount/letters.length*100):0)+"%"}}/></div>
+      <div className="ch-letters-label">{t("COLLECTED LETTERS")}</div><div className="ch-letters">{letters.map((letter,i)=><span key={i} className={i<progressCount?"earned":""}>{i<progressCount?earnedLetters[i]||letter:"·"}</span>)}</div>
+      <p className="ch-progress-note">{currentProgress?.reward_status==="ready"?t("Challenge completed! Visit the restaurant to claim your reward."):currentProgress?.reward_status==="redeemed"?t("Your reward has been marked as redeemed."):progressCount>0?t("Your letters are saved automatically from eligible completed and paid delivery orders."):t("Sign in and place eligible delivery orders to start collecting letters. Guest QR orders are not eligible.")}</p>
     </section>}
 
-    <section className="ch-how"><div className="ch-eyebrow">SIMPLE & REWARDING</div><h2>How challenges work</h2><div className="ch-steps"><div><b>01</b><strong>Choose a challenge</strong><span>Pick a live challenge from a nearby restaurant.</span></div><div><b>02</b><strong>Place eligible orders</strong><span>Collect letters as you order during the challenge.</span></div><div><b>03</b><strong>Complete & win</strong><span>Finish the name and claim the reward.</span></div></div></section>
+    <section className="ch-how"><div className="ch-eyebrow">{t("SIMPLE & REWARDING")}</div><h2>{t("How challenges work")}</h2><div className="ch-steps"><div><b>01</b><strong>{t("Choose a challenge")}</strong><span>{t("Pick a live challenge from a nearby restaurant.")}</span></div><div><b>02</b><strong>{t("Place eligible orders")}</strong><span>{t("Collect letters as you order during the challenge.")}</span></div><div><b>03</b><strong>{t("Complete & win")}</strong><span>{t("Finish the name and claim the reward.")}</span></div></div></section>
 
     <style jsx global>{`
       .ch-page{min-height:100vh;background:#f7f7f5;color:#111;padding:0 0 110px;font-family:inherit}

@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -39,6 +41,7 @@ function indiaClock() {
 const hhmm = (value: string) => String(value || "").slice(0, 5);
 
 export default function MenuSchedulePage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [restaurantId, setRestaurantId] = useState("");
   const [restaurantName, setRestaurantName] = useState("");
@@ -265,14 +268,14 @@ export default function MenuSchedulePage() {
   return (
     <main className="ms-page">
       <div className="ms-shell">
-        <Link href="/restaurant-admin" className="ms-back"><ArrowLeft size={16} /> Dashboard</Link>
+        <Link href="/restaurant-admin" className="ms-back"><ArrowLeft size={16} /> {t("Dashboard")}</Link>
 
         <header className="ms-header">
           <div>
-            <span className="ms-eyebrow">THO’AM · SMART MENU CONTROL</span>
-            <h1>Menu <span>Schedule.</span></h1>
-            <p>Control exactly when each dish appears on your restaurant menu.</p>
-            <div className="ms-clock"><span /> India Standard Time <strong>{clock.time} IST</strong></div>
+            <span className="ms-eyebrow">{t("THO’AM · SMART MENU CONTROL")}</span>
+            <h1>{t("Menu")} <span>{t("Schedule")}.</span></h1>
+            <p>{t("Control exactly when each dish appears on your restaurant menu.")}</p>
+            <div className="ms-clock"><span /> {t("India Standard Time")} <strong>{clock.time} IST</strong></div>
           </div>
           <div className="ms-header-icon"><CalendarDays size={28} /></div>
         </header>
@@ -286,29 +289,29 @@ export default function MenuSchedulePage() {
         )}
 
         <section className="ms-stats">
-          <article><span>Total schedules</span><strong>{schedules.length}</strong><small>Across your menu</small></article>
-          <article><span>Enabled rules</span><strong>{activeCount}</strong><small>Automatically applied</small></article>
-          <article><span>Paused rules</span><strong>{pausedCount}</strong><small>Not affecting visibility</small></article>
+          <article><span>{t("Total schedules")}</span><strong>{schedules.length}</strong><small>{t("Across your menu")}</small></article>
+          <article><span>{t("Enabled rules")}</span><strong>{activeCount}</strong><small>{t("Automatically applied")}</small></article>
+          <article><span>{t("Paused rules")}</span><strong>{pausedCount}</strong><small>{t("Not affecting visibility")}</small></article>
         </section>
 
         <section className="ms-layout">
           <div className="ms-panel ms-editor">
             <div className="ms-panel-heading">
-              <div><span className="ms-eyebrow">{editingId ? "UPDATE RULE" : "CREATE A RULE"}</span><h2>{editingId ? "Edit schedule" : "New time window"}</h2></div>
+              <div><span className="ms-eyebrow">{editingId ? t("UPDATE RULE") : t("CREATE A RULE")}</span><h2>{editingId ? t("Edit schedule") : t("New time window")}</h2></div>
               <span className="ms-heading-icon"><Clock3 size={20} /></span>
             </div>
 
             {loading ? (
-              <div className="ms-loading"><LoaderCircle size={21} /> Loading restaurant settings…</div>
+              <div className="ms-loading"><LoaderCircle size={21} /> {t("Loading restaurant settings…")}</div>
             ) : products.length === 0 ? (
               <div className="ms-empty-editor">
-                <CalendarDays size={27} /><strong>Add products first</strong>
+                <CalendarDays size={27} /><strong>{t("Add products first")}</strong>
                 <p>Your dishes will appear here after you add them to {restaurantName}.</p>
-                <Link href="/restaurant-admin/products">Open product management</Link>
+                <Link href="/restaurant-admin/products">{t("Open product management")}</Link>
               </div>
             ) : (
               <form onSubmit={save} className="ms-form">
-                <label className="ms-field"><span>Food item</span>
+                <label className="ms-field"><span>{t("Food item")}</span>
                   <select value={productId} onChange={(event) => setProductId(event.target.value)} required>
                     {products.map((product) => <option key={product.id} value={product.id}>
                       {product.name}{product.is_available ? "" : " · Hidden in product settings"}
@@ -318,16 +321,16 @@ export default function MenuSchedulePage() {
                 </label>
 
                 <div className="ms-time-grid">
-                  <label className="ms-field"><span>Available from</span>
+                  <label className="ms-field"><span>{t("Available from")}</span>
                     <input type="time" value={start} onChange={(event) => setStart(event.target.value)} required />
                   </label>
-                  <label className="ms-field"><span>Available until</span>
+                  <label className="ms-field"><span>{t("Available until")}</span>
                     <input type="time" value={end} onChange={(event) => setEnd(event.target.value)} required />
                   </label>
                 </div>
 
-                <fieldset className="ms-days"><legend>Serving days</legend>
-                  <p>Select the days when this time window should apply.</p>
+                <fieldset className="ms-days"><legend>{t("Serving days")}</legend>
+                  <p>{t("Select the days when this time window should apply.")}</p>
                   <div className="ms-day-grid">
                     {DAYS.map((day) => <button type="button" key={day.value}
                       className={days.includes(day.value) ? "ms-day is-selected" : "ms-day"}
@@ -339,12 +342,12 @@ export default function MenuSchedulePage() {
 
                 <label className="ms-enable">
                   <span className="ms-enable-icon"><Power size={17} /></span>
-                  <span><strong>Enable this schedule</strong><small>Enabled schedules control customer menu visibility.</small></span>
+                  <span><strong>{t("Enable this schedule")}</strong><small>{t("Enabled schedules control customer menu visibility.")}</small></span>
                   <input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />
                 </label>
 
                 <div className="ms-actions">
-                  {editingId && <button type="button" className="ms-button ms-quiet" onClick={resetForm}><X size={16} /> Cancel</button>}
+                  {editingId && <button type="button" className="ms-button ms-quiet" onClick={resetForm}><X size={16} /> {t("Cancel")}</button>}
                   <button type="submit" className="ms-button ms-primary" disabled={saving || !productId}>
                     {saving ? <LoaderCircle size={17} className="ms-spin" /> : editingId ? <Check size={17} /> : <Plus size={17} />}
                     {saving ? "Saving…" : editingId ? "Save changes" : "Create schedule"}
@@ -357,20 +360,20 @@ export default function MenuSchedulePage() {
           <div className="ms-panel ms-rules">
             <div className="ms-rules-heading">
               <div><span className="ms-eyebrow">YOUR RESTAURANT · {restaurantName.toUpperCase()}</span>
-                <h2>Serving rules</h2>
-                <p>Products without an enabled schedule stay visible all day when product availability is on.</p>
+                <h2>{t("Serving rules")}</h2>
+                <p>{t("Products without an enabled schedule stay visible all day when product availability is on.")}</p>
               </div>
               <button type="button" className="ms-refresh" onClick={() => void load()} disabled={loading} aria-label="Refresh schedules"><RefreshCw size={17} className={loading ? "ms-spin" : ""} /></button>
             </div>
 
-            <label className="ms-search"><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search scheduled products…" /></label>
+            <label className="ms-search"><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("Search scheduled products…")} /></label>
 
-            {loading ? <div className="ms-loading"><LoaderCircle size={21} /> Loading schedules…</div> :
+            {loading ? <div className="ms-loading"><LoaderCircle size={21} /> {t("Loading schedules…")}</div> :
               visibleSchedules.length === 0 ? (
                 <div className="ms-empty-rules"><div className="ms-empty-icon"><CalendarDays size={25} /></div>
-                  <h3>{schedules.length ? "No matching schedules" : "Your schedule is clear"}</h3>
-                  <p>{schedules.length ? "Try another product name." : "Create your first time window. Until then, all available products stay visible throughout the day."}</p>
-                  {!schedules.length && <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>Create first schedule <Plus size={15} /></button>}
+                  <h3>{schedules.length ? t("No matching schedules") : t("Your schedule is clear")}</h3>
+                  <p>{schedules.length ? t("Try another product name.") : t("Create your first time window. Until then, all available products stay visible throughout the day.")}</p>
+                  {!schedules.length && <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>{t("Create first schedule")} <Plus size={15} /></button>}
                 </div>
               ) : (
                 <div className="ms-rule-list">
@@ -381,16 +384,16 @@ export default function MenuSchedulePage() {
                         <div className="ms-rule-title">
                           <h3>{productName(row.product_id)}</h3>
                           <span className={row.is_enabled ? (live ? "ms-status is-live" : "ms-status is-enabled") : "ms-status is-paused"}>
-                            <span />{row.is_enabled ? (live ? "Live now" : "Enabled") : "Paused"}
+                            <span />{row.is_enabled ? (live ? t("Live now") : t("Enabled")) : t("Paused")}
                           </span>
                         </div>
                         <div className="ms-rule-time"><Clock3 size={15} /><strong>{hhmm(row.starts_at)} – {hhmm(row.ends_at)}</strong><span>IST</span></div>
-                        <div className="ms-rule-days"><CalendarDays size={14} /> {dayLabels(row.weekdays || []) || "No days selected"}</div>
+                        <div className="ms-rule-days"><CalendarDays size={14} /> {dayLabels(row.weekdays || []) || t("No days selected")}</div>
                       </div>
                       <div className="ms-rule-actions">
-                        <button type="button" className="ms-icon-button" onClick={() => edit(row)} aria-label={`Edit ${productName(row.product_id)} schedule`} title="Edit"><Pencil size={16} /></button>
-                        <button type="button" className="ms-icon-button" onClick={() => void toggle(row)} disabled={busyId === row.id} aria-label={row.is_enabled ? "Pause schedule" : "Enable schedule"} title={row.is_enabled ? "Pause" : "Enable"}>{busyId === row.id ? <LoaderCircle size={16} className="ms-spin" /> : <Power size={16} />}</button>
-                        <button type="button" className="ms-icon-button ms-delete" onClick={() => void remove(row)} disabled={busyId === row.id} aria-label={`Delete ${productName(row.product_id)} schedule`} title="Delete">{busyId === row.id ? <LoaderCircle size={16} className="ms-spin" /> : <Trash2 size={16} />}</button>
+                        <button type="button" className="ms-icon-button" onClick={() => edit(row)} aria-label={`Edit ${productName(row.product_id)} schedule`} title={t("Edit")}><Pencil size={16} /></button>
+                        <button type="button" className="ms-icon-button" onClick={() => void toggle(row)} disabled={busyId === row.id} aria-label={row.is_enabled ? t("Pause schedule") : t("Enable schedule")} title={row.is_enabled ? "Pause" : "Enable"}>{busyId === row.id ? <LoaderCircle size={16} className="ms-spin" /> : <Power size={16} />}</button>
+                        <button type="button" className="ms-icon-button ms-delete" onClick={() => void remove(row)} disabled={busyId === row.id} aria-label={`Delete ${productName(row.product_id)} schedule`} title={t("Delete")}>{busyId === row.id ? <LoaderCircle size={16} className="ms-spin" /> : <Trash2 size={16} />}</button>
                       </div>
                     </article>;
                   })}
@@ -399,7 +402,7 @@ export default function MenuSchedulePage() {
           </div>
         </section>
 
-        <footer className="ms-footer"><span><strong>THO’AM.</strong> Smart menu operations</span><span>Schedule timezone · Asia/Kolkata</span></footer>
+        <footer className="ms-footer"><span><strong>THO’AM.</strong> {t("Smart menu operations")}</span><span>{t("Schedule timezone · Asia/Kolkata")}</span></footer>
       </div>
 
       <style jsx>{`

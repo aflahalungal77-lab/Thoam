@@ -1,20 +1,23 @@
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
 function AuthCallbackContent() {
+  const { t } = useLanguage();
   const params = useSearchParams();
-  const [message, setMessage] = useState("Completing sign in…");
+  const [message, setMessage] = useState(t("Completing sign in…"));
 
   useEffect(() => {
     let alive = true;
 
     async function run() {
       if (!supabase) {
-        setMessage("Supabase is not configured.");
+        setMessage(t("Supabase is not configured."));
         return;
       }
 
@@ -82,7 +85,7 @@ function AuthCallbackContent() {
     <main className="auth-wrap">
       <section className="auth-card">
         <div className="brand-mark">T.</div>
-        <h1>One moment.</h1>
+        <h1>{t("One moment.")}</h1>
         <p className="muted" role="status">
           {message}
         </p>
@@ -95,6 +98,7 @@ function AuthCallbackContent() {
 }
 
 export default function AuthCallback() {
+  const { t } = useLanguage();
   return (
     <Suspense
       fallback={
@@ -102,7 +106,7 @@ export default function AuthCallback() {
           <section className="auth-card">
             <div className="brand-mark">T.</div>
             <h1>One moment.</h1>
-            <p className="muted">Loading sign-in callback…</p>
+            <p className="muted">{t("Loading sign-in callback…")}</p>
           </section>
         </main>
       }

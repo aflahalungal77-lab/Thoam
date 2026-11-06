@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -32,6 +34,7 @@ const money = (n: number) => new Intl.NumberFormat("en-IN", {
 }).format(n);
 
 export default function KitchenPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [restaurantId, setRestaurantId] = useState("");
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
@@ -113,12 +116,12 @@ export default function KitchenPage() {
 
   return (
     <main className="container ta-manage-page" style={{ maxWidth: 980 }}>
-      <Link href="/restaurant-admin" className="ta-back-link"><ArrowLeft size={15} /> Dashboard</Link>
+      <Link href="/restaurant-admin" className="ta-back-link"><ArrowLeft size={15} /> {t("Dashboard")}</Link>
       <header className="ta-manage-heading">
         <div>
-          <span className="ta-eyebrow">DINE-IN · KITCHEN WORKSPACE</span>
-          <h1>Kitchen tickets<span>.</span></h1>
-          <p>Every table order appears as its own KOT.</p>
+          <span className="ta-eyebrow">{t("DINE-IN · KITCHEN WORKSPACE")}</span>
+          <h1>{t("Kitchen tickets")}<span>.</span></h1>
+          <p>{t("Every table order appears as its own KOT.")}</p>
         </div>
         <button className="ta-refresh-button" onClick={() => void load(true)} disabled={loading || refreshing}>
           <RefreshCw size={15} /> Refresh
@@ -126,20 +129,20 @@ export default function KitchenPage() {
       </header>
       {message && <div className="ta-manage-message" role="status">{message}</div>}
       <div style={{ display: "flex", gap: 10, margin: "22px 0" }}>
-        <button className="ta-filter-select" onClick={() => setTab("active")} aria-pressed={tab === "active"}>Active · {orders.length}</button>
-        <button className="ta-filter-select" onClick={() => setTab("completed")} aria-pressed={tab === "completed"}>Completed · {completed.length}</button>
+        <button className="ta-filter-select" onClick={() => setTab("active")} aria-pressed={tab === "active"}>{t("Active")} · {orders.length}</button>
+        <button className="ta-filter-select" onClick={() => setTab("completed")} aria-pressed={tab === "completed"}>{t("Completed")} · {completed.length}</button>
       </div>
       {loading ? (
-        <div className="ta-menu-empty"><LoaderCircle size={28} /><h3>Loading kitchen tickets...</h3></div>
+        <div className="ta-menu-empty"><LoaderCircle size={28} /><h3>{t("Loading kitchen tickets...")}</h3></div>
       ) : visible.length === 0 ? (
-        <div className="ta-menu-empty"><ChefHat size={32} /><h3>{tab === "active" ? "No active KOTs" : "No completed KOTs"}</h3><p>New dine-in orders will appear here automatically.</p></div>
+        <div className="ta-menu-empty"><ChefHat size={32} /><h3>{tab === "active" ? t("No active KOTs") : t("No completed KOTs")}</h3><p>{t("New dine-in orders will appear here automatically.")}</p></div>
       ) : (
         <section style={{ display: "grid", gap: 16 }}>
           {visible.map((order) => (
             <article key={order.id} style={{ border: "1px solid #e5e7eb", borderRadius: 16, padding: 18, background: "#fff", color: "#111" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", borderBottom: "1px solid #eee", paddingBottom: 13 }}>
                 <div>
-                  <span style={{ fontSize: 11, letterSpacing: 1.5, color: "#777", fontWeight: 700 }}>KITCHEN ORDER TICKET</span>
+                  <span style={{ fontSize: 11, letterSpacing: 1.5, color: "#777", fontWeight: 700 }}>{t("KITCHEN ORDER TICKET")}</span>
                   <h2 style={{ fontSize: 27, margin: "4px 0", fontWeight: 800 }}>#{order.order_number}</h2>
                   <strong style={{ fontSize: 15 }}>TABLE {order.restaurant_tables?.table_code || "—"}</strong>
                 </div>
@@ -162,7 +165,7 @@ export default function KitchenPage() {
                 {tab === "active" && <button onClick={() => void complete(order)} disabled={busy === order.id} className="ta-form-submit" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                   {busy === order.id ? <LoaderCircle size={16} /> : <CheckCircle2 size={16} />} Complete
                 </button>}
-                {tab === "completed" && <span style={{ color: "#28734c", fontWeight: 700, fontSize: 13 }}>Completed</span>}
+                {tab === "completed" && <span style={{ color: "#28734c", fontWeight: 700, fontSize: 13 }}>{t("Completed")}</span>}
               </div>
             </article>
           ))}

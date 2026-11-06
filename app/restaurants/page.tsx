@@ -1,6 +1,8 @@
 
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -30,6 +32,7 @@ function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: num
 }
 
 export default function Restaurants() {
+  const { t } = useLanguage();
   const [items, setItems] = useState<Restaurant[]>([]);
   const [query, setQuery] = useState("");
   const [area, setArea] = useState("");
@@ -150,13 +153,13 @@ export default function Restaurants() {
           <div className="restaurants-hero-inner">
             <div className="restaurants-eyebrow">
               <span className="eyebrow-dot" />
-              YOUR LOCAL FOOD GUIDE
+              {t("YOUR LOCAL FOOD GUIDE")}
             </div>
 
             <h1>
               Good food.
               <br />
-              <span>Close to you.</span>
+              <span>{t("Close to you.")}</span>
             </h1>
 
             <p className="restaurants-hero-description">
@@ -171,11 +174,11 @@ export default function Restaurants() {
 
             <div className="restaurants-hero-note">
               <MapPin size={14} />
-              <span>Discover local favourites around you</span>
+              <span>{t("Discover local favourites around you")}</span>
             </div>
-            <button type="button" onClick={requestLocation} disabled={locationStatus === "loading"} className="restaurants-location-button"><MapPin size={15} /> {locationStatus === "loading" ? "Finding your location..." : locationStatus === "ready" ? "Location enabled · Nearby first" : "Use my location"}</button>
-            {locationStatus === "denied" && <p className="restaurants-location-help">Location permission was denied. Enable it in browser settings, or browse all restaurants.</p>}
-            {locationStatus === "unsupported" && <p className="restaurants-location-help">Location is not supported by this browser. You can still browse all restaurants.</p>}
+            <button type="button" onClick={requestLocation} disabled={locationStatus === "loading"} className="restaurants-location-button"><MapPin size={15} /> {locationStatus === "loading" ? t("Finding your location...") : locationStatus === "ready" ? t("Location enabled · Nearby first") : t("Use my location")}</button>
+            {locationStatus === "denied" && <p className="restaurants-location-help">{t("Location permission was denied. Enable it in browser settings, or browse all restaurants.")}</p>}
+            {locationStatus === "unsupported" && <p className="restaurants-location-help">{t("Location is not supported by this browser. You can still browse all restaurants.")}</p>}
           </div>
 
           <div className="restaurants-hero-decoration" aria-hidden="true">
@@ -196,9 +199,9 @@ export default function Restaurants() {
               <div className="restaurants-section-kicker">
                 FIND YOUR NEXT FAVOURITE
               </div>
-              <h2>{userLocation ? "Restaurants near you" : "Explore restaurants"}</h2>
+              <h2>{userLocation ? t("Restaurants near you") : t("Explore restaurants")}</h2>
               <p>
-                Find a place, browse the options, and discover your next meal.
+                {t("Find a place, browse the options, and discover your next meal.")}
               </p>
             </div>
 
@@ -207,7 +210,7 @@ export default function Restaurants() {
                 <Store size={15} />
                 <span>
                   {filtered.length}{" "}
-                  {filtered.length === 1 ? "place" : "places"}
+                  {filtered.length === 1 ? t("place") : t("places")}
                 </span>
               </div>
             )}
@@ -220,8 +223,8 @@ export default function Restaurants() {
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Restaurant, food or location..."
-                aria-label="Search restaurants"
+                placeholder={t("Restaurant, food or location...")}
+                aria-label={t("Search restaurants")}
               />
 
               {query && (
@@ -241,8 +244,8 @@ export default function Restaurants() {
               <input
                 value={area}
                 onChange={(event) => setArea(event.target.value)}
-                placeholder="Area or city"
-                aria-label="Filter by area or city"
+                placeholder={t("Area or city")}
+                aria-label={t("Filter by area or city")}
               />
             </label>
           </div>
@@ -251,15 +254,15 @@ export default function Restaurants() {
           <div className="restaurants-filters">
             <div className="filter-label">
               <SlidersHorizontal size={15} />
-              <span>FILTER</span>
+              <span>{t("FILTER")}</span>
             </div>
 
             <div className="restaurants-filter-options">
               {(
                 [
-                  ["all", "All restaurants"],
-                  ["open", "Open now"],
-                  ["qr", "QR ordering"],
+                  ["all", t("All restaurants")],
+                  ["open", t("Open now")],
+                  ["qr", t("QR ordering")],
                 ] as [FilterType, string][]
               ).map(([value, label]) => (
                 <button
@@ -283,7 +286,7 @@ export default function Restaurants() {
                 className="clear-filters"
                 onClick={clearSearch}
               >
-                Clear filters
+                {t("Clear filters")}
               </button>
             )}
           </div>
@@ -305,8 +308,8 @@ export default function Restaurants() {
               <div className="restaurants-empty-icon">
                 <Store size={27} />
               </div>
-              <h3>We couldn’t load restaurants</h3>
-              <p>Please check your connection and try again.</p>
+              <h3>{t("We couldn’t load restaurants")}</h3>
+              <p>{t("Please check your connection and try again.")}</p>
               <p className="restaurants-error-detail">{err}</p>
             </div>
           ) : !supabase ? (
@@ -314,7 +317,7 @@ export default function Restaurants() {
               <div className="restaurants-empty-icon">
                 <Store size={27} />
               </div>
-              <h3>Restaurants are getting ready</h3>
+              <h3>{t("Restaurants are getting ready")}</h3>
               <p>
                 Restaurant listings will appear here when the service
                 is connected and approved listings are available.
@@ -332,7 +335,7 @@ export default function Restaurants() {
               <div className="restaurants-empty-icon">
                 <Search size={27} />
               </div>
-              <h3>No matching restaurants</h3>
+              <h3>{t("No matching restaurants")}</h3>
               <p>
                 Try a different search or remove some filters to
                 discover other local places.
@@ -391,7 +394,7 @@ export default function Restaurants() {
                       }`}
                     >
                       <span className="status-indicator" />
-                      {restaurant.is_open ? "Open" : "Closed"}
+                      {restaurant.is_open ? t("Open") : t("Closed")}
                     </span>
 
                     {restaurant.qr_enabled && (
@@ -453,8 +456,8 @@ export default function Restaurants() {
           </div>
 
           <div className="owner-banner-copy">
-            <span>ARE YOU A RESTAURANT OWNER?</span>
-            <h2>Bring your restaurant online.</h2>
+            <span>{t("ARE YOU A RESTAURANT OWNER?")}</span>
+            <h2>{t("Bring your restaurant online.")}</h2>
             <p>
               Join the local food community and manage your menu
               and orders in one place.
@@ -476,7 +479,7 @@ export default function Restaurants() {
               height={30}
             />
           </Link>
-          <span>Local food, connected.</span>
+          <span>{t("Local food, connected.")}</span>
         </footer>
       </main>
       <style jsx global>{`

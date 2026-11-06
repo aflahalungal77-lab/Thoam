@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -92,6 +94,7 @@ function isOfferCurrentlyValid(offer: RestaurantOffer) {
 }
 
 export default function RestaurantPage() {
+  const { t } = useLanguage();
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
 
@@ -402,18 +405,18 @@ export default function RestaurantPage() {
         <div className="premium-menu-container">
           <Link href="/restaurants" className="premium-back">
             <ArrowLeft size={16} />
-            <span>All restaurants</span>
+            <span>{t("All restaurants")}</span>
           </Link>
 
           {loading ? (
             <div className="premium-loading">
               <div className="premium-spinner" />
-              <p>Preparing your menu...</p>
+              <p>{t("Preparing your menu...")}</p>
             </div>
           ) : !restaurant ? (
             <section className="premium-empty">
               <Utensils size={34} />
-              <h1>Restaurant unavailable</h1>
+              <h1>{t("Restaurant unavailable")}</h1>
               <p>
                 {message || "This restaurant is currently unavailable."}
               </p>
@@ -440,7 +443,7 @@ export default function RestaurantPage() {
                     }`}
                   >
                     <span className="premium-status-dot" />
-                    {restaurant.is_open ? "Open now" : "Currently closed"}
+                    {restaurant.is_open ? t("Open now") : t("Currently closed")}
                   </span>
                 </div>
 
@@ -485,12 +488,12 @@ export default function RestaurantPage() {
                 >
                   <div className="thoam-offers-heading">
                     <div>
-                      <span>EXCLUSIVE DEALS</span>
-                      <h2>Offers for you</h2>
+                      <span>{t("EXCLUSIVE DEALS")}</span>
+                      <h2>{t("Offers for you")}</h2>
                     </div>
 
                     {offers.length > 1 && (
-                      <small>Swipe to explore</small>
+                      <small>{t("Swipe to explore")}</small>
                     )}
                   </div>
 
@@ -517,7 +520,7 @@ export default function RestaurantPage() {
               <section className="premium-menu-section">
                 <div className="thoam-schedule-note">
                   <Clock3 size={15} />
-                  <span>Menu timings follow India Standard Time (IST) and update automatically.</span>
+                  <span>{t("Menu timings follow India Standard Time (IST) and update automatically.")}</span>
                   <strong>{indiaClock.time} IST</strong>
                 </div>
                 {!scheduleReady && (
@@ -532,12 +535,12 @@ export default function RestaurantPage() {
                     </span>
 
                     <h2>
-                      Explore the menu<span>.</span>
+                      {t("Explore the menu")}<span>.</span>
                     </h2>
 
                     <p>
                       {filteredProducts.length}{" "}
-                      {filteredProducts.length === 1 ? "dish" : "dishes"}
+                      {filteredProducts.length === 1 ? t("dish") : t("dishes")}
                       {search ||
                       category !== "All" ||
                       foodFilter !== "all"
@@ -567,8 +570,8 @@ export default function RestaurantPage() {
                     type="search"
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search biriyani, shawarma..."
-                    aria-label="Search menu items"
+                    placeholder={t("Search biriyani, shawarma...")}
+                    aria-label={t("Search menu items")}
                   />
 
                   {search && (
@@ -583,7 +586,7 @@ export default function RestaurantPage() {
                 </label>
 
                 <div className="premium-filter-heading">
-                  <span>Categories</span>
+                  <span>{t("Categories")}</span>
 
                   <div className="premium-food-filters">
                     <button
@@ -630,7 +633,7 @@ export default function RestaurantPage() {
                 {products.length === 0 ? (
                   <div className="premium-empty">
                     <ShoppingBag size={30} />
-                    <h3>Menu coming soon</h3>
+                    <h3>{t("Menu coming soon")}</h3>
                     <p>
                       This restaurant has not added available items yet.
                     </p>
@@ -638,8 +641,8 @@ export default function RestaurantPage() {
                 ) : filteredProducts.length === 0 ? (
                   <div className="premium-empty">
                     <Search size={30} />
-                    <h3>No dishes found</h3>
-                    <p>Try a different search or filter.</p>
+                    <h3>{t("No dishes found")}</h3>
+                    <p>{t("Try a different search or filter.")}</p>
 
                     <button
                       className="premium-secondary-button"
@@ -694,7 +697,7 @@ export default function RestaurantPage() {
                                 ) : (
                                   <Drumstick size={12} />
                                 )}
-                                {product.is_veg ? "VEG" : "NON-VEG"}
+                                {product.is_veg ? t("VEG") : t("NON-VEG")}
                               </span>
 
                               {quantity > 0 && (
@@ -781,7 +784,7 @@ export default function RestaurantPage() {
 
               <footer className="premium-menu-footer">
                 <span>THO’AM.</span>
-                <p>Good food. Simple ordering.</p>
+                <p>{t("Good food. Simple ordering.")}</p>
               </footer>
             </>
           )}
@@ -800,9 +803,9 @@ export default function RestaurantPage() {
           </span>
 
           <span className="premium-floating-cart-text">
-            <strong>View your cart</strong>
+            <strong>{t("View your cart")}</strong>
             <small>
-              {cartCount} {cartCount === 1 ? "item" : "items"}
+              {cartCount} {cartCount === 1 ? t("item") : t("items")}
             </small>
           </span>
 
@@ -832,10 +835,10 @@ export default function RestaurantPage() {
           >
             <div className="premium-cart-header">
               <div className="premium-cart-title-wrap">
-                <span className="premium-label">YOUR SELECTION</span>
+                <span className="premium-label">{t("YOUR SELECTION")}</span>
 
                 <h2 id="premium-cart-title">
-                  Your cart<span>.</span>
+                  {t("Your cart")}<span>.</span>
                 </h2>
 
                 <p>
@@ -859,7 +862,7 @@ export default function RestaurantPage() {
                   <ShoppingBag size={30} />
                 </div>
 
-                <h3>Your cart is empty</h3>
+                <h3>{t("Your cart is empty")}</h3>
                 <p>
                   Discover something delicious from the menu.
                 </p>
@@ -960,7 +963,7 @@ export default function RestaurantPage() {
 
                   <div className="premium-cart-total-row">
                     <div>
-                      <span>Subtotal</span>
+                      <span>{t("Subtotal")}</span>
                       <small>
                         Delivery charges, if any, at checkout
                       </small>
@@ -970,7 +973,7 @@ export default function RestaurantPage() {
                   </div>
 
                   <div className="premium-cart-total-row premium-cart-grand-total">
-                    <span>Total</span>
+                    <span>{t("Total")}</span>
                     <strong>₹{total.toFixed(2)}</strong>
                   </div>
 

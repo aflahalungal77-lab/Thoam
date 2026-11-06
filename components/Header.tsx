@@ -6,10 +6,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogIn, LogOut, Menu, ShoppingBag, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useLanguage } from "@/components/LanguageProvider";
 
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -86,9 +88,9 @@ export default function Header() {
       </Link>
 
       <nav className="thoam-desktop-nav" aria-label="Main navigation">
-        <Link href="/">Home</Link>
-        <Link href="/restaurants">Restaurants</Link>
-        <Link href="/owner">For restaurants</Link>
+        <Link href="/">{t("Home")}</Link>
+        <Link href="/restaurants">{t("Restaurants")}</Link>
+        <Link href="/owner">{t("For restaurants")}</Link>
       </nav>
 
       <div className="thoam-header-actions">
@@ -100,7 +102,7 @@ export default function Header() {
               onClick={handleLogout}
             >
               <LogOut size={15} />
-              <span>Log out</span>
+              <span>{t("Log out")}</span>
             </button>
           ) : (
             <Link
@@ -108,7 +110,7 @@ export default function Header() {
               className="button button-light small thoam-auth-button"
             >
               <LogIn size={15} />
-              <span>Log in</span>
+              <span>{t("Log in")}</span>
             </Link>
           )
         )}
@@ -120,7 +122,7 @@ export default function Header() {
           disabled={loading}
         >
           <ShoppingBag size={15} />
-          <span>Order food</span>
+          <span>{t("Order food")}</span>
         </button>
 
         <button
@@ -136,29 +138,29 @@ export default function Header() {
 
       {mobileMenuOpen && (
         <nav className="thoam-mobile-menu" aria-label="Mobile navigation">
-          <Link href="/">Home</Link>
-          <Link href="/restaurants">Restaurants</Link>
-          <Link href="/owner">For restaurants</Link>
+          <Link href="/">{t("Home")}</Link>
+          <Link href="/restaurants">{t("Restaurants")}</Link>
+          <Link href="/owner">{t("For restaurants")}</Link>
 
           {!loading && (
             user ? (
               <button type="button" onClick={handleLogout}>
                 <LogOut size={16} />
-                Log out
+                {t("Log out")}
               </button>
             ) : (
               <Link
                 href={`/auth?next=${encodeURIComponent(pathname || "/")}`}
               >
                 <LogIn size={16} />
-                Log in
+                {t("Log in")}
               </Link>
             )
           )}
 
           <button type="button" onClick={handleOrderFood}>
             <ShoppingBag size={16} />
-            Order food
+            {t("Order food")}
           </button>
         </nav>
       )}
