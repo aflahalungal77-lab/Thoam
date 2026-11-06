@@ -101,6 +101,9 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
+  const initialLanguage = cookieStore.get("thoam-language")?.value === "ml" ? "ml" : "en";
+
   return (
     <html lang={initialLanguage}>
       <head>
