@@ -14,6 +14,7 @@ const items = [
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   // Keep this navigation exclusive to customer-facing pages.
   if (
