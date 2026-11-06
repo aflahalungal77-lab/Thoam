@@ -12,7 +12,7 @@ type Challenge={id:string;title:string;challenge_word:string;description:string|
 type Progress={id:string;challenge_id:string;customer_id:string;progress_count:number;collected_letters:string[];reward_status:string;completed_at:string|null;redeemed_at:string|null};
 type FormState={title:string;challenge_word:string;description:string;image_url:string;starts_at:string;ends_at:string;status:string;reward_title:string;reward_description:string};
 const blank:FormState={title:"",challenge_word:"",description:"",image_url:"",starts_at:"",ends_at:"",status:"draft",reward_title:"",reward_description:""};
-const localInput=(value:string)={{const d=new Date(value);const p=(n:number)=>String(n).padStart(2,"0");return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"T"+p(d.getHours())+":"+p(d.getMinutes());};
+const localInput=(value:string)=>{const d=new Date(value);const p=(n:number)=>String(n).padStart(2,"0");return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"T"+p(d.getHours())+":"+p(d.getMinutes());};
 
 export default function RestaurantChallengesPage(){
   const { t } = useLanguage();
