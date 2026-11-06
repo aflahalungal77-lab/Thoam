@@ -1,6 +1,8 @@
 
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { useCallback, useEffect, useState, ChangeEvent, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -80,6 +82,7 @@ function localDateValue(value: string | null) {
 }
 
 export default function OffersPage() {
+  const { t } = useLanguage();
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
@@ -528,8 +531,8 @@ console.log("STEP 4: Starting offer database insert");
       <main className="offers-page">
         <div className="loading-state">
           <LoaderCircle className="spin" size={30} />
-          <h2>Loading offers</h2>
-          <p>Preparing your promotions workspace.</p>
+          <h2>{t("Loading offers")}</h2>
+          <p>{t("Preparing your promotions workspace.")}</p>
         </div>
         <OffersStyles />
       </main>
@@ -546,9 +549,9 @@ console.log("STEP 4: Starting offer database insert");
       </header>
 
       <section className="offers-heading">
-        <span className="eyebrow">RESTAURANT PROMOTIONS</span>
-        <h1>Offers<span>.</span></h1>
-        <p>Create discounts that make customers want to order.</p>
+        <span className="eyebrow">{t("RESTAURANT PROMOTIONS")}</span>
+        <h1>{t("Offers")}<span>.</span></h1>
+        <p>{t("Create discounts that make customers want to order.")}</p>
       </section>
 
       {message && (
@@ -563,36 +566,36 @@ console.log("STEP 4: Starting offer database insert");
           <div className="section-title">
             <div className="section-icon"><Plus size={20} /></div>
             <div>
-              <span className="eyebrow">{editing ? "UPDATE PROMOTION" : "NEW PROMOTION"}</span>
-              <h2>{editing ? "Edit offer" : "Create an offer"}</h2>
+              <span className="eyebrow">{editing ? "{t("UPDATE PROMOTION")}" : "{t("NEW PROMOTION")}"}</span>
+              <h2>{editing ? t("Edit offer") : t("Create an offer")}</h2>
             </div>
           </div>
 
           <form onSubmit={saveOffer}>
             <label className="field">
-              <span>Offer title *</span>
+              <span>{t("Offer title")} *</span>
               <input
                 value={form.title}
                 onChange={(e) => updateForm("title", e.target.value)}
                 maxLength={100}
-                placeholder="Example: Weekend Special"
+                placeholder={t("Example: Weekend Special")}
                 required
               />
             </label>
 
             <label className="field">
-              <span>Description</span>
+              <span>{t("Description")}</span>
               <textarea
                 value={form.description}
                 onChange={(e) => updateForm("description", e.target.value)}
                 maxLength={300}
                 rows={3}
-                placeholder="Tell customers about this offer..."
+                placeholder={t("Tell customers about this offer...")}
               />
             </label>
 
             <div className="field">
-              <span>Offer image</span>
+              <span>{t("Offer image")}</span>
               <label className="image-upload">
                 {imagePreview ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -600,7 +603,7 @@ console.log("STEP 4: Starting offer database insert");
                 ) : (
                   <div className="image-placeholder">
                     <ImagePlus size={27} />
-                    <strong>Upload offer image</strong>
+                    <strong>{t("Upload offer image")}</strong>
                     <small>PNG, JPG or WEBP · Max 5 MB</small>
                   </div>
                 )}
@@ -622,7 +625,7 @@ console.log("STEP 4: Starting offer database insert");
             </div>
 
             <div className="field">
-              <span>Offer applies to</span>
+              <span>{t("Offer applies to")}</span>
               <div className="choice-grid">
                 <button
                   type="button"
@@ -630,8 +633,8 @@ console.log("STEP 4: Starting offer database insert");
                   onClick={() => updateForm("scope", "order")}
                 >
                   <ShoppingBagIcon />
-                  <strong>Entire order</strong>
-                  <small>Discount on the full items subtotal</small>
+                  <strong>{t("Entire order")}</strong>
+                  <small>{t("Discount on the full items subtotal")}</small>
                 </button>
                 <button
                   type="button"
@@ -639,18 +642,18 @@ console.log("STEP 4: Starting offer database insert");
                   onClick={() => updateForm("scope", "products")}
                 >
                   <Package size={20} />
-                  <strong>Selected products</strong>
-                  <small>Discount on selected menu items</small>
+                  <strong>{t("Selected products")}</strong>
+                  <small>{t("Discount on selected menu items")}</small>
                 </button>
               </div>
             </div>
 
             {form.scope === "products" && (
               <div className="field">
-                <span>Select products *</span>
+                <span>{t("Select products")} *</span>
                 <div className="product-picker">
                   {products.length === 0 ? (
-                    <p>No products found. Add products first.</p>
+                    <p>{t("No products found. Add products first.")}</p>
                   ) : products.map((product) => (
                     <label key={product.id} className="product-option">
                       <input
@@ -667,7 +670,7 @@ console.log("STEP 4: Starting offer database insert");
             )}
 
             <div className="field">
-              <span>Discount type</span>
+              <span>{t("Discount type")}</span>
               <div className="segmented">
                 <button
                   type="button"
@@ -700,7 +703,7 @@ console.log("STEP 4: Starting offer database insert");
                 />
               </label>
               <label className="field">
-                <span>Minimum order (₹)</span>
+                <span>{t("Minimum order")} (₹)</span>
                 <input
                   type="number"
                   min="0"
@@ -712,14 +715,14 @@ console.log("STEP 4: Starting offer database insert");
             </div>
 
             <label className="field">
-              <span>Maximum discount (₹) <small>OPTIONAL</small></span>
+              <span>{t("Maximum discount")} (₹) <small>{t("OPTIONAL")}</small></span>
               <input
                 type="number"
                 min="0.01"
                 step="0.01"
                 value={form.max_discount}
                 onChange={(e) => updateForm("max_discount", e.target.value)}
-                placeholder="No maximum"
+                placeholder={t("No maximum")}
               />
             </label>
 
@@ -748,7 +751,7 @@ console.log("STEP 4: Starting offer database insert");
                 checked={form.is_active}
                 onChange={(e) => updateForm("is_active", e.target.checked)}
               />
-              <span><strong>Activate offer</strong><small>Customers can use this offer when active and valid.</small></span>
+              <span><strong>{t("Activate offer")}</strong><small>{t("Customers can use this offer when active and valid.")}</small></span>
             </label>
 
             <div className="form-actions">
@@ -768,8 +771,8 @@ console.log("STEP 4: Starting offer database insert");
         <section className="list-section">
           <div className="list-heading">
             <div>
-              <span className="eyebrow">YOUR PROMOTIONS</span>
-              <h2>All offers <span>{offers.length}</span></h2>
+              <span className="eyebrow">{t("YOUR PROMOTIONS")}</span>
+              <h2>{t("All offers")} <span>{offers.length}</span></h2>
             </div>
             <button className="new-button" onClick={resetForm}>
               <Plus size={17} /> New offer
@@ -779,9 +782,9 @@ console.log("STEP 4: Starting offer database insert");
           {offers.length === 0 ? (
             <div className="empty-state">
               <div><Tag size={28} /></div>
-              <h3>No offers yet</h3>
-              <p>Create your first promotion to show customers a discount at checkout.</p>
-              <button className="save-button" onClick={resetForm}><Plus size={17} /> Create your first offer</button>
+              <h3>{t("No offers yet")}</h3>
+              <p>{t("Create your first promotion to show customers a discount at checkout.")}</p>
+              <button className="save-button" onClick={resetForm}><Plus size={17} /> {t("Create your first offer")}</button>
             </div>
           ) : (
             <div className="offer-list">
@@ -805,15 +808,15 @@ console.log("STEP 4: Starting offer database insert");
                       </span>
                     </div>
                     <h3>{offer.title}</h3>
-                    <p>{offer.description || "No description added."}</p>
+                    <p>{offer.description || t("No description added.")}</p>
                     <small>
                       {offer.scope === "order" ? "Entire order" : `${offer.product_ids?.length || 0} selected products`}
                       {" · "}Min. {money(Number(offer.min_order_amount || 0))}
                     </small>
                     <div className="offer-actions">
-                      <button onClick={() => startEdit(offer)}><Pencil size={15} /> Edit</button>
-                      <button onClick={() => void toggleActive(offer)}><Power size={15} /> {offer.is_active ? "Deactivate" : "Activate"}</button>
-                      <button className="delete-action" onClick={() => void deleteOffer(offer)}><Trash2 size={15} /> Delete</button>
+                      <button onClick={() => startEdit(offer)}><Pencil size={15} /> {t("Edit")}</button>
+                      <button onClick={() => void toggleActive(offer)}><Power size={15} /> {offer.is_active ? t("Deactivate") : t("Activate")}</button>
+                      <button className="delete-action" onClick={() => void deleteOffer(offer)}><Trash2 size={15} /> {t("Delete")}</button>
                     </div>
                   </div>
                 </article>
@@ -825,7 +828,7 @@ console.log("STEP 4: Starting offer database insert");
 
       <footer className="offers-footer">
         <strong>THO’AM.</strong>
-        <span>Restaurant partner workspace</span>
+        <span>{t("Restaurant partner workspace")}</span>
       </footer>
 
       <OffersStyles />
