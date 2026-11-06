@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { useEffect, useMemo, useState } from "react";
 import MenuProductCard, { type MenuProduct } from "./MenuProductCard";
 import MenuCart, { type CartItem } from "./MenuCart";
@@ -53,6 +55,7 @@ interface Props {
 }
 
 export default function PublicMenu({ restaurant, products, offers }: Props) {
+  const { t } = useLanguage();
   const [cart, setCart] = useState<Record<string, CartItem>>({});
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
@@ -265,7 +268,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
               FINAL STEP
             </span>
 
-            <h1>Complete your order<span>.</span></h1>
+            <h1>{t("Complete your order")}<span>.</span></h1>
             <p>
               A few details and your order will be on its way to the restaurant.
             </p>
@@ -274,8 +277,8 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
           <section className="checkout-summary">
             <div className="summary-heading">
               <div>
-                <span className="summary-kicker">YOUR SELECTION</span>
-                <h2>Order summary</h2>
+                <span className="summary-kicker">{t("YOUR SELECTION")}</span>
+                <h2>{t("Order summary")}</h2>
               </div>
 
               <span className="summary-count">
@@ -301,7 +304,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
             {offers.length > 0 && (
               <div className="checkout-offers">
                 <div className="checkout-offers-heading">
-                  <span className="summary-kicker">AVAILABLE OFFERS</span>
+                  <span className="summary-kicker">{t("AVAILABLE OFFERS")}</span>
                   {selectedOfferId && (
                     <button type="button" onClick={() => setSelectedOfferId(null)}>
                       Remove
@@ -349,7 +352,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
                             </small>
                           )}
                         </span>
-                        {active && <strong className="offer-saving">Applied</strong>}
+                        {active && <strong className="offer-saving">{t("Applied")}</strong>}
                       </button>
                     );
                   })}
@@ -358,7 +361,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
             )}
 
             <div className="summary-total">
-              <span>Subtotal</span>
+              <span>{t("Subtotal")}</span>
               <strong>₹{subtotal.toFixed(2)}</strong>
             </div>
             {selectedOffer && estimatedDiscount > 0 && (
@@ -368,7 +371,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
               </div>
             )}
             <div className="summary-payable">
-              <span>Items total after discount</span>
+              <span>{t("Items total after discount")}</span>
               <strong>₹{Math.max(0, subtotal - estimatedDiscount).toFixed(2)}</strong>
             </div>
           </section>
@@ -715,7 +718,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
 
             <div>
               <strong>THO'AM</strong>
-              <span>ORDER DIRECTLY</span>
+              <span>{t("ORDER DIRECTLY")}</span>
             </div>
           </div>
 
@@ -765,13 +768,13 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
             <div className="hero-graphic-center">
               <span>T<span>.</span></span>
             </div>
-            <div className="hero-graphic-caption">GOOD FOOD, YOUR WAY</div>
+            <div className="hero-graphic-caption">{t("GOOD FOOD, YOUR WAY")}</div>
           </div>
         </div>
 
         <div className="hero-bottom">
-          <span>MADE FOR YOUR CRAVINGS</span>
-          <span>SCROLL TO EXPLORE ↓</span>
+          <span>{t("MADE FOR YOUR CRAVINGS")}</span>
+          <span>{t("SCROLL TO EXPLORE ↓")}</span>
         </div>
       </header>
 
@@ -780,9 +783,9 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
         <section className="menu-content">
           <div className="menu-section-heading">
             <div>
-              <span className="section-kicker">THE COLLECTION</span>
-              <h2>Explore the menu<span>.</span></h2>
-              <p>Find something delicious for today.</p>
+              <span className="section-kicker">{t("THE COLLECTION")}</span>
+              <h2>{t("Explore the menu")}<span>.</span></h2>
+              <p>{t("Find something delicious for today.")}</p>
             </div>
 
             <span className="item-count">
@@ -799,8 +802,8 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search your favourite food..."
-              aria-label="Search food"
+              placeholder={t("Search your favourite food...")}
+              aria-label={t("Search food")}
             />
 
             {search && (
@@ -817,8 +820,8 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
 
           {/* CATEGORIES */}
           <div className="category-header">
-            <span>DISCOVER BY CATEGORY</span>
-            <span>{categories.length - 1} categories</span>
+            <span>{t("DISCOVER BY CATEGORY")}</span>
+            <span>{categories.length - 1} {t("categories")}</span>
           </div>
 
           <div className="category-list" aria-label="Food categories">
@@ -841,8 +844,8 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
           {offers.length > 0 && (
             <section className="public-offers" aria-label="Current restaurant offers">
               <div className="public-offers-heading">
-                <span className="public-offers-kicker">LIMITED-TIME DEALS</span>
-                <span className="public-offers-count">{offers.length} {offers.length === 1 ? "OFFER" : "OFFERS"}</span>
+                <span className="public-offers-kicker">{t("LIMITED-TIME DEALS")}</span>
+                <span className="public-offers-count">{offers.length} {offers.length === 1 ? t("OFFER") : t("OFFERS")}</span>
               </div>
               <div className="public-offers-grid">
                 {offers.map((offer) => (
@@ -880,7 +883,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
                 <Search size={25} />
               </div>
 
-              <h3>No dishes found</h3>
+              <h3>{t("No dishes found")}</h3>
               <p>
                 We couldn't find anything matching your search.
                 Try another dish or category.
@@ -912,7 +915,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
 
           <div className="menu-bottom-note">
             <span className="menu-bottom-line" />
-            <span>MADE WITH CARE. SERVED WITH LOVE.</span>
+            <span>{t("MADE WITH CARE. SERVED WITH LOVE.")}</span>
             <span className="menu-bottom-line" />
           </div>
         </section>
@@ -922,7 +925,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
           <div className="cart-sidebar-heading">
             <div>
               <span className="section-kicker">YOUR SELECTION</span>
-              <h2>Your cart<span>.</span></h2>
+              <h2>{t("Your cart")}<span>.</span></h2>
             </div>
 
             <div className="cart-count">
@@ -966,14 +969,14 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
             </div>
 
             <div>
-              <strong>Order directly</strong>
-              <p>Your order goes straight to the restaurant.</p>
+              <strong>{t("Order directly")}</strong>
+              <p>{t("Your order goes straight to the restaurant.")}</p>
             </div>
           </div>
 
           <div className="cart-delivery-note">
             <Clock3 size={14} />
-            <span>Order confirmation via WhatsApp</span>
+            <span>{t("Order confirmation via WhatsApp")}</span>
           </div>
         </aside>
       </div>
@@ -983,7 +986,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
         <div className="footer-inner">
           <div className="footer-brand">
             <strong>THO'AM<span>.</span></strong>
-            <p>Good food. Good moments.</p>
+            <p>{t("Good food. Good moments.")}</p>
           </div>
 
           <div className="footer-right">
@@ -1010,7 +1013,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
             <span>{cartCount}</span>
           </span>
 
-          <span>View your cart</span>
+          <span>{t("View your cart")}</span>
 
           <strong>₹{subtotal.toFixed(2)}</strong>
         </button>
