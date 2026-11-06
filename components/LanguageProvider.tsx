@@ -48,6 +48,11 @@ const translations: Record<string, { en: string; ml: string }> = {
   "Clear filters": { en: "Clear filters", ml: "ഫിൽട്ടറുകൾ നീക്കുക" },
   "Explore restaurants": { en: "Explore restaurants", ml: "റെസ്റ്റോറന്റുകൾ കണ്ടെത്തൂ" },
   "Choose language": { en: "Choose language", ml: "ഭാഷ തിരഞ്ഞെടുക്കുക" },
+  "Something delicious.": { en: "Something delicious.", ml: "രുചികരമായ വിഭവങ്ങൾ." },
+  "Just around the corner.": { en: "Just around the corner.", ml: "നിങ്ങളുടെ തൊട്ടടുത്ത്." },
+  "Dining in?": { en: "Dining in?", ml: "റെസ്റ്റോറന്റിൽ ഇരുന്ന് കഴിക്കുകയാണോ?" },
+  "Scan. Order. Enjoy.": { en: "Scan. Order. Enjoy.", ml: "സ്കാൻ ചെയ്യൂ. ഓർഡർ ചെയ്യൂ. ആസ്വദിക്കൂ." },
+  "Search food": { en: "Search food", ml: "ഭക്ഷണം തിരയുക" },
 };
 
 type LanguageContextValue = {
