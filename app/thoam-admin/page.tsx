@@ -1,6 +1,8 @@
 
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -69,6 +71,7 @@ function money(amount: number) {
 }
 
 export default function AdminPage() {
+  const { t } = useLanguage();
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
@@ -309,7 +312,7 @@ export default function AdminPage() {
           Tho<span>’</span>am<span className="wordmark-dot">.</span>
         </Link>
 
-        <span className="status">SUPER ADMIN</span>
+        <span className="status">{t("SUPER ADMIN")}</span>
 
         <div className="header-actions">
           <button
@@ -336,7 +339,7 @@ export default function AdminPage() {
 
       <main className="container admin-container">
         <div className="page-head admin-page-head">
-          <div className="eyebrow">PLATFORM OPERATIONS</div>
+          <div className="eyebrow">{t("PLATFORM OPERATIONS")}</div>
           <h1>Tho'am control centre.</h1>
           <p className="muted">
             Manage restaurant partners, monitor platform revenue and review
@@ -352,11 +355,11 @@ export default function AdminPage() {
         )}
 
         {loading ? (
-          <div className="empty">Loading platform data…</div>
+          <div className="empty">{t("Loading platform data…")}</div>
         ) : msg.includes("Access denied") ? (
           <div className="panel admin-access-panel">
             <ShieldCheck size={30} />
-            <h2>Admin access required</h2>
+            <h2>{t("Admin access required")}</h2>
             <p className="muted">{msg}</p>
             <p className="footer-note">
               Set your profile role to admin through the protected SQL
@@ -370,20 +373,20 @@ export default function AdminPage() {
             <section className="admin-stats-grid">
               <div className="admin-stat-card">
                 <div className="admin-stat-top">
-                  <span>Restaurants</span>
+                  <span>{t("Restaurants")}</span>
                   <Store size={18} />
                 </div>
                 <strong>{stats.restaurants}</strong>
-                <small>Registered partners</small>
+                <small>{t("Registered partners")}</small>
               </div>
 
               <div className="admin-stat-card">
                 <div className="admin-stat-top">
-                  <span>Total products</span>
+                  <span>{t("Total products")}</span>
                   <Package size={18} />
                 </div>
                 <strong>{stats.products}</strong>
-                <small>Platform menu items</small>
+                <small>{t("Platform menu items")}</small>
               </div>
 
               <div className="admin-stat-card">
@@ -397,11 +400,11 @@ export default function AdminPage() {
 
               <div className="admin-stat-card">
                 <div className="admin-stat-top">
-                  <span>Customers</span>
+                  <span>{t("Customers")}</span>
                   <Users size={18} />
                 </div>
                 <strong>{stats.customers}</strong>
-                <small>Registered customers</small>
+                <small>{t("Registered customers")}</small>
               </div>
             </section>
 
@@ -409,8 +412,8 @@ export default function AdminPage() {
             <section className="admin-revenue-section">
               <div className="admin-section-title">
                 <div>
-                  <div className="eyebrow">PLATFORM REVENUE</div>
-                  <h2>Revenue overview</h2>
+                  <div className="eyebrow">{t("PLATFORM REVENUE")}</div>
+                  <h2>{t("Revenue overview")}</h2>
                 </div>
 
                 <span className="admin-live-label">
@@ -423,9 +426,9 @@ export default function AdminPage() {
                   <div className="revenue-icon">
                     <TrendingUp size={19} />
                   </div>
-                  <span>Total restaurant revenue</span>
+                  <span>{t("Total restaurant revenue")}</span>
                   <strong>{money(stats.totalRevenue)}</strong>
-                  <small>All delivered / completed orders</small>
+                  <small>{t("All delivered / completed orders")}</small>
                 </div>
 
                 <div className="admin-revenue-card">
@@ -452,13 +455,13 @@ export default function AdminPage() {
             <section className="admin-feature-grid">
               <article className="admin-feature-card">
                 <Store size={21} />
-                <h3>Restaurants</h3>
-                <p>Review, approve, suspend and manage partners.</p>
+                <h3>{t("Restaurants")}</h3>
+                <p>{t("Review, approve, suspend and manage partners.")}</p>
               </article>
 
               <article className="admin-feature-card">
                 <ClipboardList size={21} />
-                <h3>Orders</h3>
+                <h3>{t("Orders")}</h3>
                 <p>
                   Review delivery and QR dine-in orders across the platform.
                 </p>
@@ -466,8 +469,8 @@ export default function AdminPage() {
 
               <article className="admin-feature-card">
                 <Package size={21} />
-                <h3>Products</h3>
-                <p>Monitor platform menu products and availability.</p>
+                <h3>{t("Products")}</h3>
+                <p>{t("Monitor platform menu products and availability.")}</p>
               </article>
             </section>
 
@@ -475,8 +478,8 @@ export default function AdminPage() {
             <section className="admin-section">
               <div className="admin-section-heading">
                 <div>
-                  <div className="eyebrow">PARTNER OPERATIONS</div>
-                  <h2>Restaurants</h2>
+                  <div className="eyebrow">{t("PARTNER OPERATIONS")}</div>
+                  <h2>{t("Restaurants")}</h2>
                   <p>
                     Restaurant-wise revenue and commission overview.
                   </p>
@@ -498,14 +501,14 @@ export default function AdminPage() {
                     <table className="admin-table">
                       <thead>
                         <tr>
-                          <th>Restaurant</th>
-                          <th>Location</th>
-                          <th>Status</th>
-                          <th>QR</th>
-                          <th>Total revenue</th>
+                          <th>{t("Restaurant")}</th>
+                          <th>{t("Location")}</th>
+                          <th>{t("Status")}</th>
+                          <th>{t("QR")}</th>
+                          <th>{t("Total revenue")}</th>
                           <th>Today's revenue</th>
                           <th>Today's 10%</th>
-                          <th>Actions</th>
+                          <th>{t("Actions")}</th>
                         </tr>
                       </thead>
 
@@ -621,26 +624,26 @@ export default function AdminPage() {
             <section className="admin-section recent-section">
               <div className="admin-section-heading">
                 <div>
-                  <div className="eyebrow">PLATFORM ACTIVITY</div>
-                  <h2>Recent orders</h2>
-                  <p>Latest 20 orders across all restaurants.</p>
+                  <div className="eyebrow">{t("PLATFORM ACTIVITY")}</div>
+                  <h2>{t("Recent orders")}</h2>
+                  <p>{t("Latest 20 orders across all restaurants.")}</p>
                 </div>
               </div>
 
               {orders.length === 0 ? (
-                <div className="empty">No orders yet.</div>
+                <div className="empty">{t("No orders yet.")}</div>
               ) : (
                 <div className="admin-table-panel">
                   <div className="admin-table-scroll">
                     <table className="admin-table">
                       <thead>
                         <tr>
-                          <th>Order</th>
+                          <th>{t("Order")}</th>
                           <th>Restaurant</th>
-                          <th>Type</th>
+                          <th>{t("Type")}</th>
                           <th>Status</th>
-                          <th>Amount</th>
-                          <th>Created</th>
+                          <th>{t("Amount")}</th>
+                          <th>{t("Created")}</th>
                         </tr>
                       </thead>
 
