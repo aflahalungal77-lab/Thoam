@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
 import "./mobile-bottom-nav.css";
 import ServiceWorker from "@/components/ServiceWorker";
@@ -95,13 +96,13 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang={initialLanguage}>
       <head>
         <script
           type="application/ld+json"
@@ -109,7 +110,7 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <LanguageProvider>
+        <LanguageProvider initialLanguage={initialLanguage}>
           <ServiceWorker />
           {children}
           <MobileBottomNav />
