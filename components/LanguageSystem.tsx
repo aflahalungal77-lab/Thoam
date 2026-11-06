@@ -196,18 +196,33 @@ function translateElement(element: Element, language: Language) {
   }
 }
 
+function translateSubtree(root: Node, language: Language) {
+  if (root.nodeType === Node.TEXT_NODE) {
+    const text = root as Text;
+    const parent = text.parentElement;
+    if (parent && !parent.closest("script, style, noscript, textarea, input, select, option, [contenteditable='true'], [data-no-translate]")) {
+      translateTextNode(text, language);
+    }
+    return;
+  }
+
+  if (!(root instanceof Element) && root !== document.body) return;
+  const elementRoot = root as Element;
+  if (elementRoot instanceof Element) translateElement(elementRoot, language);
+  elementRoot.querySelectorAll("*").forEach((element) => translateElement(element, language));
+
+  const walker = document.createTreeWalker(elementRoot, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode()) {
+    const text = walker.currentNode as Text;
+    const parent = text.parentElement;
+    if (!parent || parent.closest("script, style, noscript, textarea, input, select, option, [contenteditable='true'], [data-no-translate]")) continue;
+    translateTextNode(text, language);
+  }
+}
+
 function translatePage(language: Language) {
   document.documentElement.lang = language === "ml" ? "ml" : "en";
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-  const textNodes: Text[] = [];
-  while (walker.nextNode()) {
-    const node = walker.currentNode as Text;
-    const parent = node.parentElement;
-    if (!parent || parent.closest("script, style, noscript, textarea, input, select, option, [contenteditable='true'], [data-no-translate]")) continue;
-    textNodes.push(node);
-  }
-  textNodes.forEach((node) => translateTextNode(node, language));
-  document.body.querySelectorAll("*").forEach((element) => translateElement(element, language));
+  translateSubtree(document.body, language);
 }
 
 export default function LanguageSystem() {
@@ -230,8 +245,24 @@ export default function LanguageSystem() {
     }
 
     translatePage(language);
-    const observer = new MutationObserver(() => translatePage(language));
-    observer.observe(document.body, { childList: true, characterData: true, subtree: true });
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        if (record.type === "characterData") {
+          translateTextNode(record.target as Text, language);
+        } else if (record.type === "attributes") {
+          if (record.target instanceof Element) translateElement(record.target, language);
+        } else {
+          record.addedNodes.forEach((node) => translateSubtree(node, language));
+        }
+      }
+    });
+    observer.observe(document.body, {
+      childList: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: [...ATTRS],
+      subtree: true,
+    });
     return () => observer.disconnect();
   }, [language]);
 
