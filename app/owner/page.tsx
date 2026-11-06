@@ -1,5 +1,8 @@
 
+"use client";
+
 import Link from "next/link";
+import { useLanguage } from "@/components/LanguageProvider";
 import Image from "next/image";
 import {
   Store,
@@ -52,6 +55,7 @@ const features = [
 ];
 
 export default function OwnerPage() {
+  const { t } = useLanguage();
   return (
     <>
       <InstallPrompt audience="owner" />
@@ -94,7 +98,7 @@ export default function OwnerPage() {
             <h1>
               Your restaurant.
               <br />
-              <span>Ready for more.</span>
+              <span>{t("Ready for more.")}</span>
             </h1>
 
             <p className="owner-hero-description">
@@ -139,8 +143,8 @@ export default function OwnerPage() {
                     <Store size={17} />
                   </div>
                   <div>
-                    <strong>Partner space</strong>
-                    <span>Restaurant overview</span>
+                    <strong>{t("Partner space")}</strong>
+                    <span>{t("Restaurant overview")}</span>
                   </div>
                 </div>
 
@@ -161,8 +165,8 @@ export default function OwnerPage() {
                   <Package size={20} />
                 </div>
                 <div>
-                  <strong>Menu management</strong>
-                  <span>Products & availability</span>
+                  <strong>{t("Menu management")}</strong>
+                  <span>{t("Products & availability")}</span>
                 </div>
                 <ArrowUpRight size={16} />
               </div>
@@ -172,8 +176,8 @@ export default function OwnerPage() {
                   <ClipboardList size={20} />
                 </div>
                 <div>
-                  <strong>Order management</strong>
-                  <span>Incoming orders</span>
+                  <strong>{t("Order management")}</strong>
+                  <span>{t("Incoming orders")}</span>
                 </div>
                 <ArrowUpRight size={16} />
               </div>
@@ -183,15 +187,15 @@ export default function OwnerPage() {
                   <QrCode size={20} />
                 </div>
                 <div>
-                  <strong>Table QR ordering</strong>
-                  <span>Digital menu access</span>
+                  <strong>{t("Table QR ordering")}</strong>
+                  <span>{t("Digital menu access")}</span>
                 </div>
                 <ArrowUpRight size={16} />
               </div>
 
               <div className="owner-dashboard-bottom">
                 <ShieldCheck size={16} />
-                <span>One space. Your restaurant.</span>
+                <span>{t("One space. Your restaurant.")}</span>
               </div>
             </div>
 
@@ -200,8 +204,8 @@ export default function OwnerPage() {
                 <TrendingUp size={18} />
               </div>
               <div>
-                <strong>Business insights</strong>
-                <span>Understand your sales</span>
+                <strong>{t("Business insights")}</strong>
+                <span>{t("Understand your sales")}</span>
               </div>
             </div>
 
@@ -210,8 +214,8 @@ export default function OwnerPage() {
                 <Smartphone size={18} />
               </div>
               <div>
-                <strong>Made for mobile</strong>
-                <span>Your partner PWA</span>
+                <strong>{t("Made for mobile")}</strong>
+                <span>{t("Your partner PWA")}</span>
               </div>
             </div>
           </div>
@@ -221,19 +225,19 @@ export default function OwnerPage() {
         <section className="owner-benefits">
           <div>
             <Check size={17} />
-            <span>Manage your menu</span>
+            <span>{t("Manage your menu")}</span>
           </div>
           <div>
             <Check size={17} />
-            <span>Handle your orders</span>
+            <span>{t("Handle your orders")}</span>
           </div>
           <div>
             <Check size={17} />
-            <span>Enable table QR ordering</span>
+            <span>{t("Enable table QR ordering")}</span>
           </div>
           <div>
             <Check size={17} />
-            <span>Review business activity</span>
+            <span>{t("Review business activity")}</span>
           </div>
         </section>
 
@@ -249,7 +253,7 @@ export default function OwnerPage() {
               <h2>
                 Built around
                 <br />
-                <span>your daily work.</span>
+                <span>{t("your daily work.")}</span>
               </h2>
             </div>
 
@@ -274,9 +278,9 @@ export default function OwnerPage() {
 
                   <div className="owner-feature-tag">{feature.tag}</div>
 
-                  <h3>{feature.title}</h3>
+                  <h3>{t(feature.title)}</h3>
 
-                  <p>{feature.description}</p>
+                  <p>{t(feature.description)}</p>
 
                   <div className="owner-feature-bottom">
                     <span />
@@ -344,7 +348,7 @@ export default function OwnerPage() {
             />
           </Link>
 
-          <span>Built for local food businesses.</span>
+          <span>{t("Built for local food businesses.")}</span>
 
           <Link href="/" className="owner-footer-link">
             Customer website
