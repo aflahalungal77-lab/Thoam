@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import type { MenuProduct } from "./MenuProductCard";
 
 export interface CartItem { product: MenuProduct; quantity: number; }
@@ -11,29 +13,30 @@ interface Props {
 }
 
 export default function MenuCart({ items, onIncrease, onDecrease, onCheckout }: Props) {
+  const { t } = useLanguage();
   const subtotal = items.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <section className="cart-card" aria-label="Your shopping cart">
+    <section className="cart-card" aria-label={t("Your shopping cart")}>
       <div className="cart-header">
         <div className="cart-icon" aria-hidden="true"> <svg viewBox="0 0 24 24"><path d="M3 4h2l2.2 10.1a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4L21 8H6"/><circle cx="10" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg></div>
-        <div className="cart-heading"><span className="cart-eyebrow">YOUR SELECTION</span><h2>Your order</h2><p>{totalQuantity ? "Your delicious picks, all in one place." : "A great meal starts with a great choice."}</p></div>
+        <div className="cart-heading"><span className="cart-eyebrow">{t("YOUR SELECTION")}</span><h2>{t("Your order")}</h2><p>{totalQuantity ? t("Your delicious picks, all in one place.") : t("A great meal starts with a great choice.")}</p></div>
         <span className="item-badge">{totalQuantity}</span>
       </div>
 
       {items.length === 0 ? (
         <div className="empty-cart">
           <div className="empty-cart-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M8 11h4l4.5 21h20L42 17H15"/><circle cx="20" cy="39" r="2.5"/><circle cx="34" cy="39" r="2.5"/><path d="M23 8v12M17 14h12"/></svg></div>
-          <h3>Your cart is empty</h3><p>Explore the menu and add your favourites. They’ll show up here.</p>
-          <span className="empty-cart-hint">MADE FOR YOUR CRAVINGS</span>
+          <h3>{t("Your cart is empty")}</h3><p>{t("Explore the menu and add your favourites. They’ll show up here.")}</p>
+          <span className="empty-cart-hint">{t("MADE FOR YOUR CRAVINGS")}</span>
         </div>
       ) : (
         <>
           <div className="cart-items">
             {items.map(({ product, quantity }) => (
               <div className="cart-item" key={product.id}>
-                <div className="item-details"><p className="item-name" title={product.name}>{product.name}</p><p className="item-price">₹{Number(product.price).toFixed(2)} each</p><p className="item-line-total">₹{(Number(product.price) * quantity).toFixed(2)}</p></div>
+                <div className="item-details"><p className="item-name" title={product.name}>{product.name}</p><p className="item-price">₹{Number(product.price).toFixed(2)} {t("each")}</p><p className="item-line-total">₹{(Number(product.price) * quantity).toFixed(2)}</p></div>
                 <div className="quantity-control" aria-label={`Quantity of ${product.name}`}>
                   <button type="button" onClick={() => onDecrease(product.id)} aria-label={`Remove one ${product.name}`}>−</button><span aria-live="polite">{quantity}</span><button type="button" onClick={() => onIncrease(product)} aria-label={`Add one ${product.name}`}>+</button>
                 </div>
@@ -41,10 +44,10 @@ export default function MenuCart({ items, onIncrease, onDecrease, onCheckout }: 
             ))}
           </div>
           <div className="cart-total">
-            <div className="subtotal-row"><span>Subtotal</span><strong>₹{subtotal.toFixed(2)}</strong></div>
-            <p className="checkout-note">Delivery charges, if applicable, will be confirmed by the restaurant.</p>
-            <button type="button" onClick={onCheckout} className="checkout-button"><span>Continue to checkout</span><span className="checkout-arrow" aria-hidden="true">→</span></button>
-            <p className="secure-note"><span aria-hidden="true">✓</span> Order details are prepared before opening WhatsApp.</p>
+            <div className="subtotal-row"><span>{t("Subtotal")}</span><strong>₹{subtotal.toFixed(2)}</strong></div>
+            <p className="checkout-note">{t("Delivery charges, if applicable, will be confirmed by the restaurant.")}</p>
+            <button type="button" onClick={onCheckout} className="checkout-button"><span>{t("Continue to checkout")}</span><span className="checkout-arrow" aria-hidden="true">→</span></button>
+            <p className="secure-note"><span aria-hidden="true">✓</span> {t("Order details are prepared before opening WhatsApp.")}</p>
           </div>
         </>
       )}
