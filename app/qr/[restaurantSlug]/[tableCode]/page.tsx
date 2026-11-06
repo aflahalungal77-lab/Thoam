@@ -1,6 +1,8 @@
 
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
@@ -39,6 +41,7 @@ type NeedType =
   | "Other";
 
 export default function QRMenu() {
+  const { t } = useLanguage();
   const params = useParams<{
     restaurantSlug: string;
     tableCode: string;
@@ -330,7 +333,7 @@ export default function QRMenu() {
           )}
           <span>
             {r?.name || "Tho’am"}
-            <small>GOOD FOOD. GOOD MOMENTS.</small>
+            <small>{t("GOOD FOOD. GOOD MOMENTS.")}</small>
           </span>
         </a>
 
@@ -350,7 +353,7 @@ export default function QRMenu() {
             className="premium-spinner"
             size={34}
           />
-          <h2>Preparing your menu</h2>
+          <h2>{t("Preparing your menu")}</h2>
           <p>
             Just a moment. Something delicious is on its way.
           </p>
@@ -359,7 +362,7 @@ export default function QRMenu() {
         /* ERROR */
         <section className="premium-state premium-error">
           <CircleAlert size={36} />
-          <h2>Menu unavailable</h2>
+          <h2>{t("Menu unavailable")}</h2>
           <p>
             {status ||
               "This restaurant's QR menu is unavailable."}
@@ -383,7 +386,7 @@ export default function QRMenu() {
             KOT CREATED
           </span>
 
-          <h1>You're all set.</h1>
+          <h1>{t("You're all set.")}</h1>
 
           <p className="success-description">
             Your KOT has been sent to{" "}
@@ -393,13 +396,13 @@ export default function QRMenu() {
 
           <div className="success-receipt">
             <div className="receipt-row">
-              <span>Restaurant</span>
+              <span>{t("Restaurant")}</span>
               <strong>{r.name}</strong>
             </div>
 
             {placedOrder.order_number != null && (
               <div className="receipt-row">
-                <span>KOT number</span>
+                <span>{t("KOT number")}</span>
                 <strong>
                   #{placedOrder.order_number}
                 </strong>
@@ -407,17 +410,17 @@ export default function QRMenu() {
             )}
 
             <div className="receipt-row">
-              <span>Table</span>
+              <span>{t("Table")}</span>
               <strong>{tableCode}</strong>
             </div>
 
             <div className="receipt-row">
-              <span>Payment</span>
-              <strong>Cash at restaurant</strong>
+              <span>{t("Payment")}</span>
+              <strong>{t("Cash at restaurant")}</strong>
             </div>
 
             <div className="receipt-total">
-              <span>Total amount</span>
+              <span>{t("Total amount")}</span>
               <strong>
                 ₹
                 {Number(
@@ -453,7 +456,7 @@ export default function QRMenu() {
               <h1>
                 Good food.
                 <br />
-                <span>Made for you.</span>
+                <span>{t("Made for you.")}</span>
               </h1>
 
               <p>
@@ -516,7 +519,7 @@ export default function QRMenu() {
                     TABLE ASSISTANCE
                   </span>
 
-                  <h3>Need anything?</h3>
+                  <h3>{t("Need anything?")}</h3>
 
                   <p>
                     We're here to help. Request directly from
@@ -552,7 +555,7 @@ export default function QRMenu() {
                       TABLE {tableCode}
                     </span>
 
-                    <h3>How can we help?</h3>
+                    <h3>{t("How can we help?")}</h3>
                   </div>
 
                   <div className="need-options">
@@ -582,7 +585,7 @@ export default function QRMenu() {
 
                   <label className="need-message-label">
                     Additional message{" "}
-                    <span>(Optional)</span>
+                    <span>({t("OPTIONAL")})</span>
 
                     <textarea
                       value={needMessage}
@@ -591,7 +594,7 @@ export default function QRMenu() {
                       }
                       maxLength={300}
                       rows={3}
-                      placeholder="Tell us what you need..."
+                      placeholder={t("Tell us what you need...")}
                     />
                   </label>
 
@@ -661,17 +664,17 @@ export default function QRMenu() {
                 </span>
 
                 <h2>
-                  Explore the menu<span>.</span>
+                  {t("Explore the menu")}<span>.</span>
                 </h2>
 
-                <p>Find something you’ll love.</p>
+                <p>{t("Find something you’ll love.")}</p>
               </div>
 
               <div className="menu-count">
                 <strong>
                   {items.length.toString().padStart(2, "0")}
                 </strong>
-                <span>ITEMS</span>
+                <span>{t("ITEMS")}</span>
               </div>
             </div>
 
@@ -683,8 +686,8 @@ export default function QRMenu() {
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search dishes..."
-                aria-label="Search dishes"
+                placeholder={t("Search dishes...")}
+                aria-label={t("Search dishes...")}
               />
 
               <span className="search-shortcut">MENU</span>
@@ -712,13 +715,13 @@ export default function QRMenu() {
             {items.length === 0 ? (
               <div className="premium-empty">
                 <UtensilsCrossed size={30} />
-                <h3>The menu is being prepared.</h3>
-                <p>Please check back in a little while.</p>
+                <h3>{t("The menu is being prepared.")}</h3>
+                <p>{t("Please check back in a little while.")}</p>
               </div>
             ) : filteredItems.length === 0 ? (
               <div className="premium-empty">
                 <Search size={30} />
-                <h3>No dishes found.</h3>
+                <h3>{t("No dishes found")}</h3>
                 <p>
                   Try a different search or category.
                 </p>
@@ -761,7 +764,7 @@ export default function QRMenu() {
                               size={35}
                               strokeWidth={1.2}
                             />
-                            <span>FRESH & DELICIOUS</span>
+                            <span>{t("FRESH & DELICIOUS")}</span>
                           </div>
                         )}
 
@@ -785,7 +788,7 @@ export default function QRMenu() {
                             <Drumstick size={13} />
                           )}
 
-                          {p.is_veg ? "VEG" : "NON-VEG"}
+                          {p.is_veg ? t("VEG") : t("NON-VEG")}
                         </span>
                       </div>
 
@@ -864,11 +867,11 @@ export default function QRMenu() {
                       ALMOST THERE
                     </span>
 
-                    <h2>Your order</h2>
+                    <h2>{t("Your order")}</h2>
 
                     <p>
                       {cartCount}{" "}
-                      {cartCount === 1 ? "item" : "items"}{" "}
+                      {cartCount === 1 ? t("item") : t("items")}{" "}
                       selected
                     </p>
                   </div>
@@ -905,8 +908,8 @@ export default function QRMenu() {
 
                 <div className="checkout-form">
                   <div className="checkout-form-heading">
-                    <span className="premium-kicker">KITCHEN NOTES</span>
-                    <p>Add an instruction to any dish if needed. No personal details required.</p>
+                    <span className="premium-kicker">{t("KITCHEN NOTES")}</span>
+                    <p>{t("Add an instruction to any dish if needed. No personal details required.")}</p>
                   </div>
 
                   {selectedItems.map((p) => (
@@ -916,14 +919,14 @@ export default function QRMenu() {
                         maxLength={300}
                         value={itemNotes[p.id] || ""}
                         onChange={(e) => setItemNotes((current) => ({ ...current, [p.id]: e.target.value }))}
-                        placeholder="Less spicy, no onions, etc. (optional)"
+                        placeholder={t("Less spicy, no onions, etc. (optional)")}
                         rows={2}
                       />
                     </label>
                   ))}
 
                   <label className="premium-field notes-field">
-                    <span>Order note (optional)</span>
+                    <span>{t("Order note (optional)")}</span>
 
                     <textarea
                       maxLength={500}
@@ -931,7 +934,7 @@ export default function QRMenu() {
                       onChange={(e) =>
                         setNotes(e.target.value)
                       }
-                      placeholder="Any note for the whole order (optional)"
+                      placeholder={t("Any note for the whole order (optional)")}
                       rows={3}
                     />
                   </label>
@@ -947,7 +950,7 @@ export default function QRMenu() {
                     <div className="cash-symbol">₹</div>
 
                     <div>
-                      <strong>Pay at the restaurant</strong>
+                      <strong>{t("Pay at the restaurant")}</strong>
                       <span>
                         Cash payment · No online payment needed
                       </span>
@@ -995,7 +998,7 @@ export default function QRMenu() {
           THO’AM<span>.</span>
         </a>
 
-        <span>Good food. Good moments.</span>
+        <span>{t("Good food. Good moments.")}</span>
 
         <span className="footer-table">
           TABLE {tableCode}
@@ -1020,7 +1023,7 @@ export default function QRMenu() {
           </span>
 
           <span>
-            <strong>View your order</strong>
+            <strong>{t("View your order")}</strong>
             <small>
               {cartCount}{" "}
               {cartCount === 1 ? "item" : "items"}
