@@ -1,11 +1,11 @@
 import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals.js";
-import nextTs from "eslint-config-next/typescript.js";
+import { FlatCompat } from "@eslint/eslintrc";
 
-const asConfigArray = (config) => Array.isArray(config) ? config : [config];
+const compat = new FlatCompat({
+  baseDirectory: import.meta.dirname,
+});
 
 export default defineConfig([
-  ...asConfigArray(nextVitals),
-  ...asConfigArray(nextTs),
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
   globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
 ]);
