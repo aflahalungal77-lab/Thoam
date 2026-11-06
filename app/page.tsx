@@ -34,7 +34,7 @@ const categories = [
 ];
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [products, setProducts] = useState<FoodProduct[]>([]);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +100,7 @@ export default function Home() {
       <Header />
       <InstallPrompt audience="customer" />
 
-      <main>
+      <main className={`home-page ${language === "ml" ? "home-page-ml" : ""}`}>
         {/* HERO */}
         <section className="home-hero">
           <div className="home-container hero-layout">
@@ -488,7 +488,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="home-footer">
+      <footer className={`home-footer ${language === "ml" ? "home-page-ml" : ""}`}>
         <div className="home-container footer-inner">
           <Link href="/" className="thoam-brand">
             <span className="brand-symbol">T.</span>
@@ -1517,6 +1517,367 @@ export default function Home() {
             transition: none;
           }
         }
+
+        /* Malayalam-only homepage typography and visual refinement */
+        .home-page-ml {
+          color: #171717;
+          font-family: "Noto Sans Malayalam", "Manjari", "Kartika", sans-serif;
+          letter-spacing: 0;
+          font-synthesis: none;
+          text-rendering: optimizeLegibility;
+        }
+
+        .home-page-ml .home-hero {
+          background: #f7f7f5;
+          padding-top: 74px;
+          padding-bottom: 78px;
+        }
+
+        .home-page-ml .hero-layout {
+          gap: 60px;
+        }
+
+        .home-page-ml .hero-content h1 {
+          max-width: 650px;
+          margin-top: 25px;
+          margin-bottom: 22px;
+          font-family: "Noto Sans Malayalam", "Manjari", "Kartika", sans-serif;
+          font-size: clamp(43px, 5.1vw, 66px);
+          font-weight: 800;
+          letter-spacing: 0;
+          line-height: 1.38;
+          word-break: keep-all;
+          text-wrap: pretty;
+        }
+
+        .home-page-ml .hero-content h1 span,
+        .home-page-ml .qr-banner h2 span {
+          font-family: inherit;
+          font-style: normal;
+          font-weight: 650;
+          letter-spacing: 0;
+          color: inherit;
+        }
+
+        .home-page-ml .hero-badge {
+          padding: 11px 16px;
+          font-family: inherit;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0;
+          line-height: 1.6;
+        }
+
+        .home-page-ml .hero-description {
+          max-width: 490px;
+          color: #62625e;
+          font-size: 15px;
+          line-height: 2;
+          font-weight: 450;
+        }
+
+        .home-page-ml .hero-search {
+          min-height: 60px;
+          border-radius: 15px;
+          padding-left: 19px;
+          box-shadow: 0 12px 34px rgba(17,17,17,.055);
+        }
+
+        .home-page-ml .hero-search input {
+          font-family: inherit;
+          font-size: 14px;
+          letter-spacing: 0;
+        }
+
+        .home-page-ml .primary-cta,
+        .home-page-ml .secondary-cta,
+        .home-page-ml .qr-banner-button,
+        .home-page-ml .owner-cta {
+          min-height: 50px;
+          padding-right: 20px;
+          padding-left: 20px;
+          border-radius: 11px;
+          font-family: inherit;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0;
+        }
+
+        .home-page-ml .hero-trust {
+          gap: 12px 20px;
+          color: #696963;
+          font-family: inherit;
+          font-size: 11px;
+          line-height: 1.8;
+        }
+
+        .home-page-ml .home-section {
+          padding-top: 72px;
+          padding-bottom: 72px;
+        }
+
+        .home-page-ml .category-section {
+          padding-top: 48px;
+          padding-bottom: 48px;
+        }
+
+        .home-page-ml .home-eyebrow {
+          color: #73736d;
+          font-family: inherit;
+          font-size: 11px;
+          font-weight: 750;
+          letter-spacing: 0;
+          line-height: 1.8;
+        }
+
+        .home-page-ml .section-topline h2,
+        .home-page-ml .owner-banner h2 {
+          margin-top: 12px;
+          font-family: inherit;
+          font-size: clamp(27px, 3vw, 36px);
+          font-weight: 800;
+          letter-spacing: 0;
+          line-height: 1.48;
+          text-wrap: pretty;
+        }
+
+        .home-page-ml .section-description,
+        .home-page-ml .owner-banner p {
+          color: #686862;
+          font-family: inherit;
+          font-size: 14px;
+          line-height: 2;
+        }
+
+        .home-page-ml .text-link,
+        .home-page-ml .category-pill {
+          font-family: inherit;
+          font-size: 12px;
+          font-weight: 650;
+          letter-spacing: 0;
+        }
+
+        .home-page-ml .category-pill {
+          min-height: 46px;
+          padding-right: 18px;
+          padding-left: 18px;
+        }
+
+        .home-page-ml .food-card,
+        .home-page-ml .restaurant-card {
+          border-color: #e7e7e2;
+          border-radius: 16px;
+          box-shadow: 0 5px 20px rgba(20,20,20,.025);
+        }
+
+        .home-page-ml .food-card-content {
+          padding: 17px;
+        }
+
+        .home-page-ml .food-card-heading h3,
+        .home-page-ml .food-price,
+        .home-page-ml .restaurant-details h3 {
+          font-family: inherit;
+          font-size: 14px;
+          font-weight: 750;
+          letter-spacing: 0;
+          line-height: 1.7;
+        }
+
+        .home-page-ml .food-category,
+        .home-page-ml .restaurant-details p {
+          color: #777770;
+          font-family: inherit;
+          font-size: 12px;
+          line-height: 1.9;
+        }
+
+        .home-page-ml .food-order-link,
+        .home-page-ml .restaurant-discover {
+          font-family: inherit;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0;
+        }
+
+        .home-page-ml .food-type {
+          font-family: inherit;
+          font-size: 10px;
+          letter-spacing: 0;
+        }
+
+        .home-page-ml .qr-banner {
+          padding: 52px;
+          border-radius: 20px;
+          background: #151515;
+        }
+
+        .home-page-ml .qr-banner h2 {
+          font-family: inherit;
+          font-size: clamp(28px, 3.5vw, 40px);
+          font-weight: 800;
+          letter-spacing: 0;
+          line-height: 1.5;
+        }
+
+        .home-page-ml .qr-banner-copy > p {
+          font-family: inherit;
+          font-size: 14px;
+          line-height: 2;
+        }
+
+        .home-page-ml .qr-art-caption {
+          font-family: inherit;
+          font-size: 10px;
+          letter-spacing: .08em;
+        }
+
+        .home-page-ml .owner-banner {
+          padding-top: 42px;
+          padding-bottom: 42px;
+        }
+
+        .home-page-ml .home-footer .footer-copy,
+        .home-page-ml .home-footer .footer-tagline {
+          font-family: inherit;
+          font-size: 11px;
+          letter-spacing: 0;
+          line-height: 1.8;
+        }
+
+        @media (max-width: 700px) {
+          .home-page-ml .home-hero {
+            padding-top: 40px;
+            padding-bottom: 48px;
+          }
+
+          .home-page-ml .hero-layout {
+            gap: 29px;
+          }
+
+          .home-page-ml .hero-content h1 {
+            max-width: 100%;
+            margin-top: 20px;
+            font-size: clamp(35px, 9.2vw, 47px);
+            line-height: 1.48;
+          }
+
+          .home-page-ml .hero-description {
+            font-size: 13px;
+            line-height: 2;
+          }
+
+          .home-page-ml .hero-badge {
+            font-size: 10px;
+            padding: 9px 12px;
+          }
+
+          .home-page-ml .hero-search {
+            min-height: 55px;
+            margin-top: 22px;
+          }
+
+          .home-page-ml .hero-search input {
+            font-size: 12px;
+          }
+
+          .home-page-ml .hero-trust {
+            font-size: 10px;
+            gap: 9px 13px;
+          }
+
+          .home-page-ml .home-section {
+            padding-top: 48px;
+            padding-bottom: 48px;
+          }
+
+          .home-page-ml .category-section {
+            padding-top: 32px;
+            padding-bottom: 32px;
+          }
+
+          .home-page-ml .section-topline h2,
+          .home-page-ml .owner-banner h2 {
+            font-size: 25px;
+            line-height: 1.55;
+          }
+
+          .home-page-ml .section-description,
+          .home-page-ml .owner-banner p {
+            font-size: 12px;
+            line-height: 1.95;
+          }
+
+          .home-page-ml .category-pill {
+            min-height: 42px;
+            padding-right: 14px;
+            padding-left: 14px;
+            font-size: 11px;
+          }
+
+          .home-page-ml .food-card-content {
+            padding: 10px;
+          }
+
+          .home-page-ml .food-card-heading h3,
+          .home-page-ml .food-price {
+            font-size: 12px;
+            line-height: 1.65;
+          }
+
+          .home-page-ml .food-category,
+          .home-page-ml .restaurant-details p {
+            font-size: 10px;
+            line-height: 1.8;
+          }
+
+          .home-page-ml .food-order-link,
+          .home-page-ml .restaurant-discover {
+            font-size: 10px;
+          }
+
+          .home-page-ml .restaurant-card {
+            padding: 15px;
+            gap: 13px;
+          }
+
+          .home-page-ml .qr-banner {
+            padding: 29px 21px;
+            border-radius: 16px;
+          }
+
+          .home-page-ml .qr-banner h2 {
+            font-size: 27px;
+            line-height: 1.55;
+          }
+
+          .home-page-ml .qr-banner-copy > p {
+            font-size: 12px;
+            line-height: 1.95;
+          }
+
+          .home-page-ml .owner-banner {
+            padding-top: 27px;
+            padding-bottom: 27px;
+          }
+
+          .home-page-ml .primary-cta,
+          .home-page-ml .secondary-cta,
+          .home-page-ml .qr-banner-button,
+          .home-page-ml .owner-cta {
+            min-height: 46px;
+            font-size: 12px;
+          }
+        }
+
+        .home-footer.home-page-ml .footer-copy,
+        .home-footer.home-page-ml .footer-tagline {
+          font-family: "Noto Sans Malayalam", "Manjari", "Kartika", sans-serif;
+          font-size: 11px;
+          letter-spacing: 0;
+          line-height: 1.8;
+        }
+
       `}</style>
     </>
   );
