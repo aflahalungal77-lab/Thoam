@@ -3,6 +3,7 @@ import "./globals.css";
 import "./mobile-bottom-nav.css";
 import ServiceWorker from "@/components/ServiceWorker";
 import MobileBottomNav from "@/components/MobileBottomNav";
+import LanguageSystem from "@/components/LanguageSystem";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://thoam.vercel.app").replace(/\/+$/, "");
 
@@ -106,6 +107,7 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <LanguageSystem />
         <ServiceWorker />
         {children}
         <MobileBottomNav />
