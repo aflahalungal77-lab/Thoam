@@ -73,6 +73,7 @@ export default function OrdersPage() {
   const [updatingId, setUpdatingId] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
   const load = useCallback(async (manual = false) => {
     const client = supabase;
@@ -123,7 +124,7 @@ export default function OrdersPage() {
       while (true) {
         const { data, error } = await client
           .from("orders")
-          .select("*")
+          .select("*,order_items(id,product_name,quantity,unit_price,line_total),restaurant:restaurants(name,area,city)")
           .eq("restaurant_id", profile.restaurant_id)
           .order("created_at", { ascending: false })
           .range(from, from + PAGE_SIZE - 1);
@@ -518,6 +519,16 @@ const todayRevenue = revenueOrders
                     </div>
                   </div>
 
+                  <div className="ta-order-actions">
+                    <button
+                      type="button"
+                      className="ta-view-bill"
+                      onClick={() => setSelectedOrder(order)}
+                    >
+                      View Bill
+                    </button>
+                  </div>
+
                   <div className="ta-order-update">
                     <label htmlFor={`status-${order.id}`}>
                       Update order status
@@ -557,7 +568,109 @@ const todayRevenue = revenueOrders
           </div>
         )}
       </section>
+      {selectedOrder && (
+        <div
+          className="ta-bill-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSelectedOrder(null);
+          }}
+        >
+          <section
+            className="ta-bill-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ta-bill-title"
+          >
+            <div className="ta-bill-header">
+              <div>
+                <span className="ta-eyebrow">ORDER DETAILS</span>
+                <h2 id="ta-bill-title">Order bill</h2>
+                <p>#{selectedOrder.order_number || String(selectedOrder.id).slice(0, 8)}</p>
+              </div>
+              <button type="button" className="ta-bill-close" onClick={() => setSelectedOrder(null)} aria-label="Close bill">×</button>
+            </div>
+
+            <div className="ta-bill-restaurant">
+              <strong>{selectedOrder.restaurant?.name || "Restaurant"}</strong>
+              {(selectedOrder.restaurant?.area || selectedOrder.restaurant?.city) && (
+                <span>{[selectedOrder.restaurant.area, selectedOrder.restaurant.city].filter(Boolean).join(", ")}</span>
+              )}
+            </div>
+
+            <div className="ta-bill-info">
+              <div><span>Customer</span><strong>{selectedOrder.customer_name || "Guest"}</strong></div>
+              <div><span>Phone</span><strong>{selectedOrder.customer_phone || "—"}</strong></div>
+              <div><span>Order type</span><strong>{String(selectedOrder.order_type || "Order").replace(/_/g, " ")}</strong></div>
+              <div><span>Date</span><strong>{selectedOrder.created_at ? new Date(selectedOrder.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: TIME_ZONE }) : "—"}</strong></div>
+              <div><span>Payment</span><strong>{String(selectedOrder.payment_method || "COD").toUpperCase()} · {String(selectedOrder.payment_status || "pending").replace(/_/g, " ")}</strong></div>
+              {selectedOrder.delivery_address && <div className="ta-bill-wide"><span>Delivery address</span><strong>{selectedOrder.delivery_address}</strong></div>}
+            </div>
+
+            <div className="ta-bill-items-wrap">
+              <h3>Items ordered</h3>
+              {(selectedOrder.order_items || []).length > 0 ? (
+                <div className="ta-bill-table">
+                  <div className="ta-bill-row ta-bill-table-head"><span>Item</span><span>Qty</span><span>Price</span><span>Amount</span></div>
+                  {selectedOrder.order_items.map((item: any) => (
+                    <div className="ta-bill-row" key={item.id}>
+                      <span>{item.product_name || "Item"}</span>
+                      <span>{Number(item.quantity || 0)}</span>
+                      <span>{money(Number(item.unit_price || 0))}</span>
+                      <strong>{money(Number(item.line_total ?? Number(item.quantity || 0) * Number(item.unit_price || 0)))}</strong>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="ta-bill-no-items">Item details are not available for this order.</p>
+              )}
+            </div>
+
+            <div className="ta-bill-totals">
+              <div><span>Subtotal</span><strong>{money(Number(selectedOrder.subtotal ?? selectedOrder.total_amount ?? 0))}</strong></div>
+              {Number(selectedOrder.delivery_fee || 0) > 0 && <div><span>Delivery fee</span><strong>{money(Number(selectedOrder.delivery_fee))}</strong></div>}
+              {Number(selectedOrder.platform_fee || 0) > 0 && <div><span>Platform fee</span><strong>{money(Number(selectedOrder.platform_fee))}</strong></div>}
+              <div className="ta-bill-grand-total"><span>Total</span><strong>{money(Number(selectedOrder.total_amount || 0))}</strong></div>
+            </div>
+            {selectedOrder.notes && <div className="ta-bill-notes"><span>Notes</span><p>{selectedOrder.notes}</p></div>}
+            <button type="button" className="ta-bill-done" onClick={() => setSelectedOrder(null)}>Close bill</button>
+          </section>
+        </div>
+      )}
+
       <style jsx global>{`
+
+        .ta-order-actions{display:flex;justify-content:flex-end;margin:0 0 12px}
+        .ta-view-bill{border:1px solid #171717;border-radius:9px;background:#fff;color:#171717;padding:9px 15px;font-size:12px;font-weight:800;cursor:pointer;transition:background .18s ease,color .18s ease}
+        .ta-view-bill:hover{background:#171717;color:#fff}
+        .ta-bill-backdrop{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.58);display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto}
+        .ta-bill-modal{width:min(100%,620px);max-height:min(90vh,900px);overflow-y:auto;background:#fff;color:#171717;border-radius:18px;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.25)}
+        .ta-bill-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #e9e9e9;padding-bottom:16px}
+        .ta-bill-header h2{font-size:25px;line-height:1.15;margin:5px 0}
+        .ta-bill-header p{margin:0;color:#777;font-size:12px}
+        .ta-bill-close{border:0;background:#f2f2f2;border-radius:50%;width:34px;height:34px;font-size:23px;line-height:1;cursor:pointer}
+        .ta-bill-restaurant{padding:16px 0 12px;display:grid;gap:4px}
+        .ta-bill-restaurant strong{font-size:16px}
+        .ta-bill-restaurant span,.ta-bill-info span,.ta-bill-notes>span{font-size:11px;color:#777}
+        .ta-bill-info{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;background:#f7f7f7;border-radius:12px}
+        .ta-bill-info>div{display:grid;gap:4px;min-width:0}
+        .ta-bill-info strong{font-size:12px;line-height:1.5;overflow-wrap:anywhere;text-transform:capitalize}
+        .ta-bill-wide{grid-column:1/-1}
+        .ta-bill-items-wrap{padding:20px 0 12px}
+        .ta-bill-items-wrap h3{font-size:14px;margin:0 0 12px}
+        .ta-bill-table{width:100%}
+        .ta-bill-row{display:grid;grid-template-columns:minmax(0,1.8fr) .45fr .9fr .9fr;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #eee;font-size:11px}
+        .ta-bill-row>span:first-child{overflow-wrap:anywhere}
+        .ta-bill-row>span:not(:first-child),.ta-bill-row>strong{text-align:right}
+        .ta-bill-table-head{color:#777;font-size:10px;font-weight:800;text-transform:uppercase}
+        .ta-bill-no-items{font-size:12px;color:#777}
+        .ta-bill-totals{display:grid;gap:9px;border-top:1px solid #e8e8e8;padding-top:14px}
+        .ta-bill-totals>div{display:flex;justify-content:space-between;gap:12px;font-size:12px}
+        .ta-bill-grand-total{border-top:1px dashed #ccc;padding-top:12px;margin-top:3px;font-size:16px!important;font-weight:900}
+        .ta-bill-notes{margin-top:16px;padding:12px;background:#f7f7f7;border-radius:10px}
+        .ta-bill-notes p{font-size:12px;white-space:pre-wrap;margin:5px 0 0}
+        .ta-bill-done{width:100%;margin-top:18px;min-height:43px;border:0;border-radius:10px;background:#171717;color:#fff;font-weight:800;cursor:pointer}
+        @media(max-width:520px){.ta-bill-modal{padding:17px;border-radius:14px}.ta-bill-info{gap:11px;padding:12px}.ta-bill-row{grid-template-columns:minmax(0,1.5fr) .35fr .8fr .8fr;gap:5px;font-size:10px}.ta-bill-header h2{font-size:22px}}
         .ta-order-meta>div{min-width:0}
         .ta-payment-collect{
           display:inline-flex;align-items:center;justify-content:center;gap:7px;
