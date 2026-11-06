@@ -109,9 +109,12 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <ServiceWorker />
-        {children}
-        <MobileBottomNav />
+        <LanguageProvider>
+          <ServiceWorker />
+          {children}
+          <MobileBottomNav />
+          <LanguageSwitcher />
+        </LanguageProvider>
       </body>
     </html>
   );
