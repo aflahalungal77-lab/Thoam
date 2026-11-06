@@ -1,6 +1,8 @@
 
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -30,6 +32,7 @@ type TableNeed = {
 };
 
 export default function QRPage() {
+  const { t } = useLanguage();
   const router = useRouter();
 
   const [rid, setRid] = useState("");
@@ -270,9 +273,9 @@ useEffect(() => {
 
       <header className="ta-manage-heading">
         <div>
-          <span className="ta-eyebrow">DINE-IN EXPERIENCE</span>
-          <h1>QR ordering<span>.</span></h1>
-          <p>One table. One QR code. A simpler way to order.</p>
+          <span className="ta-eyebrow">{t("DINE-IN EXPERIENCE")}</span>
+          <h1>{t("QR ordering.")}<span>.</span></h1>
+          <p>{t("One table. One QR code. A simpler way to order.")}</p>
         </div>
         <div className="ta-manage-heading-icon"><QrCode size={29} /></div>
       </header>
@@ -287,13 +290,13 @@ useEffect(() => {
       {loading ? (
         <div className="ta-menu-empty">
           <LoaderCircle size={28} className="ta-refreshing" />
-          <h3>Loading your tables...</h3>
+          <h3>{t("Loading your tables...")}</h3>
         </div>
       ) : !rid ? (
         <section className="ta-qr-disabled">
           <ShieldAlert size={30} />
-          <h2>Setup needed</h2>
-          <p>{msg || "Your account is not linked to a restaurant."}</p>
+          <h2>{t("Setup needed")}</h2>
+          <p>{msg || t("Your account is not linked to a restaurant.")}</p>
           <Link href="/restaurant-admin" className="ta-form-submit">
             Back to dashboard
           </Link>
@@ -304,9 +307,9 @@ useEffect(() => {
           <section className="qr-needs-section">
             <div className="qr-needs-heading">
               <div>
-                <span className="ta-eyebrow">CUSTOMER REQUESTS</span>
-                <h2>Table needs<span>.</span></h2>
-                <p>Requests sent by customers from their table QR menu.</p>
+                <span className="ta-eyebrow">{t("CUSTOMER REQUESTS")}</span>
+                <h2>{t("Table needs")}<span>.</span></h2>
+                <p>{t("Requests sent by customers from their table QR menu.")}</p>
               </div>
               <div className="qr-needs-count">
                 <Bell size={18} />
@@ -317,8 +320,8 @@ useEffect(() => {
             {pendingNeeds.length === 0 ? (
               <div className="qr-needs-empty">
                 <CheckCircle2 size={27} />
-                <strong>All caught up</strong>
-                <p>No pending table requests.</p>
+                <strong>{t("All caught up")}</strong>
+                <p>{t("No pending table requests.")}</p>
               </div>
             ) : (
               <div className="qr-needs-list">
@@ -329,7 +332,7 @@ useEffect(() => {
                         <Store size={14} /> Table {need.table_code}
                       </span>
                       <span className="qr-need-pending">
-                        <span /> Pending
+                        <span /> {t("Pending")}
                       </span>
                     </div>
 
@@ -369,9 +372,9 @@ useEffect(() => {
 
           <section className="ta-qr-hero">
             <div className="ta-qr-hero-copy">
-              <span className="ta-eyebrow">TABLE MANAGEMENT</span>
-              <h2>Let customers order<br />right from their table.</h2>
-              <p>Create a unique QR link for each table. Customers scan it to open your restaurant’s digital menu.</p>
+              <span className="ta-eyebrow">{t("TABLE MANAGEMENT")}</span>
+              <h2>{t("Let customers order right from their table.")}</h2>
+              <p>{t("Create a unique QR link for each table. Customers scan it to open your restaurant’s digital menu.")}</p>
               <span className={`ta-qr-enabled ${qrEnabled ? "enabled" : "disabled"}`}>
                 <span />
                 QR ordering {qrEnabled ? "enabled" : "disabled"}
@@ -379,26 +382,26 @@ useEffect(() => {
             </div>
             <div className="ta-qr-hero-art" aria-hidden="true">
               <div className="ta-qr-frame"><QrCode size={94} strokeWidth={1.2} /></div>
-              <span className="ta-qr-art-caption">SCAN. BROWSE. ORDER.</span>
+              <span className="ta-qr-art-caption">{t("SCAN. BROWSE. ORDER.")}</span>
             </div>
           </section>
 
           <section className="ta-product-summary">
-            <div><span>Total tables</span><strong>{tables.length}</strong></div>
-            <div><span>Active tables</span><strong>{activeTables}</strong></div>
-            <div><span>Inactive tables</span><strong>{tables.length - activeTables}</strong></div>
+            <div><span>{t("Total tables")}</span><strong>{tables.length}</strong></div>
+            <div><span>{t("Active tables")}</span><strong>{activeTables}</strong></div>
+            <div><span>{t("Inactive tables")}</span><strong>{tables.length - activeTables}</strong></div>
           </section>
 
           <section className="ta-manage-panel ta-create-table">
             <div className="ta-panel-heading">
               <div>
-                <span className="ta-eyebrow">NEW TABLE</span>
-                <h2>Create a table QR</h2>
+                <span className="ta-eyebrow">{t("NEW TABLE")}</span>
+                <h2>{t("Create a table QR")}</h2>
               </div>
               <div className="ta-panel-icon"><Plus size={20} /></div>
             </div>
 
-            <p className="ta-create-description">Add a unique table name, such as Table-01 or Window-02.</p>
+            <p className="ta-create-description">{t("Add a unique table name, such as Table-01 or Window-02.")}</p>
 
             <form
               className="ta-create-table-form"
@@ -413,7 +416,7 @@ useEffect(() => {
                   required
                   value={code}
                   onChange={(event) => setCode(event.target.value)}
-                  placeholder="e.g. Table-01"
+                  placeholder={t("e.g. Table-01")}
                   maxLength={60}
                 />
               </label>
@@ -426,7 +429,7 @@ useEffect(() => {
 
             {!qrEnabled && (
               <p className="ta-qr-warning">
-                QR ordering is disabled for this restaurant. Enable <code>qr_enabled</code> before creating tables.
+                {t("QR ordering is disabled for this restaurant. Enable")} <code>qr_enabled</code> before creating tables.
               </p>
             )}
           </section>
@@ -434,7 +437,7 @@ useEffect(() => {
           <section className="ta-qr-tables-section">
             <div className="ta-menu-heading">
               <div>
-                <span className="ta-eyebrow">YOUR RESTAURANT</span>
+                <span className="ta-eyebrow">{t("YOUR RESTAURANT")}</span>
                 <h2>{restaurantName}<span> · {tables.length} tables</span></h2>
               </div>
               <button className="ta-refresh-button" onClick={() => void load()}>
@@ -445,8 +448,8 @@ useEffect(() => {
             {tables.length === 0 ? (
               <div className="ta-menu-empty">
                 <QrCode size={32} />
-                <h3>No tables created yet.</h3>
-                <p>Create your first table above to start preparing QR links.</p>
+                <h3>{t("No tables created yet.")}</h3>
+                <p>{t("Create your first table above to start preparing QR links.")}</p>
               </div>
             ) : (
               <div className="ta-qr-grid">
@@ -455,13 +458,13 @@ useEffect(() => {
                     <div className="ta-qr-card-top">
                       <div className="ta-qr-card-icon"><QrCode size={24} /></div>
                       <span className={`ta-product-status ${table.is_active ? "available" : "unavailable"}`}>
-                        <span />{table.is_active ? "Active" : "Inactive"}
+                        <span />{table.is_active ? t("Active") : t("Inactive")}
                       </span>
                     </div>
 
-                    <span className="ta-eyebrow">TABLE CODE</span>
+                    <span className="ta-eyebrow">{t("TABLE CODE")}</span>
                     <h3>{table.table_code}</h3>
-                    <p className="ta-qr-card-description">Scan this table’s QR code to open the linked menu.</p>
+                    <p className="ta-qr-card-description">{t("Scan this table’s QR code to open the linked menu.")}</p>
 
                     <div className="ta-qr-link-box">
                       <span>{getUrl(table)}</span>
@@ -495,10 +498,10 @@ useEffect(() => {
           <div className="ta-qr-print-note">
             <Printer size={17} />
             <div>
-              <strong>Ready to print your QR codes?</strong>
-              <p>Open each active QR code and print the QR image for the corresponding table.</p>
+              <strong>{t("Ready to print your QR codes?")}</strong>
+              <p>{t("Open each active QR code and print the QR image for the corresponding table.")}</p>
             </div>
-            <button onClick={() => window.print()}><Printer size={15} /> Print page</button>
+            <button onClick={() => window.print()}><Printer size={15} /> {t("Print page")}</button>
           </div>
         </>
       )}
