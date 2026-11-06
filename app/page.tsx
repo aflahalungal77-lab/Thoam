@@ -135,7 +135,7 @@ export default function Home() {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder={t("Search biryani, burgers, restaurants...")}
-                  aria-label="Search food"
+                  aria-label={t("Search food")}
                 />
                 <button type="submit" aria-label="Search">
                   <ArrowRight size={19} />
