@@ -138,9 +138,9 @@ export default function Header() {
 
       {mobileMenuOpen && (
         <nav className="thoam-mobile-menu" aria-label="Mobile navigation">
-          <Link href="/">Home</Link>
-          <Link href="/restaurants">Restaurants</Link>
-          <Link href="/owner">For restaurants</Link>
+          <Link href="/">{t("Home")}</Link>
+          <Link href="/restaurants">{t("Restaurants")}</Link>
+          <Link href="/owner">{t("For restaurants")}</Link>
 
           {!loading && (
             user ? (
