@@ -98,6 +98,7 @@ function AuthCallbackContent() {
 }
 
 export default function AuthCallback() {
+  const { t } = useLanguage();
   return (
     <Suspense
       fallback={
