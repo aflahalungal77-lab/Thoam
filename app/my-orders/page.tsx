@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -44,6 +46,7 @@ const currentStep = (s: string, isDineIn = false) => {
 };
 
 export default function MyOrders() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [selected, setSelected] = useState<Order | null>(null);
@@ -98,37 +101,37 @@ export default function MyOrders() {
     <Header />
     <main className="container thoam-myorders">
       <header className="mo-heading">
-        <div><span className="mo-eyebrow">YOUR THO'AM ACCOUNT</span><h1>My orders<span>.</span></h1><p>Every order, every update — all in one place.</p></div>
-        <button className="mo-refresh" onClick={() => void load(true)} disabled={refreshing || loading}><RefreshCw size={15} className={refreshing ? "mo-spin" : ""} /> Refresh</button>
+        <div><span className="mo-eyebrow">{t("YOUR THO'AM ACCOUNT")}</span><h1>{t("My orders")}<span>.</span></h1><p>{t("Every order, every update — all in one place.")}</p></div>
+        <button className="mo-refresh" onClick={() => void load(true)} disabled={refreshing || loading}><RefreshCw size={15} className={refreshing ? "mo-spin" : ""} /> {t("Refresh")}</button>
       </header>
 
       {!loading && orders.length > 0 && <section className="mo-summary">
         <div className="mo-summary-icon"><ShoppingBag size={19} /></div>
         <div><strong>{orders.length} {orders.length === 1 ? "order" : "orders"}</strong><span>{activeCount ? activeCount + " currently in progress" : "You're all caught up"}</span></div>
-        <div className="mo-summary-total"><span>Order history</span><strong>{orders.length.toString().padStart(2, "0")}</strong></div>
+        <div className="mo-summary-total"><span>{t("Order history")}</span><strong>{orders.length.toString().padStart(2, "0")}</strong></div>
       </section>}
 
       {msg && <div className={loading ? "mo-loading" : "mo-empty"}>
         {loading ? <span className="mo-loader" /> : <div className="mo-empty-icon"><ShoppingBag size={25} /></div>}
         <h2>{loading ? "Getting your orders" : orders.length ? "Something needs attention" : "No orders yet"}</h2><p>{msg}</p>
-        {!loading && orders.length === 0 && <Link href="/restaurants" className="mo-browse">Explore restaurants <ArrowRight size={16} /></Link>}
-        {!loading && orders.length > 0 && <button className="mo-browse" onClick={() => void load(true)}>Try again</button>}
+        {!loading && orders.length === 0 && <Link href="/restaurants" className="mo-browse">{t("Explore restaurants")} <ArrowRight size={16} /></Link>}
+        {!loading && orders.length > 0 && <button className="mo-browse" onClick={() => void load(true)}>{t("Try again")}</button>}
       </div>}
 
       {orders.length > 0 && <section className="mo-list-section">
-        <div className="mo-section-title"><div><span className="mo-eyebrow">RECENT ACTIVITY</span><h2>Your orders</h2></div><span>{orders.length} total</span></div>
+        <div className="mo-section-title"><div><span className="mo-eyebrow">{t("RECENT ACTIVITY")}</span><h2>{t("Your orders")}</h2></div><span>{orders.length} {t("total")}</span></div>
         <div className="mo-order-list">{orders.map((o) => {
           const s = norm(o.status);
           const cancelled = ["cancelled", "rejected"].includes(s);
           const done = s === "delivered";
           return <button type="button" className="mo-order-card" key={o.id} onClick={() => setSelected(o)}>
             <div className="mo-card-top">
-              <div className="mo-card-brand"><span className="mo-card-icon"><ShoppingBag size={18} /></span><div><small>ORDER ID</small><strong>#{o.order_number || o.id.slice(0, 8).toUpperCase()}</strong></div></div>
+              <div className="mo-card-brand"><span className="mo-card-icon"><ShoppingBag size={18} /></span><div><small>{t("ORDER ID")}</small><strong>#{o.order_number || o.id.slice(0, 8).toUpperCase()}</strong></div></div>
               <span className={"mo-status-pill " + (cancelled ? "is-cancelled" : done ? "is-done" : "is-active")}><i />{cancelled ? label(s) : done ? "Delivered" : label(s)}</span>
             </div>
             <div className="mo-card-main"><div className="mo-restaurant"><strong>{o.restaurant?.name || "Tho'am restaurant"}</strong><span>{o.order_type === "dine_in" ? "Dine-in order" : "Delivery order"} · {shortDate(o.created_at)}</span></div>
               <div className="mo-card-total"><strong>{money(o.total_amount)}</strong><span>{o.order_items?.length || 0} items</span></div></div>
-            <div className="mo-card-bottom"><span className="mo-card-date"><Clock3 size={13} /> Placed {dateTime(o.created_at)}</span><span className="mo-track-link">Track order <ChevronRight size={16} /></span></div>
+            <div className="mo-card-bottom"><span className="mo-card-date"><Clock3 size={13} /> {t("Placed")} {dateTime(o.created_at)}</span><span className="mo-track-link">{t("Track order")} <ChevronRight size={16} /></span></div>
             {!cancelled && <div className="mo-mini-progress"><span style={{ width: Math.max(8, (currentStep(s, o.order_type === "dine_in") + 1) / 5 * 100) + "%" }} /></div>}
           </button>;
         })}</div>
@@ -137,10 +140,10 @@ export default function MyOrders() {
 
     {selected && <div className="mo-overlay" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setSelected(null); }}>
       <section className="mo-drawer" role="dialog" aria-modal="true" aria-labelledby="mo-dialog-title">
-        <header className="mo-drawer-head"><div><span className="mo-eyebrow">ORDER TRACKING</span><h2 id="mo-dialog-title">#{selected.order_number || selected.id.slice(0, 8).toUpperCase()}</h2><p>{selected.restaurant?.name || "Tho'am restaurant"}</p></div>
-          <button className="mo-close" onClick={() => setSelected(null)} aria-label="Close tracking"><X size={19} /></button></header>
+        <header className="mo-drawer-head"><div><span className="mo-eyebrow">{t("ORDER TRACKING")}</span><h2 id="mo-dialog-title">#{selected.order_number || selected.id.slice(0, 8).toUpperCase()}</h2><p>{selected.restaurant?.name || "Tho'am restaurant"}</p></div>
+          <button className="mo-close" onClick={() => setSelected(null)} aria-label={t("Close tracking")}><X size={19} /></button></header>
         <div className="mo-drawer-scroll">
-          {["cancelled", "rejected"].includes(norm(selected.status)) ? <div className="mo-cancelled"><span><X size={18} /></span><div><strong>Order {label(norm(selected.status)).toLowerCase()}</strong><p>Please contact the restaurant if you need more information.</p></div></div> :
+          {["cancelled", "rejected"].includes(norm(selected.status)) ? <div className="mo-cancelled"><span><X size={18} /></span><div><strong>Order {label(norm(selected.status)).toLowerCase()}</strong><p>{t("Please contact the restaurant if you need more information.")}</p></div></div> :
             <div className="mo-live-banner"><span className="mo-live-dot" /><div><strong>{norm(selected.status) === "delivered" ? "Order completed" : "Live order updates"}</strong><p>{norm(selected.status) === "delivered" ? "Your order has reached its destination." : "This timeline updates when the restaurant changes your order status."}</p></div></div>}
           <div className="mo-timeline">{steps.filter((x) => selected.order_type !== "dine_in" || x.key !== "out_for_delivery").map((step, index, arr) => {
             const idx = currentStep(selected.status, selected.order_type === "dine_in");
@@ -151,19 +154,19 @@ export default function MyOrders() {
             const Icon = step.icon;
             return <div className={"mo-step " + (isDone ? "is-done " : "") + (isCurrent ? "is-current" : "")} key={step.key}>
               <div className="mo-step-rail"><span className="mo-step-icon">{isDone ? <Check size={16} /> : <Icon size={16} />}</span>{index < arr.length - 1 && <i />}</div>
-              <div className="mo-step-copy"><div className="mo-step-title"><strong>{step.label}</strong>{isCurrent && <em>Current status</em>}</div><p>{step.detail}</p><small>{time ? dateTime(time) : isDone ? "Update time not recorded" : "Waiting for update"}</small></div>
+              <div className="mo-step-copy"><div className="mo-step-title"><strong>{step.label}</strong>{isCurrent && <em>{t("Current status")}</em>}</div><p>{step.detail}</p><small>{time ? dateTime(time) : isDone ? t("Update time not recorded") : t("Waiting for update")}</small></div>
             </div>;
           })}</div>
-          <div className="mo-detail-card"><h3>Order details</h3>
-            <div className="mo-detail-row"><span><Clock3 size={14} /> Order placed</span><strong>{dateTime(selected.created_at)}</strong></div>
-            <div className="mo-detail-row"><span><CreditCard size={14} /> Payment · Cash on delivery</span><strong>{selected.payment_status === "collected" ? "Cash collected" : selected.payment_status === "refunded" ? "Refunded" : "Pay on arrival"}</strong></div>
-            {selected.order_type === "delivery" && selected.delivery_address && <div className="mo-detail-row"><span><MapPin size={14} /> Delivery address</span><strong>{selected.delivery_address}</strong></div>}
-            <div className="mo-detail-total"><span>Total amount</span><strong>{money(selected.total_amount)}</strong></div>
+          <div className="mo-detail-card"><h3>{t("Order details")}</h3>
+            <div className="mo-detail-row"><span><Clock3 size={14} /> {t("Order placed")}</span><strong>{dateTime(selected.created_at)}</strong></div>
+            <div className="mo-detail-row"><span><CreditCard size={14} /> {t("Payment · Cash on delivery")}</span><strong>{selected.payment_status === "collected" ? t("Cash collected") : selected.payment_status === "refunded" ? t("Refunded") : t("Pay on arrival")}</strong></div>
+            {selected.order_type === "delivery" && selected.delivery_address && <div className="mo-detail-row"><span><MapPin size={14} /> {t("Delivery address")}</span><strong>{selected.delivery_address}</strong></div>}
+            <div className="mo-detail-total"><span>{t("Total amount")}</span><strong>{money(selected.total_amount)}</strong></div>
           </div>
-          {!!selected.order_items?.length && <div className="mo-detail-card"><h3>Items in this order</h3>{selected.order_items.map((item) => <div className="mo-item-row" key={item.id}><span>{item.quantity} × {item.product_name}</span><strong>{money(item.line_total)}</strong></div>)}</div>}
-          <p className="mo-update-note"><RefreshCw size={12} /> Order status refreshes automatically.</p>
+          {!!selected.order_items?.length && <div className="mo-detail-card"><h3>{t("Items in this order")}</h3>{selected.order_items.map((item) => <div className="mo-item-row" key={item.id}><span>{item.quantity} × {item.product_name}</span><strong>{money(item.line_total)}</strong></div>)}</div>}
+          <p className="mo-update-note"><RefreshCw size={12} /> {t("Order status refreshes automatically.")}</p>
         </div>
-        <footer className="mo-drawer-footer"><button onClick={() => void load(true)} disabled={refreshing}><RefreshCw size={14} className={refreshing ? "mo-spin" : ""} /> Refresh tracking</button><button onClick={() => setSelected(null)}>Done</button></footer>
+        <footer className="mo-drawer-footer"><button onClick={() => void load(true)} disabled={refreshing}><RefreshCw size={14} className={refreshing ? "mo-spin" : ""} /> {t("Refresh tracking")}</button><button onClick={() => setSelected(null)}>{t("Done")}</button></footer>
       </section>
     </div>}
 
