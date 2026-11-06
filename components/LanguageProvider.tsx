@@ -520,7 +520,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const setLanguage = useCallback((next: Language) => {
     setLanguageState(next);
     try {
-      window.localStorage.setItem("thoam-language", next);
+      window.localStorage.setItem("thoam-language", next);\n      document.cookie = `thoam-language=${next}; Path=/; Max-Age=31536000; SameSite=Lax`;
     } catch {
       // Language still changes for the current session.
     }
