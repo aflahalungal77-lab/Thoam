@@ -566,7 +566,7 @@ console.log("STEP 4: Starting offer database insert");
           <div className="section-title">
             <div className="section-icon"><Plus size={20} /></div>
             <div>
-              <span className="eyebrow">{editing ? "{t("UPDATE PROMOTION")}" : "{t("NEW PROMOTION")}"}</span>
+              <span className="eyebrow">{editing ? t("UPDATE PROMOTION") : t("NEW PROMOTION")}</span>
               <h2>{editing ? t("Edit offer") : t("Create an offer")}</h2>
             </div>
           </div>
