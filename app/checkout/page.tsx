@@ -632,6 +632,7 @@ function CheckoutStyles() {
 }
 
 export default function CheckoutPage() {
+  const { t } = useLanguage();
   return (
     <Suspense fallback={<><Header /><main className="tc-page"><div className="tc-loading"><LoaderCircle size={28} />{t("Loading checkout...")}</div></main><CheckoutStyles /></>}>
       <CheckoutInner />
