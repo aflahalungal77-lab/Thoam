@@ -1,10 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 type Language = "en" | "ml";
 
-const STORAGE_KEY = "thoam-language";
+function getLanguageStorageKey(pathname: string) {
+  if (pathname.startsWith("/thoam-admin")) return "thoam-language:admin";
+  if (
+    pathname.startsWith("/owner") ||
+    pathname.startsWith("/restaurant-admin") ||
+    pathname.startsWith("/restaurant-registration")
+  ) return "thoam-language:owner";
+  return "thoam-language:customer";
+}
 
 const translations: Record<string, string> = {
   "Home": "ഹോം",
@@ -148,7 +157,11 @@ function translateTextNode(node: Text, language: Language) {
   }
 
   const trimmed = original.trim();
-  const translated = language === "ml" ? translations[trimmed] : original;
+  const categoryOnly = ["All", "Biryani", "Meals", "Fast Food", "Snacks", "Drinks"].includes(trimmed);
+  const isCategoryControl = Boolean(node.parentElement?.closest(".category-pill, .category-list"));
+  const translated = language === "ml"
+    ? (categoryOnly && !isCategoryControl ? undefined : translations[trimmed])
+    : original;
   if (translated === undefined) return;
 
   const leading = original.match(/^\s*/)?.[0] ?? "";
@@ -226,20 +239,22 @@ function translatePage(language: Language) {
 }
 
 export default function LanguageSystem() {
+  const pathname = usePathname();
   const [language, setLanguage] = useState<Language>("en");
+  const storageKey = getLanguageStorageKey(pathname);
 
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved === "ml" || saved === "en") setLanguage(saved);
+      const saved = window.localStorage.getItem(storageKey);
+      setLanguage(saved === "ml" || saved === "en" ? saved : "en");
     } catch {
-      // Continue with English if browser storage is unavailable.
+      setLanguage("en");
     }
-  }, []);
+  }, [storageKey]);
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(STORAGE_KEY, language);
+      window.localStorage.setItem(storageKey, language);
     } catch {
       // Language still works for the current page if storage is unavailable.
     }
@@ -264,7 +279,7 @@ export default function LanguageSystem() {
       subtree: true,
     });
     return () => observer.disconnect();
-  }, [language]);
+  }, [language, storageKey]);
 
   return (
     <div
