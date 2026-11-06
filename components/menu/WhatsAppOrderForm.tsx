@@ -120,7 +120,7 @@ export default function WhatsAppOrderForm({ loading, onSubmit, onCancel }: Props
 
       <div className="whatsapp-notice">
         <span aria-hidden="true">✓</span>
-        <p>{t("Your order is saved first. WhatsApp opens with your order message ready. Tap")} <strong>Send</strong> there to confirm.</p>
+        <p>{t("Your order is saved first. WhatsApp opens with your order message ready. Tap")} <strong>{t("Send")}</strong> {t("there to confirm.")}</p>
       </div>
 
       <style jsx>{`
