@@ -117,8 +117,7 @@ export default function Home() {
               </h1>
 
               <p className="hero-description">
-                Discover local restaurants, explore delicious food and order
-                your favourites with Tho’am.
+                {t("Discover local restaurants, explore delicious food and order your favourites with Tho’am.")}
               </p>
 
               <form
