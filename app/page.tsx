@@ -22,6 +22,7 @@ import Header from "@/components/Header";
 import InstallPrompt from "@/components/InstallPrompt";
 import { supabase } from "@/lib/supabase";
 import type { FoodProduct, Restaurant } from "@/lib/types";
+import { useLanguage } from "@/components/LanguageProvider";
 
 const categories = [
   "All",
@@ -105,13 +106,13 @@ export default function Home() {
             <div className="hero-content">
               <div className="hero-badge">
                 <Sparkles size={14} />
-                GOOD FOOD. RIGHT AROUND YOU.
+                {t("GOOD FOOD. RIGHT AROUND YOU.")}
               </div>
 
               <h1>
-                Your next
+                {t("Your next")}
                 <br />
-                favourite <span>bite.</span>
+                {t("favourite bite.")}
               </h1>
 
               <p className="hero-description">
@@ -132,7 +133,7 @@ export default function Home() {
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search biryani, burgers, restaurants..."
+                  placeholder={t("Search biryani, burgers, restaurants...")}
                   aria-label="Search food"
                 />
                 <button type="submit" aria-label="Search">
@@ -142,11 +143,11 @@ export default function Home() {
 
               <div className="hero-links">
                 <Link href="/restaurants" className="primary-cta">
-                  Explore food <ArrowUpRight size={17} />
+                  {t("Explore food")} <ArrowUpRight size={17} />
                 </Link>
 
                 <Link href="/owner" className="secondary-cta">
-                  <Store size={17} /> Become a partner
+                  <Store size={17} /> {t("Become a partner")}
                 </Link>
               </div>
 
@@ -154,8 +155,8 @@ export default function Home() {
                 <span>
                   <span className="trust-dot" /> Local restaurants
                 </span>
-                <span>Cash on delivery</span>
-                <span>QR table ordering</span>
+                <span>{t("Cash on delivery")}</span>
+                <span>{t("QR table ordering")}</span>
               </div>
             </div>
 
@@ -204,8 +205,8 @@ export default function Home() {
           <div className="home-container">
             <div className="section-topline">
               <div>
-                <span className="home-eyebrow">EXPLORE THE MENU</span>
-                <h2>What are you craving?</h2>
+                <span className="home-eyebrow">{t("EXPLORE THE MENU")}</span>
+                <h2>{t("What are you craving?")}</h2>
               </div>
 
               <Link href="/restaurants" className="text-link">
@@ -253,10 +254,10 @@ export default function Home() {
           <div className="home-container">
             <div className="section-topline">
               <div>
-                <span className="home-eyebrow">MADE BY LOCAL KITCHENS</span>
-                <h2>Worth every bite.</h2>
+                <span className="home-eyebrow">{t("MADE BY LOCAL KITCHENS")}</span>
+                <h2>{t("Worth every bite.")}</h2>
                 <p className="section-description">
-                  Discover dishes from restaurants around you.
+                  {t("Discover dishes from restaurants around you.")}
                 </p>
               </div>
 
@@ -268,7 +269,7 @@ export default function Home() {
             {loading ? (
               <div className="home-loading">
                 <LoaderCircle className="loading-spin" size={26} />
-                <p>Discovering delicious food...</p>
+                <p>{t("Discovering delicious food...")}</p>
               </div>
             ) : filteredProducts.length > 0 ? (
               <div className="food-grid">
@@ -297,7 +298,7 @@ export default function Home() {
                         className={`food-type ${
                           product.is_veg ? "veg" : "nonveg"
                         }`}
-                        title={product.is_veg ? "Vegetarian" : "Non-vegetarian"}
+                        title={product.is_veg ? t("Vegetarian") : t("Non-vegetarian")}
                       >
                         {product.is_veg ? (
                           <Leaf size={13} />
@@ -321,7 +322,7 @@ export default function Home() {
                       </p>
 
                       <Link href="/restaurants" className="food-order-link">
-                        Explore restaurant <ArrowUpRight size={15} />
+                        {t("Explore restaurant")} <ArrowUpRight size={15} />
                       </Link>
                     </div>
                   </article>
@@ -335,14 +336,14 @@ export default function Home() {
 
                 <h3>
                   {search || category !== "All"
-                    ? "No matching dishes"
-                    : "Good food is on its way."}
+                    ? t("No matching dishes")
+                    : t("Good food is on its way.")}
                 </h3>
 
                 <p>
                   {search || category !== "All"
-                    ? "Try another search or choose a different category."
-                    : "Explore our restaurant directory to discover available menus."}
+                    ? t("Try another search or choose a different category.")
+                    : t("Explore our restaurant directory to discover available menus.")}
                 </p>
 
                 <button
@@ -353,8 +354,8 @@ export default function Home() {
                   }}
                 >
                   {search || category !== "All"
-                    ? "Clear filters"
-                    : "Explore restaurants"}
+                    ? t("Clear filters")
+                    : t("Explore restaurants")}
                   <ArrowRight size={17} />
                 </button>
               </div>
