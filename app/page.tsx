@@ -242,7 +242,7 @@ export default function Home() {
                     <span>🍔</span>
                   )}
 
-                  {item}
+                  {t(item)}
                 </button>
               ))}
             </div>
