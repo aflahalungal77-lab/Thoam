@@ -163,7 +163,7 @@ export default function Home() {
             <div className="hero-visual">
               <div className="hero-image-frame">
                 <Image
-                  src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1100&q=85"
+                  src="/hero.jpg"
                   alt="Freshly prepared food"
                   fill
                   priority
@@ -687,10 +687,11 @@ export default function Home() {
         .hero-image-frame {
           position: relative;
           width: 100%;
-          height: 460px;
+          height: auto;
+          aspect-ratio: 16 / 9;
           overflow: hidden;
           border-radius: 18px;
-          background: #e9e7e0;
+          background: #090909;
         }
 
         .hero-image-overlay {
@@ -1312,7 +1313,8 @@ export default function Home() {
           }
 
           .hero-image-frame {
-            height: 390px;
+            height: auto;
+            aspect-ratio: 16 / 9;
           }
 
           .food-grid {
@@ -1361,7 +1363,8 @@ export default function Home() {
           }
 
           .hero-image-frame {
-            height: 330px;
+            height: auto;
+            aspect-ratio: 16 / 9;
             border-radius: 14px;
           }
 
