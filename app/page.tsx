@@ -34,6 +34,7 @@ const categories = [
 ];
 
 export default function Home() {
+  const { t } = useLanguage();
   const [products, setProducts] = useState<FoodProduct[]>([]);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -153,7 +154,7 @@ export default function Home() {
 
               <div className="hero-trust">
                 <span>
-                  <span className="trust-dot" /> Local restaurants
+                  <span className="trust-dot" /> {t("Local restaurants")}
                 </span>
                 <span>{t("Cash on delivery")}</span>
                 <span>{t("QR table ordering")}</span>
@@ -179,8 +180,8 @@ export default function Home() {
                     <Utensils size={18} />
                   </span>
                   <div>
-                    <strong>Something delicious.</strong>
-                    <span>Just around the corner.</span>
+                    <strong>{t("Something delicious.")}</strong>
+                    <span>{t("Just around the corner.")}</span>
                   </div>
                 </div>
               </div>
@@ -190,8 +191,8 @@ export default function Home() {
                   <QrCode size={19} />
                 </span>
                 <div>
-                  <strong>Dining in?</strong>
-                  <span>Scan. Order. Enjoy.</span>
+                  <strong>{t("Dining in?")}</strong>
+                  <span>{t("Scan. Order. Enjoy.")}</span>
                 </div>
               </div>
 
