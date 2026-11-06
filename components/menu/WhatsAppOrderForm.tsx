@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
+
 import { useState, type FormEvent } from "react";
 
 export interface CustomerOrderForm {
@@ -17,6 +19,7 @@ interface Props {
 }
 
 export default function WhatsAppOrderForm({ loading, onSubmit, onCancel }: Props) {
+  const { t } = useLanguage();
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [orderType, setOrderType] = useState<"DELIVERY" | "TAKEAWAY">("DELIVERY");
@@ -54,39 +57,39 @@ export default function WhatsAppOrderForm({ loading, onSubmit, onCancel }: Props
   return (
     <form className="customer-form" onSubmit={handleSubmit}>
       <div className="form-heading">
-        <span className="form-eyebrow">ORDER DETAILS</span>
-        <h2>Almost there. <span>Let’s get your order ready.</span></h2>
-        <p>Just a few details so the restaurant can confirm your order.</p>
+        <span className="form-eyebrow">{t("ORDER DETAILS")}</span>
+        <h2>{t("Almost there.")} <span>{t("Let’s get your order ready.")}</span></h2>
+        <p>{t("Just a few details so the restaurant can confirm your order.")}</p>
       </div>
 
       {validationError && <p className="validation-error" role="alert">{validationError}</p>}
 
       <div className="form-grid">
         <div className="form-field">
-          <label htmlFor="customerName">Full name</label>
+          <label htmlFor="customerName">{t("Full name")}</label>
           <input id="customerName" type="text" autoComplete="name" required minLength={2} maxLength={100}
-            value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Your name" />
+            value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder={t("Your name")} />
         </div>
         <div className="form-field">
-          <label htmlFor="customerPhone">Phone number</label>
+          <label htmlFor="customerPhone">{t("Phone number")}</label>
           <input id="customerPhone" type="tel" autoComplete="tel" inputMode="tel" required maxLength={20}
-            value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} placeholder="Your contact number" />
+            value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} placeholder={t("Your contact number")} />
         </div>
       </div>
 
       <fieldset className="order-type-field">
-        <legend>How would you like to receive your order?</legend>
+        <legend>{t("How would you like to receive your order?")}</legend>
         <div className="order-type-options">
           <button type="button" className={`order-type-option ${orderType === "DELIVERY" ? "selected" : ""}`}
             aria-pressed={orderType === "DELIVERY"} onClick={() => setOrderType("DELIVERY")}>
             <span className="option-icon" aria-hidden="true">⌂</span>
-            <span className="option-copy"><strong>Delivery</strong><small>Bring it to me</small></span>
+            <span className="option-copy"><strong>{t("Delivery")}</strong><small>{t("Bring it to me")}</small></span>
             <span className="radio-mark" aria-hidden="true" />
           </button>
           <button type="button" className={`order-type-option ${orderType === "TAKEAWAY" ? "selected" : ""}`}
             aria-pressed={orderType === "TAKEAWAY"} onClick={() => setOrderType("TAKEAWAY")}>
             <span className="option-icon" aria-hidden="true">▣</span>
-            <span className="option-copy"><strong>Takeaway</strong><small>I’ll collect it</small></span>
+            <span className="option-copy"><strong>{t("Takeaway")}</strong><small>{t("I’ll collect it")}</small></span>
             <span className="radio-mark" aria-hidden="true" />
           </button>
         </div>
@@ -94,30 +97,30 @@ export default function WhatsAppOrderForm({ loading, onSubmit, onCancel }: Props
 
       {orderType === "DELIVERY" && (
         <div className="form-field address-field">
-          <label htmlFor="address">Delivery address</label>
+          <label htmlFor="address">{t("Delivery address")}</label>
           <textarea id="address" autoComplete="street-address" required minLength={5} maxLength={1000}
             value={address} onChange={(event) => setAddress(event.target.value)}
-            placeholder="House name, street, locality and landmark" rows={2} />
+            placeholder={t("House name, street, locality and landmark")} rows={2} />
         </div>
       )}
 
       <div className="form-field notes-field">
-        <label htmlFor="notes">Special instructions <span>Optional</span></label>
+        <label htmlFor="notes">{t("Special instructions")} <span>{t("Optional")}</span></label>
         <textarea id="notes" maxLength={500} value={notes} onChange={(event) => setNotes(event.target.value)}
-          placeholder="Any preferences? (e.g. less spicy)" rows={2} />
+          placeholder={t("Any preferences? (e.g. less spicy)")} rows={2} />
       </div>
 
       <div className="form-actions">
         <button type="submit" disabled={loading} className="submit-button">
-          <span>{loading ? "Preparing your order..." : "Continue to WhatsApp"}</span>
+          <span>{loading ? t("Preparing your order...") : t("Continue to WhatsApp")}</span>
           {!loading && <span className="submit-arrow" aria-hidden="true">→</span>}
         </button>
-        <button type="button" onClick={onCancel} disabled={loading} className="cancel-button">Back to menu</button>
+        <button type="button" onClick={onCancel} disabled={loading} className="cancel-button">{t("Back to menu")}</button>
       </div>
 
       <div className="whatsapp-notice">
         <span aria-hidden="true">✓</span>
-        <p>Your order is saved first. WhatsApp opens with your order message ready. Tap <strong>Send</strong> there to confirm.</p>
+        <p>{t("Your order is saved first. WhatsApp opens with your order message ready. Tap")} <strong>Send</strong> there to confirm.</p>
       </div>
 
       <style jsx>{`
