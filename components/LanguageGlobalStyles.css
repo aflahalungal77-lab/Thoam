@@ -734,3 +734,438 @@ html[lang="ml"] .thoam-bottom-nav__item.is-active:before {
   }
 }
 
+
+
+/* =========================================================
+   MALAYALAM PAGE FINISH — Challenges, Restaurants, My Orders
+   Strictly language-scoped: English styles remain untouched.
+========================================================= */
+html[lang="ml"] .ch-page,
+html[lang="ml"] .restaurants-page,
+html[lang="ml"] .thoam-myorders {
+  color: #171714;
+  font-size: 13px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+html[lang="ml"] .ch-top,
+html[lang="ml"] .restaurants-page,
+html[lang="ml"] .thoam-myorders {
+  min-width: 0;
+}
+
+html[lang="ml"] .ch-top {
+  min-height: 64px;
+  height: auto;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  gap: 12px;
+}
+
+html[lang="ml"] .ch-top-tag,
+html[lang="ml"] .ch-eyebrow,
+html[lang="ml"] .ch-kicker,
+html[lang="ml"] .ch-hero-count,
+html[lang="ml"] .mo-eyebrow,
+html[lang="ml"] .restaurants-eyebrow,
+html[lang="ml"] .restaurants-section-kicker,
+html[lang="ml"] .filter-label {
+  font-size: 10px;
+  line-height: 1.65;
+  letter-spacing: 0;
+  font-weight: 700;
+  color: #77776f;
+}
+
+html[lang="ml"] .ch-hero {
+  padding-top: 48px;
+  padding-bottom: 34px;
+}
+
+html[lang="ml"] .ch-hero h1 {
+  max-width: 760px;
+  font-size: clamp(30px, 5.2vw, 54px);
+  line-height: 1.3;
+  letter-spacing: 0;
+  font-weight: 800;
+  margin: 18px 0 12px;
+}
+
+html[lang="ml"] .ch-hero h1 span {
+  color: #77776f;
+}
+
+html[lang="ml"] .ch-hero > p,
+html[lang="ml"] .ch-section-head p,
+html[lang="ml"] .ch-card-body > p,
+html[lang="ml"] .ch-current-info > p,
+html[lang="ml"] .ch-steps span {
+  color: #66665f;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+html[lang="ml"] .ch-section-head h2,
+html[lang="ml"] .ch-how h2,
+html[lang="ml"] .ch-current-head h2 {
+  font-size: clamp(20px, 3vw, 26px);
+  line-height: 1.4;
+  letter-spacing: 0;
+  font-weight: 800;
+}
+
+html[lang="ml"] .ch-list {
+  gap: 14px;
+}
+
+html[lang="ml"] .ch-live-card,
+html[lang="ml"] .ch-steps > div,
+html[lang="ml"] .ch-current-empty {
+  border-color: #e7e5df;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(20,20,16,.035);
+}
+
+html[lang="ml"] .ch-card-body {
+  padding: 15px;
+}
+
+html[lang="ml"] .ch-card-body h3,
+html[lang="ml"] .ch-current-info h3 {
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  font-weight: 800;
+}
+
+html[lang="ml"] .ch-card-foot {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+html[lang="ml"] .ch-card-foot button,
+html[lang="ml"] .restaurants-hero-cta,
+html[lang="ml"] .restaurants-location-button,
+html[lang="ml"] .mo-refresh,
+html[lang="ml"] .mo-browse {
+  min-height: 40px;
+  padding: 9px 13px;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 700;
+  border-radius: 11px;
+}
+
+html[lang="ml"] .ch-current {
+  border-radius: 19px;
+  padding: 24px;
+}
+
+html[lang="ml"] .ch-current-info .ch-reward,
+html[lang="ml"] .ch-progress-note {
+  line-height: 1.8;
+}
+
+html[lang="ml"] .ch-steps > div {
+  padding: 16px;
+  gap: 7px;
+}
+
+html[lang="ml"] .restaurants-hero {
+  min-width: 0;
+}
+
+html[lang="ml"] .restaurants-hero h1 {
+  font-size: clamp(28px, 4.8vw, 48px);
+  line-height: 1.32;
+  letter-spacing: 0;
+  font-weight: 800;
+}
+
+html[lang="ml"] .restaurants-hero-description,
+html[lang="ml"] .restaurants-section-heading p,
+html[lang="ml"] .restaurants-location-help {
+  color: #66665f;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+html[lang="ml"] .restaurants-section-heading h2 {
+  font-size: clamp(20px, 3vw, 26px);
+  line-height: 1.4;
+  font-weight: 800;
+}
+
+html[lang="ml"] .restaurants-search-panel {
+  gap: 10px;
+}
+
+html[lang="ml"] .restaurants-search-field,
+html[lang="ml"] .restaurants-area-field {
+  min-width: 0;
+  min-height: 46px;
+  border-radius: 12px;
+}
+
+html[lang="ml"] .restaurants-search-field input,
+html[lang="ml"] .restaurants-area-field input {
+  min-width: 0;
+  font-size: 13px;
+}
+
+html[lang="ml"] .restaurants-filter-options {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+html[lang="ml"] .restaurants-filter-chip {
+  min-height: 36px;
+  padding: 7px 11px;
+  font-size: 11px;
+  border-radius: 999px;
+}
+
+html[lang="ml"] .restaurant-card {
+  border-color: #e8e6e0;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+html[lang="ml"] .restaurant-card h3,
+html[lang="ml"] .restaurant-card-name {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 800;
+}
+
+html[lang="ml"] .restaurant-card-description,
+html[lang="ml"] .restaurant-distance,
+html[lang="ml"] .restaurant-card-meta {
+  color: #696960;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+html[lang="ml"] .thoam-myorders {
+  padding-bottom: 90px;
+}
+
+html[lang="ml"] .mo-heading {
+  padding-top: 42px;
+  padding-bottom: 22px;
+  align-items: center;
+}
+
+html[lang="ml"] .mo-heading h1 {
+  font-size: clamp(28px, 4.6vw, 43px);
+  line-height: 1.35;
+  letter-spacing: 0;
+  font-weight: 800;
+  margin: 8px 0 5px;
+}
+
+html[lang="ml"] .mo-heading p,
+html[lang="ml"] .mo-summary > div:nth-child(2) span,
+html[lang="ml"] .mo-summary-total span {
+  color: #6e6e66;
+  font-size: 11px;
+  line-height: 1.75;
+}
+
+html[lang="ml"] .mo-summary {
+  gap: 12px;
+  padding: 15px 16px;
+  border-color: #e8e6df;
+  border-radius: 15px;
+  background: #fff;
+}
+
+html[lang="ml"] .mo-summary > div:nth-child(2) strong,
+html[lang="ml"] .mo-restaurant strong,
+html[lang="ml"] .mo-card-brand strong {
+  font-size: 13px;
+  line-height: 1.55;
+  font-weight: 800;
+}
+
+html[lang="ml"] .mo-section-title h2 {
+  font-size: 21px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  font-weight: 800;
+}
+
+html[lang="ml"] .mo-order-card {
+  padding: 16px;
+  border-color: #e8e6df;
+  border-radius: 15px;
+  box-shadow: 0 6px 20px rgba(20,20,16,.025);
+}
+
+html[lang="ml"] .mo-status-pill,
+html[lang="ml"] .mo-card-brand small,
+html[lang="ml"] .mo-restaurant span,
+html[lang="ml"] .mo-card-total span,
+html[lang="ml"] .mo-card-date,
+html[lang="ml"] .mo-track-link {
+  font-size: 10px;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+
+html[lang="ml"] .mo-card-main,
+html[lang="ml"] .mo-card-bottom {
+  gap: 10px;
+}
+
+html[lang="ml"] .mo-card-total strong {
+  font-size: 15px;
+}
+
+html[lang="ml"] .mo-loading h2,
+html[lang="ml"] .mo-empty h2 {
+  font-size: 17px;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+html[lang="ml"] .mo-loading p,
+html[lang="ml"] .mo-empty p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #686860;
+}
+
+html[lang="ml"] .mo-drawer-head h2,
+html[lang="ml"] .mo-drawer-scroll h3 {
+  letter-spacing: 0;
+  line-height: 1.45;
+}
+
+html[lang="ml"] .mo-detail-row,
+html[lang="ml"] .mo-step-copy,
+html[lang="ml"] .mo-step-title {
+  min-width: 0;
+}
+
+@media (max-width: 700px) {
+  html[lang="ml"] .ch-top {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  html[lang="ml"] .ch-hero {
+    padding: 34px 17px 27px;
+  }
+  html[lang="ml"] .ch-hero h1 {
+    font-size: clamp(27px, 7.4vw, 36px);
+  }
+  html[lang="ml"] .ch-section,
+  html[lang="ml"] .ch-how {
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+  html[lang="ml"] .ch-section-head {
+    align-items: center;
+    gap: 10px;
+  }
+  html[lang="ml"] .ch-section-head h2,
+  html[lang="ml"] .ch-how h2 {
+    font-size: 20px;
+  }
+  html[lang="ml"] .ch-current {
+    margin-left: 12px;
+    margin-right: 12px;
+    padding: 17px;
+  }
+  html[lang="ml"] .ch-current-main {
+    grid-template-columns: minmax(88px, 104px) minmax(0, 1fr);
+    gap: 12px;
+  }
+  html[lang="ml"] .ch-current-info h3 {
+    font-size: 15px;
+  }
+  html[lang="ml"] .ch-current-head {
+    gap: 10px;
+    align-items: flex-start;
+  }
+  html[lang="ml"] .ch-current-head h2 {
+    font-size: 17px;
+  }
+  html[lang="ml"] .ch-card-foot button {
+    max-width: 100%;
+  }
+  html[lang="ml"] .restaurants-hero {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  html[lang="ml"] .restaurants-hero h1 {
+    font-size: clamp(26px, 7vw, 35px);
+  }
+  html[lang="ml"] .restaurants-section-heading {
+    align-items: flex-start;
+  }
+  html[lang="ml"] .restaurants-search-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  html[lang="ml"] .restaurants-filter-options {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 5px;
+    scrollbar-width: none;
+  }
+  html[lang="ml"] .restaurants-filter-options::-webkit-scrollbar {
+    display: none;
+  }
+  html[lang="ml"] .mo-heading {
+    padding-top: 30px;
+    align-items: flex-start;
+  }
+  html[lang="ml"] .mo-heading h1 {
+    font-size: clamp(26px, 7vw, 34px);
+  }
+  html[lang="ml"] .mo-summary {
+    gap: 9px;
+    padding: 12px;
+  }
+  html[lang="ml"] .mo-summary-icon {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+  }
+  html[lang="ml"] .mo-order-card {
+    padding: 13px 12px;
+  }
+  html[lang="ml"] .mo-card-top {
+    align-items: flex-start;
+    gap: 8px;
+  }
+  html[lang="ml"] .mo-card-main {
+    align-items: flex-start;
+  }
+  html[lang="ml"] .mo-card-bottom {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 380px) {
+  html[lang="ml"] .ch-current-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  html[lang="ml"] .ch-current-image {
+    height: 150px;
+  }
+  html[lang="ml"] .mo-heading {
+    gap: 10px;
+  }
+  html[lang="ml"] .mo-refresh {
+    flex: 0 0 auto;
+    padding: 8px 9px;
+  }
+  html[lang="ml"] .mo-card-top {
+    flex-wrap: wrap;
+  }
+}
