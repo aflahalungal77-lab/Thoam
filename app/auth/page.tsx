@@ -325,6 +325,7 @@ function AuthForm() {
 }
 
 export default function AuthPage() {
+  const { t } = useLanguage();
   return (
     <Suspense
       fallback={
