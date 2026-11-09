@@ -2,70 +2,45 @@
 
 **One Platform. Three Ways to Order.**
 
-Tho’am is a local food ordering platform built to connect customers with restaurants through a simple, mobile-first experience. Customers can discover restaurants, explore menus, and place orders, while restaurant partners manage their operations through a dedicated dashboard.
+Tho’am is a local food ordering platform designed to bring customers and restaurants together through a simple digital experience. Discover local restaurants, explore menus, and order with ease — while restaurant partners manage their menus and orders from one place.
 
-**Live app:** https://thoam.vercel.app
+**Explore Tho’am:** https://thoam.vercel.app
 
-## Features
+## What Tho’am Offers
 
-### For customers
-- Discover restaurants and browse available menus.
-- Explore restaurant menus with categories and item availability.
-- Place takeaway and delivery orders with Cash on Delivery.
-- View order history and track order status.
-- Open restaurant menus through table QR codes without creating an account.
-- Install the customer experience as a Progressive Web App (PWA).
+### Customer Experience
+- **Discover Restaurants** — Find restaurants and explore what’s available nearby.
+- **Digital Menus** — Browse restaurant menus, categories, items, and availability.
+- **Online Ordering** — Place takeaway and delivery orders with Cash on Delivery.
+- **Order Updates** — View your orders and follow their status.
+- **QR Menu Access** — Scan a restaurant table QR code to open its menu without signing in.
+- **Installable App** — Add the customer experience to your device for convenient access.
 
-### For restaurant partners
-- Dedicated restaurant dashboard.
-- Manage menu items and availability.
-- View incoming orders and update order status.
-- Manage table QR codes for dine-in menu access.
-- Separate installable partner PWA experience.
+### Restaurant Partner Experience
+- **Restaurant Dashboard** — Manage your restaurant from a dedicated portal.
+- **Menu Management** — Add products and manage item availability.
+- **Order Management** — View incoming orders and update their status.
+- **Table QR Codes** — Provide customers with quick access to your digital menu.
+- **Partner App** — Use a separate installable experience for restaurant operations.
 
-### Platform
-- Admin dashboard for platform and restaurant management.
-- Restaurant approval and management workflows.
-- Nearby restaurant discovery.
-- NameQuest — a monthly restaurant-name challenge with offer-based participation.
-- Responsive interface designed for mobile and desktop.
+### Platform Experience
+- **Restaurant Discovery** — Browse restaurants in one place, with nearby discovery.
+- **Restaurant Administration** — Platform-level restaurant review and management.
+- **NameQuest** — A monthly restaurant-name challenge with offer-based participation.
+- **Responsive Design** — A consistent experience across mobile and desktop.
 
-## Technology
+## The Tho’am Experience
 
-- **Framework:** Next.js (App Router)
-- **Language:** TypeScript
-- **UI:** React, Tailwind CSS
-- **Backend & database:** Supabase, PostgreSQL
-- **Authentication:** Supabase Auth
-- **Deployment:** Vercel
+One platform connecting three parts of the food ordering experience:
 
-## Project setup
-
-```bash
-git clone https://github.com/aflahalungal77-lab/Thoam.git
-cd Thoam
-npm install
-```
-
-Configure the required Supabase environment variables in `.env.local` using the variable names referenced by the application, then start the development server:
-
-```bash
-npm run dev
-```
-
-Open http://localhost:3000.
-
-To create a production build:
-
-```bash
-npm run build
-```
-
-## Project
-
-- **Repository:** https://github.com/aflahalungal77-lab/Thoam
-- **Live application:** https://thoam.vercel.app
+1. **Customers** discover restaurants and place orders.
+2. **Restaurants** manage menus and incoming orders.
+3. **Tho’am** brings the experience together in one platform.
 
 ---
 
-Built with care for local restaurants and the communities they serve.
+**Tho’am**
+
+*Built to make local food discovery and ordering simpler.*
+
+[Visit Tho’am](https://thoam.vercel.app)
