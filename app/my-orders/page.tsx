@@ -18,6 +18,8 @@ type Order = {
   order_items?: Array<{ id: string; product_name: string; quantity: number; line_total: number | string }>;
   history?: Array<{ new_status: string; created_at: string; note?: string | null }>;
 };
+type OrderHistoryEntry = { order_id: string; new_status: string; created_at: string; note: string | null };
+
 const steps = [
   { key: "placed", label: "Order placed", detail: "Your order has been received", icon: ShoppingBag },
   { key: "preparing", label: "Preparing", detail: "The restaurant is preparing your food", icon: Utensils },
@@ -71,7 +73,7 @@ export default function MyOrders() {
       if (ids.length) {
         const { data: history } = await supabase.from("order_status_history")
           .select("order_id,new_status,created_at,note").in("order_id", ids).order("created_at", { ascending: true });
-        historyByOrder = (history || []).reduce((acc: Record<string, any[]>, item: any) => {
+        historyByOrder = ((history || []) as OrderHistoryEntry[]).reduce((acc: Record<string, OrderHistoryEntry[]>, item) => {
           (acc[item.order_id] ||= []).push(item); return acc;
         }, {});
       }
