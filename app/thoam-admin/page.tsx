@@ -50,6 +50,13 @@ function isDelivered(status: string) {
   return value === "delivered" || value === "completed";
 }
 
+function isSuccessfulOrder(order: Pick<Order, "status" | "payment_status">) {
+  return (
+    isDelivered(order.status) &&
+    order.payment_status?.toLowerCase() === "collected"
+  );
+}
+
 function isToday(date: string) {
   if (!date) return false;
 
@@ -213,7 +220,7 @@ export default function AdminPage() {
         today: todayOrders.length,
         totalRevenue,
         todayRevenue,
-        todayCommission: todayDeliveredOrders.length * COMMISSION_PER_SUCCESSFUL_ORDER,
+        todayCommission: todayOrders.filter(isSuccessfulOrder).length * COMMISSION_PER_SUCCESSFUL_ORDER,
       });
     } catch (error: unknown) {
       setMsg(error instanceof Error ? error.message : "Unable to load platform data.");
@@ -302,7 +309,7 @@ export default function AdminPage() {
     return {
       total,
       today,
-      commission: restaurantOrders.filter((order) => isToday(order.created_at) && isDelivered(order.status)).length * COMMISSION_PER_SUCCESSFUL_ORDER,
+      commission: restaurantOrders.filter((order) => isToday(order.created_at) && isSuccessfulOrder(order)).length * COMMISSION_PER_SUCCESSFUL_ORDER,
     };
   }
 
