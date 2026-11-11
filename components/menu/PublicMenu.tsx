@@ -885,7 +885,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
 
               <h3>{t("No dishes found")}</h3>
               <p>
-                We couldn't find anything matching your search.
+                We couldn&apos;t find anything matching your search.
                 Try another dish or category.
               </p>
 
