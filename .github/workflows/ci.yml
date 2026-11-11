@@ -1,4 +1,4 @@
-name: Tho'am CI
+name: Tho'am CI # full validation pipeline
 
 on:
   pull_request:
