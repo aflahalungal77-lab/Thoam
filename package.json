@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prebuild": "npm audit --json > /tmp/thoam-npm-audit.json || true; node -e 'const r=require(\"/tmp/thoam-npm-audit.json\"); const v=r.vulnerabilities||{}; console.log(\"NPM_AUDIT_SUMMARY\",JSON.stringify(r.metadata?.vulnerabilities)); console.log(\"NPM_AUDIT_PACKAGES\",JSON.stringify(Object.entries(v).map(([name,x])=>({name,severity:x.severity,range:x.range,fixAvailable:x.fixAvailable,via:(x.via||[]).map(a=>typeof a===\"string\"?a:a.title)}))))'"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
