@@ -79,7 +79,7 @@ function AuthCallbackContent() {
     return () => {
       alive = false;
     };
-  }, [params]);
+  }, [params, t]);
 
   return (
     <main className="auth-wrap">
