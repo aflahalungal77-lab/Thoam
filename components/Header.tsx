@@ -7,13 +7,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { LogIn, LogOut, Menu, ShoppingBag, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/components/LanguageProvider";
+import type { User } from "@supabase/supabase-js";
 
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useLanguage();
 
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
