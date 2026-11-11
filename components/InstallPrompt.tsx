@@ -45,8 +45,10 @@ export default function InstallPrompt({
   // Listen for the install event separately so the listener is always registered.
   useEffect(() => {
     const handler = (e: Event) => {
-      e.preventDefault();
-      setPrompt(e);
+      const installEvent = e as BeforeInstallPromptEvent;
+      if (typeof installEvent.prompt !== "function") return;
+      installEvent.preventDefault();
+      setPrompt(installEvent);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
