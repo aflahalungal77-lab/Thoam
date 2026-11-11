@@ -67,6 +67,7 @@ export default function QRMenu() {
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
+  const [selectedImage, setSelectedImage] = useState<{ url: string; name: string } | null>(null);
 
   // Table assistance states
   const [needsOpen, setNeedsOpen] = useState(false);
@@ -167,6 +168,15 @@ export default function QRMenu() {
       cancelled = true;
     };
   }, [restaurantSlug, tableCode]);
+
+  useEffect(() => {
+    if (!selectedImage) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setSelectedImage(null);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedImage]);
 
   // Menu categories
   const categories: string[] = [
@@ -321,7 +331,7 @@ export default function QRMenu() {
     <main className="premium-menu">
       {/* HEADER */}
       <header className="premium-menu-header">
-        <a
+        <Link
           className="premium-brand"
           href="/"
           aria-label="Tho'am home"
@@ -335,7 +345,7 @@ export default function QRMenu() {
             {r?.name || "Tho’am"}
             <small>{t("GOOD FOOD. GOOD MOMENTS.")}</small>
           </span>
-        </a>
+        </Link>
 
         <div className="premium-table-badge">
           <span className="live-dot" />
@@ -522,7 +532,7 @@ export default function QRMenu() {
                   <h3>{t("Need anything?")}</h3>
 
                   <p>
-                    We're here to help. Request directly from
+                    We&apos;re here to help. Request directly from
                     your table.
                   </p>
                 </div>
@@ -970,11 +980,23 @@ export default function QRMenu() {
         </>
       )}
 
+      {selectedImage && (
+        <div className="food-lightbox" role="dialog" aria-modal="true" aria-label={selectedImage.name + " photo"} onClick={() => setSelectedImage(null)}>
+          <button type="button" className="food-lightbox-close" onClick={() => setSelectedImage(null)} aria-label="Close photo preview">
+            <X size={22} />
+          </button>
+          <div className="food-lightbox-content" onClick={(event) => event.stopPropagation()}>
+            <Image src={selectedImage.url} alt={selectedImage.name} width={1200} height={900} unoptimized />
+            <p>{selectedImage.name}</p>
+          </div>
+        </div>
+      )}
+
       {/* FOOTER */}
       <footer className="premium-menu-footer">
-        <a className="premium-footer-brand" href="/">
+        <Link className="premium-footer-brand" href="/">
           THO’AM<span>.</span>
-        </a>
+        </Link>
 
         <span>{t("Good food. Good moments.")}</span>
 
