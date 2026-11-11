@@ -238,29 +238,6 @@ export default function OffersPage() {
     }));
   }
 
-  async function uploadImage(): Promise<string | null> {
-    if (!imageFile || !supabase || !restaurantId) return existingImage || null;
-
-    const extension = imageFile.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `${restaurantId}/${crypto.randomUUID()}.${extension}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("offer-images")
-      .upload(path, imageFile, {
-        cacheControl: "3600",
-        upsert: false,
-        contentType: imageFile.type,
-      });
-
-    if (uploadError) throw uploadError;
-
-    const { data } = supabase.storage
-      .from("offer-images")
-      .getPublicUrl(path);
-
-    return data.publicUrl;
-  }
-
 async function saveOffer(event: FormEvent<HTMLFormElement>) {
   event.preventDefault();
 
@@ -467,16 +444,6 @@ async function saveOffer(event: FormEvent<HTMLFormElement>) {
   } finally {
     setSaving(false);
   }
-  console.log("STEP 1: Permission verified");
-
-console.log("STEP 2: Starting image upload");
-
-if (imageFile) {
-  const imageUrl = await uploadImage();
-  console.log("STEP 3: Image uploaded:", imageUrl);
-}
-
-console.log("STEP 4: Starting offer database insert");
 }
 
   async function toggleActive(offer: Offer) {
