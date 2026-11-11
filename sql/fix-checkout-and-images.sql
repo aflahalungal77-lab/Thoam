@@ -20,7 +20,8 @@ declare
   v_order_number bigint;
   v_subtotal numeric(10,2) := 0;
   v_delivery_fee numeric(10,2);
-  v_platform_fee numeric(10,2) := 1;
+  -- Customer-facing checkout fee; separate from the restaurant's ₹3/order commission.
+  v_customer_platform_fee numeric(10,2) := 1;
   v_total numeric(10,2);
   v_item jsonb;
   v_product public.products%rowtype;
@@ -65,7 +66,7 @@ begin
   end loop;
 
   v_delivery_fee := coalesce(v_restaurant.delivery_fee,0);
-  v_total := v_subtotal + v_delivery_fee + v_platform_fee;
+  v_total := v_subtotal + v_delivery_fee + v_customer_platform_fee;
 
   insert into public.orders (
     customer_id, restaurant_id, order_type, status, payment_method, payment_status,
@@ -73,7 +74,7 @@ begin
   ) values (
     p_customer_id, p_restaurant_id, 'delivery', 'placed', 'cod', 'pending',
     trim(p_customer_name), trim(p_customer_phone), trim(p_delivery_address), nullif(trim(coalesce(p_notes,'')),''),
-    v_subtotal, v_delivery_fee, v_platform_fee, v_total
+    v_subtotal, v_delivery_fee, v_customer_platform_fee, v_total
   ) returning id, order_number into v_order_id, v_order_number;
 
   for v_item in select value from jsonb_array_elements(p_items)
