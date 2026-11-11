@@ -717,7 +717,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
             )}
 
             <div>
-              <strong>THO'AM</strong>
+              <strong>THO&apos;AM</strong>
               <span>{t("ORDER DIRECTLY")}</span>
             </div>
           </div>
