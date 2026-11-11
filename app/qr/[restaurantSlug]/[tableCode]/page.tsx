@@ -750,14 +750,10 @@ export default function QRMenu() {
                     >
                       <div className="premium-food-image">
                         {p.image_url ? (
-                          <Image
-                            src={p.image_url}
-                            alt={p.name}
-                            fill
-                            unoptimized
-                            sizes="(max-width: 640px) 50vw, (max-width: 1000px) 33vw, 260px"
-                            className="premium-food-photo"
-                          />
+                          <button type="button" className="premium-image-trigger" onClick={() => setSelectedImage({ url: p.image_url || "", name: p.name })} aria-label="View food photo">
+                            <Image src={p.image_url} alt={p.name} fill unoptimized sizes="(max-width: 640px) 50vw, (max-width: 1000px) 33vw, 260px" className="premium-food-photo" />
+                            <span className="image-view-hint">VIEW PHOTO</span>
+                          </button>
                         ) : (
                           <div className="food-placeholder">
                             <UtensilsCrossed
@@ -772,24 +768,6 @@ export default function QRMenu() {
                           {String(index + 1).padStart(2, "0")}
                         </span>
 
-                        <span
-                          className={`food-type-badge ${
-                            p.is_veg ? "veg" : "nonveg"
-                          }`}
-                          title={
-                            p.is_veg
-                              ? "Vegetarian"
-                              : "Non-vegetarian"
-                          }
-                        >
-                          {p.is_veg ? (
-                            <Leaf size={13} />
-                          ) : (
-                            <Drumstick size={13} />
-                          )}
-
-                          {p.is_veg ? t("VEG") : t("NON-VEG")}
-                        </span>
                       </div>
 
                       <div className="premium-food-info">
@@ -1102,6 +1080,7 @@ export default function QRMenu() {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
   color: var(--black);
   text-decoration: none;
   font-family: 'Manrope', sans-serif;
@@ -1109,6 +1088,10 @@ export default function QRMenu() {
   font-weight: 800;
   letter-spacing: -1.2px;
 }
+
+.premium-brand img,.premium-brand .premium-restaurant-logo { display:block; width:48px !important; height:48px !important; max-width:48px; max-height:48px; flex:0 0 48px; object-fit:contain; border-radius:12px; overflow:hidden; }
+.premium-brand > span { min-width:0; }
+.premium-brand > span small { display:block; margin-top:2px; font-size:8px; letter-spacing:1.2px; }
 
 .premium-brand-mark {
   width: 43px;
@@ -1706,6 +1689,14 @@ export default function QRMenu() {
   overflow: hidden;
   background: #edf3ee;
 }
+.premium-image-trigger { position:absolute; inset:0; display:block; width:100%; height:100%; padding:0; border:0; background:transparent; cursor:zoom-in; }
+.image-view-hint { position:absolute; right:12px; bottom:12px; z-index:2; padding:7px 10px; border:1px solid #ffffff70; border-radius:999px; background:#101713bd; color:#fff; font-size:8px; font-weight:800; letter-spacing:1px; opacity:0; transform:translateY(4px); transition:opacity .2s ease,transform .2s ease; }
+.premium-food-image:hover .image-view-hint,.premium-image-trigger:focus-visible .image-view-hint { opacity:1; transform:translateY(0); }
+.food-lightbox { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:24px; background:#050907ef; backdrop-filter:blur(12px); animation:fadeUp .18s ease; }
+.food-lightbox-close { position:absolute; top:max(18px,env(safe-area-inset-top)); right:max(18px,env(safe-area-inset-right)); z-index:2; display:grid; width:46px; height:46px; place-items:center; border:1px solid #ffffff35; border-radius:50%; background:#ffffff18; color:#fff; }
+.food-lightbox-content { display:grid; justify-items:center; gap:14px; width:min(900px,100%); max-height:90vh; }
+.food-lightbox-content img { display:block; max-width:100%; max-height:78vh; object-fit:contain; border-radius:14px; box-shadow:0 24px 80px #0008; }
+.food-lightbox-content p { margin:0; color:#fff; font-size:14px; font-weight:750; text-align:center; }
 
 .premium-food-photo {
   object-fit: cover;
@@ -2429,11 +2420,7 @@ export default function QRMenu() {
     height: 27px;
   }
 
-  .food-type-badge {
-    padding: 5px 6px;
-    font-size: 7px;
-  }
-
+  
   .premium-checkout {
     margin-top: 40px;
     padding: 18px;
