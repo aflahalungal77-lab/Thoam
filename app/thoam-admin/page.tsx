@@ -43,7 +43,7 @@ type Order = {
   payment_status: string;
 };
 
-const COMMISSION_RATE = 0.10;
+const COMMISSION_PER_SUCCESSFUL_ORDER = 3;
 
 function isDelivered(status: string) {
   const value = status?.toLowerCase();
@@ -213,7 +213,7 @@ export default function AdminPage() {
         today: todayOrders.length,
         totalRevenue,
         todayRevenue,
-        todayCommission: todayRevenue * COMMISSION_RATE,
+        todayCommission: todayDeliveredOrders.length * COMMISSION_PER_SUCCESSFUL_ORDER,
       });
     } catch (error: any) {
       setMsg(error?.message || "Unable to load platform data.");
@@ -444,9 +444,9 @@ export default function AdminPage() {
                   <div className="revenue-icon">
                     <ShieldCheck size={19} />
                   </div>
-                  <span>Today's 10% commission</span>
+                  <span>Today's restaurant commission</span>
                   <strong>{money(stats.todayCommission)}</strong>
-                  <small>10% of today's delivered revenue</small>
+                  <small>₹3 per delivered / completed order</small>
                 </div>
               </div>
             </section>
