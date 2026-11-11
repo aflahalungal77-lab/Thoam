@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createHash } from "node:crypto";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -141,6 +142,47 @@ export async function POST(req: NextRequest) {
       autoRefreshToken: false,
     },
   });
+
+  // 8a. Distributed rate limits: shared across Vercel instances and regions.
+  // Keep the raw IP out of the database; only SHA-256 bucket keys are stored.
+  const clientIp = (
+    req.headers.get("x-vercel-forwarded-for") ||
+    req.headers.get("x-real-ip") ||
+    req.headers.get("x-forwarded-for") ||
+    "unknown"
+  ).split(",")[0].trim().slice(0, 64);
+  const hashBucket = (value: string) =>
+    createHash("sha256").update(value).digest("hex");
+
+  const rateLimitChecks = [
+    { key: hashBucket(`qr:ip:${clientIp}`), limit: 30 },
+    { key: hashBucket(`qr:table:${restaurantId}:${tableCode}`), limit: 40 },
+  ];
+
+  for (const check of rateLimitChecks) {
+    const { data: limitData, error: limitError } = await db.rpc(
+      "consume_qr_order_rate_limit",
+      {
+        p_bucket_key: check.key,
+        p_limit: check.limit,
+        p_window_seconds: 60,
+      }
+    );
+
+    if (limitError) {
+      console.error("QR rate-limit check failed:", limitError.message);
+      return errorResponse("Ordering is temporarily unavailable. Please try again shortly.", 503);
+    }
+
+    const limitRow = Array.isArray(limitData) ? limitData[0] : limitData;
+    if (!limitRow || limitRow.allowed !== true) {
+      const retryAfter = Math.max(1, Number(limitRow?.retry_after_seconds) || 60);
+      return NextResponse.json(
+        { error: "Too many orders in a short time. Please wait a moment and try again." },
+        { status: 429, headers: { "Retry-After": String(retryAfter) } }
+      );
+    }
+  }
 
   // 9. Create the dine-in order
   try {
