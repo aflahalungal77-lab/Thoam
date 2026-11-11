@@ -31,6 +31,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Dependency audit report
+        run: |
+          npm audit --json > /tmp/npm-audit.json || true
+          node -e 'const r=require("/tmp/npm-audit.json"); const v=r.vulnerabilities||{}; console.log(JSON.stringify({summary:r.metadata?.vulnerabilities, packages:Object.entries(v).map(([name,item])=>({name,severity:item.severity,range:item.range,fixAvailable:item.fixAvailable,advisories:(item.via||[]).map(a=>typeof a==="string"?a:a.title)}))},null,2))'
+
       - name: Lint
         run: npm run lint
 
