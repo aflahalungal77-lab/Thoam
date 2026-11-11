@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 type AdminOrderItem = { id: string; product_name: string | null; quantity: number | string; unit_price: number | string; line_total: number | string };
-type AdminOrder = { id: string; status?: string | null; order_number?: number | string | null; order_type?: string | null; payment_status?: string | null; total_amount?: number | string | null; created_at?: string; customer_name?: string | null; customer_phone?: string | null; delivery_address?: string | null; delivery_fee?: number | string | null; notes?: string | null; payment_method?: string | null; subtotal?: number | string | null; platform_fee?: number | string | null; order_items?: AdminOrderItem[]; restaurant?: { name?: string; area?: string | null; city?: string | null } | null; };
+type AdminOrder = { id: string; status?: string | null; order_number?: number | string | null; order_type?: string | null; payment_status?: string | null; total_amount?: number | string | null; created_at?: string; customer_name?: string | null; customer_phone?: string | null; delivery_address?: string | null; delivery_fee?: number | string | null; discount_amount?: number | string | null; notes?: string | null; payment_method?: string | null; subtotal?: number | string | null; platform_fee?: number | string | null; order_items?: AdminOrderItem[]; restaurant?: { name?: string; area?: string | null; city?: string | null } | null; };
 
 const statuses = [
   "accepted",
@@ -631,8 +631,9 @@ const todayRevenue = revenueOrders
 
             <div className="ta-bill-totals">
               <div><span>Subtotal</span><strong>{money(Number(selectedOrder.subtotal ?? selectedOrder.total_amount ?? 0))}</strong></div>
+              {Number(selectedOrder.discount_amount || 0) > 0 && <div className="ta-bill-discount"><span>Offer discount</span><strong>−{money(Number(selectedOrder.discount_amount))}</strong></div>}
               {Number(selectedOrder.delivery_fee || 0) > 0 && <div><span>Delivery fee</span><strong>{money(Number(selectedOrder.delivery_fee))}</strong></div>}
-              {Number(selectedOrder.platform_fee || 0) > 0 && <div><span>Platform fee</span><strong>{money(Number(selectedOrder.platform_fee))}</strong></div>}
+              {Number(selectedOrder.platform_fee || 0) > 0 && <div><span>Customer platform fee</span><strong>{money(Number(selectedOrder.platform_fee))}</strong></div>}
               <div className="ta-bill-grand-total"><span>Total</span><strong>{money(Number(selectedOrder.total_amount || 0))}</strong></div>
             </div>
             {selectedOrder.notes && <div className="ta-bill-notes"><span>Notes</span><p>{selectedOrder.notes}</p></div>}
