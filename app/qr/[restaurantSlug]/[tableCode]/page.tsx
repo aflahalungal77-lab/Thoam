@@ -5,12 +5,11 @@ import { useLanguage } from "@/components/LanguageProvider";
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import type { FoodProduct, Restaurant } from "@/lib/types";
 import {
-  Leaf,
-  Drumstick,
   ShoppingBag,
   CheckCircle2,
   Minus,
