@@ -258,7 +258,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
             Back to menu
           </button>
 
-          <span className="checkout-brand">THO'AM.</span>
+          <span className="checkout-brand">THO&apos;AM.</span>
         </div>
 
         <div className="checkout-container">
@@ -985,12 +985,12 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
       <footer className="menu-footer">
         <div className="footer-inner">
           <div className="footer-brand">
-            <strong>THO'AM<span>.</span></strong>
+            <strong>THO&apos;AM<span>.</span></strong>
             <p>{t("Good food. Good moments.")}</p>
           </div>
 
           <div className="footer-right">
-            <span>POWERED BY THO'AM</span>
+            <span>POWERED BY THO&apos;AM</span>
             <span>© {new Date().getFullYear()}</span>
           </div>
         </div>
