@@ -831,7 +831,7 @@ export default function RestaurantAdmin() {
                 <div className="ta-stats-grid">
                   <article className="ta-stat-card">
                     <div className="ta-stat-top">
-                      <span>Today's orders</span>
+                      <span>Today&apos;s orders</span>
                       <div className="ta-stat-icon">
                         <ShoppingBag size={19} />
                       </div>
