@@ -302,7 +302,7 @@ export default function AdminPage() {
     return {
       total,
       today,
-      commission: today * COMMISSION_RATE,
+      commission: restaurantOrders.filter((order) => isToday(order.created_at)).length * COMMISSION_PER_SUCCESSFUL_ORDER,
     };
   }
 
@@ -341,7 +341,7 @@ export default function AdminPage() {
       <main className="container admin-container">
         <div className="page-head admin-page-head">
           <div className="eyebrow">{t("PLATFORM OPERATIONS")}</div>
-          <h1>Tho'am control centre.</h1>
+          <h1>Tho&apos;am control centre.</h1>
           <p className="muted">
             Manage restaurant partners, monitor platform revenue and review
             order activity.
@@ -438,7 +438,7 @@ export default function AdminPage() {
                   </div>
                   <span>Today&apos;s revenue</span>
                   <strong>{money(stats.todayRevenue)}</strong>
-                  <small>Today's delivered / completed orders</small>
+                  <small>Today&apos;s delivered / completed orders</small>
                 </div>
 
                 <div className="admin-revenue-card commission-card">
@@ -507,8 +507,8 @@ export default function AdminPage() {
                           <th>{t("Status")}</th>
                           <th>{t("QR")}</th>
                           <th>{t("Total revenue")}</th>
-                          <th>Today's revenue</th>
-                          <th>Today's 10%</th>
+                          <th>Today&apos;s revenue</th>
+                          <th>Today&apos;s ₹3 commission</th>
                           <th>{t("Actions")}</th>
                         </tr>
                       </thead>
