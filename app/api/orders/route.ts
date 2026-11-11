@@ -54,10 +54,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let body: any;
+  let body: Record<string, unknown>;
 
   try {
-    body = await req.json();
+    const parsed: unknown = await req.json();
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return NextResponse.json(
+        { error: "Invalid request body." },
+        { status: 400 }
+      );
+    }
+    body = parsed as Record<string, unknown>;
   } catch {
     return NextResponse.json(
       { error: "Invalid request body." },
@@ -65,17 +72,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const restaurantId = String(body.restaurantId || "");
-  const customerName = String(body.customerName || "")
+  const restaurantId = String(body.restaurantId ?? "");
+  const customerName = String(body.customerName ?? "")
     .trim()
     .slice(0, 100);
-  const customerPhone = String(body.customerPhone || "")
+  const customerPhone = String(body.customerPhone ?? "")
     .trim()
     .slice(0, 30);
-  const deliveryAddress = String(body.deliveryAddress || "")
+  const deliveryAddress = String(body.deliveryAddress ?? "")
     .trim()
     .slice(0, 600);
-  const notes = String(body.notes || "")
+  const notes = String(body.notes ?? "")
     .trim()
     .slice(0, 500);
 
@@ -84,9 +91,7 @@ export async function POST(req: NextRequest) {
       ? null
       : String(body.offerId);
 
-  const inputItems: InputItem[] = Array.isArray(body.items)
-    ? body.items
-    : [];
+  const rawItems: unknown[] = Array.isArray(body.items) ? body.items : [];
 
   if (
     !restaurantId ||
@@ -110,7 +115,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!inputItems.length || inputItems.length > 40) {
+  if (!rawItems.length || rawItems.length > 40) {
     return NextResponse.json(
       { error: "Your cart is empty or has too many different items." },
       { status: 400 }
@@ -119,8 +124,20 @@ export async function POST(req: NextRequest) {
 
   const quantities = new Map<string, number>();
 
-  for (const item of inputItems) {
-    const id = String(item.productId || "");
+  for (const rawItem of rawItems) {
+    if (
+      !rawItem ||
+      typeof rawItem !== "object" ||
+      Array.isArray(rawItem)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid product or quantity." },
+        { status: 400 }
+      );
+    }
+
+    const item = rawItem as Record<string, unknown>;
+    const id = String(item.productId ?? "");
     const quantity = Number(item.quantity);
 
     if (
