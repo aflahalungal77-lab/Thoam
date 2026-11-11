@@ -16,7 +16,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { supabase } from "@/lib/supabase";
 import {
-  ArrowLeft, ArrowRight, CheckCircle2, Clock3, LoaderCircle,
+  ArrowLeft, ArrowRight, CheckCircle2, LoaderCircle,
   MapPin, Minus, Plus, ShoppingBag, ShoppingCart, Truck,
   UtensilsCrossed, Wallet, XCircle, Tag, Percent
 } from "lucide-react";
@@ -28,6 +28,8 @@ type Item = {
   image_url?: string | null;
   quantity: number;
 };
+
+type ProductRecord = { id: string; name: string; price: number | string; image_url: string | null; is_available: boolean; };
 
 type Restaurant = {
   id: string;
@@ -245,9 +247,9 @@ function CheckoutInner() {
 
         if (!active) return;
 
-        const availableProducts = (products || [])
-          .filter((product: any) => product.is_available)
-          .map((product: any) => ({
+        const availableProducts = ((products || []) as ProductRecord[])
+          .filter((product) => product.is_available)
+          .map((product) => ({
             id: product.id,
             name: product.name,
             price: Number(product.price),
@@ -542,7 +544,7 @@ function CheckoutInner() {
                 <div><span>{t("Items subtotal")}</span><strong>{formatPrice(subtotal)}</strong></div>
                 {discount > 0 && <div className="tc-discount"><span><Percent size={14} /> {t("Offer discount")}</span><strong>−{formatPrice(discount)}</strong></div>}
                 <div><span><Truck size={14} /> {t("Delivery fee")}</span><strong>{formatPrice(deliveryFee)}</strong></div>
-                <div><span>{t("Platform fee")}</span><strong>{formatPrice(platformFee)}</strong></div>
+                <div><span>{t("Customer platform fee")}</span><strong>{formatPrice(platformFee)}</strong></div>
                 <div className="tc-total"><span>{t("Total amount")}</span><strong>{formatPrice(total)}</strong></div>
               </div>
 

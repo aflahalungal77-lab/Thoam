@@ -8,7 +8,6 @@ function jsonError(message: string, status: number) {
 }
 
 export async function POST(request: Request) {
-  let restaurantIdToCleanup: string | null = null;
 
   try {
     // 1. Verify the logged-in user's access token.
@@ -253,7 +252,6 @@ export async function POST(request: Request) {
       );
     }
 
-    restaurantIdToCleanup = restaurant.id;
 
     // 6. Link the restaurant to this user's profile.
     // The null check helps prevent overwriting an existing restaurant link.
@@ -281,7 +279,6 @@ export async function POST(request: Request) {
       if (cleanupError) {
         console.error("Restaurant cleanup failed:", cleanupError.message);
       } else {
-        restaurantIdToCleanup = null;
       }
 
       // Another request may have completed the registration first.
@@ -308,7 +305,6 @@ export async function POST(request: Request) {
       );
     }
 
-    restaurantIdToCleanup = null;
 
     // 7. Save the owner's name in the profile and Auth metadata.
     const { error: profileNameError } = await admin

@@ -3,7 +3,7 @@
 
 import { useLanguage } from "@/components/LanguageProvider";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -43,11 +43,18 @@ type Order = {
   payment_status: string;
 };
 
-const COMMISSION_RATE = 0.10;
+const COMMISSION_PER_SUCCESSFUL_ORDER = 3;
 
 function isDelivered(status: string) {
   const value = status?.toLowerCase();
   return value === "delivered" || value === "completed";
+}
+
+function isSuccessfulOrder(order: Pick<Order, "status" | "payment_status">) {
+  return (
+    isDelivered(order.status) &&
+    order.payment_status?.toLowerCase() === "collected"
+  );
 }
 
 function isToday(date: string) {
@@ -94,7 +101,7 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [allOrders, setAllOrders] = useState<Order[]>([]);
 
-  async function load() {
+  const load = useCallback(async () => {
     if (!supabase) {
       setMsg("Supabase is not configured.");
       setLoading(false);
@@ -213,19 +220,19 @@ export default function AdminPage() {
         today: todayOrders.length,
         totalRevenue,
         todayRevenue,
-        todayCommission: todayRevenue * COMMISSION_RATE,
+        todayCommission: todayOrders.filter(isSuccessfulOrder).length * COMMISSION_PER_SUCCESSFUL_ORDER,
       });
-    } catch (error: any) {
-      setMsg(error?.message || "Unable to load platform data.");
+    } catch (error: unknown) {
+      setMsg(error instanceof Error ? error.message : "Unable to load platform data.");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }
+  }, [router]);
 
   useEffect(() => {
-    load();
-  }, []);
+    void load();
+  }, [load]);
 
   async function updateRestaurant(id: string, status: string) {
     if (!supabase) return;
@@ -263,10 +270,11 @@ export default function AdminPage() {
 
       await load();
       setMsg(`"${r.name}" and its associated data were permanently deleted.`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setMsg(
-        error?.message ||
-          "Could not delete this restaurant. Check related database records."
+        error instanceof Error
+          ? error.message
+          : "Could not delete this restaurant. Check related database records."
       );
     } finally {
       setDeletingId(null);
@@ -301,7 +309,7 @@ export default function AdminPage() {
     return {
       total,
       today,
-      commission: today * COMMISSION_RATE,
+      commission: restaurantOrders.filter((order) => isToday(order.created_at) && isSuccessfulOrder(order)).length * COMMISSION_PER_SUCCESSFUL_ORDER,
     };
   }
 
@@ -340,7 +348,7 @@ export default function AdminPage() {
       <main className="container admin-container">
         <div className="page-head admin-page-head">
           <div className="eyebrow">{t("PLATFORM OPERATIONS")}</div>
-          <h1>Tho'am control centre.</h1>
+          <h1>Tho&apos;am control centre.</h1>
           <p className="muted">
             Manage restaurant partners, monitor platform revenue and review
             order activity.
@@ -391,7 +399,7 @@ export default function AdminPage() {
 
               <div className="admin-stat-card">
                 <div className="admin-stat-top">
-                  <span>Today's orders</span>
+                  <span>Today&apos;s orders</span>
                   <ClipboardList size={18} />
                 </div>
                 <strong>{stats.today}</strong>
@@ -435,18 +443,18 @@ export default function AdminPage() {
                   <div className="revenue-icon">
                     <IndianRupee size={19} />
                   </div>
-                  <span>Today's revenue</span>
+                  <span>Today&apos;s revenue</span>
                   <strong>{money(stats.todayRevenue)}</strong>
-                  <small>Today's delivered / completed orders</small>
+                  <small>Today&apos;s delivered / completed orders</small>
                 </div>
 
                 <div className="admin-revenue-card commission-card">
                   <div className="revenue-icon">
                     <ShieldCheck size={19} />
                   </div>
-                  <span>Today's 10% commission</span>
+                  <span>Today&apos;s restaurant commission</span>
                   <strong>{money(stats.todayCommission)}</strong>
-                  <small>10% of today's delivered revenue</small>
+                  <small>₹3 per delivered / completed order</small>
                 </div>
               </div>
             </section>
@@ -506,8 +514,8 @@ export default function AdminPage() {
                           <th>{t("Status")}</th>
                           <th>{t("QR")}</th>
                           <th>{t("Total revenue")}</th>
-                          <th>Today's revenue</th>
-                          <th>Today's 10%</th>
+                          <th>Today&apos;s revenue</th>
+                          <th>Today&apos;s ₹3 commission</th>
                           <th>{t("Actions")}</th>
                         </tr>
                       </thead>
@@ -614,9 +622,9 @@ export default function AdminPage() {
               )}
 
               <p className="admin-note">
-                Commission is calculated as 10% of today's delivered order
-                revenue. This page calculates commission but does not collect
-                or transfer payments.
+                Restaurant commission is ₹3 per delivered / completed order.
+                Customer platform fees, where applicable, are recorded separately.
+                This page calculates commission but does not collect or transfer payments.
               </p>
             </section>
 

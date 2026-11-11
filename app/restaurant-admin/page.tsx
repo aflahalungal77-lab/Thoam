@@ -1,5 +1,7 @@
 "use client";
 
+import type { User } from "@supabase/supabase-js";
+
 import { useLanguage } from "@/components/LanguageProvider";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -58,7 +60,7 @@ type OrderData = {
 export default function RestaurantAdmin() {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [restaurant, setRestaurant] =
     useState<RestaurantData | null>(null);
   const [products, setProducts] = useState<ProductData[]>([]);
@@ -829,7 +831,7 @@ export default function RestaurantAdmin() {
                 <div className="ta-stats-grid">
                   <article className="ta-stat-card">
                     <div className="ta-stat-top">
-                      <span>Today's orders</span>
+                      <span>Today&apos;s orders</span>
                       <div className="ta-stat-icon">
                         <ShoppingBag size={19} />
                       </div>

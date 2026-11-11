@@ -11,6 +11,8 @@ import {
   Package, Search, CheckCircle2, XCircle, LoaderCircle,
 } from "lucide-react";
 
+type ProductRecord = { id: string; name: string; category: string | null; description: string | null; price: number | string; image_url: string | null; is_available: boolean; is_veg: boolean; };
+
 const categories = [
   "Biriyani", "Mandhi", "Fried Rice", "Shawarma", "Burger",
   "Pizza", "Snacks", "Drinks", "Other",
@@ -21,7 +23,7 @@ export default function ProductsPage() {
   const router = useRouter();
 
   const [rid, setRid] = useState("");
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<ProductRecord[]>([]);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("Biriyani");
@@ -76,7 +78,7 @@ export default function ProductsPage() {
       .order("created_at", { ascending: false });
 
     if (error) setMsg(error.message);
-    else setItems(data || []);
+    else setItems((data || []) as ProductRecord[]);
   }, [router]);
 
   useEffect(() => {
@@ -179,7 +181,7 @@ export default function ProductsPage() {
     setSaving(false);
   }
 
-  async function toggle(product: any) {
+  async function toggle(product: ProductRecord) {
     if (!supabase || busyId) return;
 
     setBusyId(product.id);
@@ -205,7 +207,7 @@ export default function ProductsPage() {
     setBusyId("");
   }
 
-  async function remove(product: any) {
+  async function remove(product: ProductRecord) {
     if (!supabase || busyId) return;
 
     if (!window.confirm(`Delete "${product.name}"? This cannot be undone.`)) {

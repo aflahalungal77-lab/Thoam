@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ChangeEvent } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import {
   Store,
@@ -231,7 +232,7 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
       >
         <div className="setup-main">
           <div className="setup-topbar">
-            <a href="/" className="setup-brand" aria-label="Tho'am home">
+            <Link href="/" className="setup-brand" aria-label="Tho'am home">
               <span className="brand-mark">
                 <UtensilsCrossed size={19} strokeWidth={2.1} />
               </span>
@@ -239,7 +240,7 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
               <span className="brand-word">
                 THO&apos;AM<span className="brand-dot">.</span>
               </span>
-            </a>
+            </Link>
 
             <span className="partner-badge">
               <span className="status-dot" />
