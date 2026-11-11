@@ -615,7 +615,7 @@ const todayRevenue = revenueOrders
               {(selectedOrder.order_items || []).length > 0 ? (
                 <div className="ta-bill-table">
                   <div className="ta-bill-row ta-bill-table-head"><span>Item</span><span>Qty</span><span>Price</span><span>Amount</span></div>
-                  {selectedOrder.order_items.map((item: AdminOrderItem) => (
+                  {(selectedOrder.order_items || []).map((item: AdminOrderItem) => (
                     <div className="ta-bill-row" key={item.id}>
                       <span>{item.product_name || "Item"}</span>
                       <span>{Number(item.quantity || 0)}</span>
