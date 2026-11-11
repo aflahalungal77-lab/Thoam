@@ -302,7 +302,7 @@ export default function AdminPage() {
     return {
       total,
       today,
-      commission: restaurantOrders.filter((order) => isToday(order.created_at)).length * COMMISSION_PER_SUCCESSFUL_ORDER,
+      commission: restaurantOrders.filter((order) => isToday(order.created_at) && isDelivered(order.status)).length * COMMISSION_PER_SUCCESSFUL_ORDER,
     };
   }
 
