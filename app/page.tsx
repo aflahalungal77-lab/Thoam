@@ -12,8 +12,6 @@ import {
   Drumstick,
   Store,
   QrCode,
-  Plus,
-  MapPin,
   Sparkles,
   LoaderCircle,
 } from "lucide-react";
