@@ -145,12 +145,14 @@ export async function POST(req: NextRequest) {
 
   // 8a. Distributed rate limits: shared across Vercel instances and regions.
   // Keep the raw IP out of the database; only SHA-256 bucket keys are stored.
-  const clientIp = (
+  // Trust only headers set by the hosting proxy. Do not fall back to
+  // x-forwarded-for: clients can supply that header on non-proxied requests.
+  const trustedIpHeader =
     req.headers.get("x-vercel-forwarded-for") ||
-    req.headers.get("x-real-ip") ||
-    req.headers.get("x-forwarded-for") ||
-    "unknown"
-  ).split(",")[0].trim().slice(0, 64);
+    req.headers.get("x-real-ip");
+  const clientIp = trustedIpHeader
+    ? trustedIpHeader.split(",")[0].trim().slice(0, 64) || "unknown"
+    : "unknown";
   const hashBucket = (value: string) =>
     createHash("sha256").update(value).digest("hex");
 
