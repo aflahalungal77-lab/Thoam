@@ -19,6 +19,7 @@ import {
   IndianRupee,
   Users,
   RefreshCw,
+  QrCode,
 } from "lucide-react";
 
 type Restaurant = {
@@ -43,7 +44,7 @@ type Order = {
   payment_status: string;
 };
 
-const COMMISSION_RATE = 0.10;
+const COMMISSION_PER_SUCCESSFUL_ORDER = 3;
 
 function isDelivered(status: string) {
   const value = status?.toLowerCase();
@@ -77,6 +78,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [qrUpdatingId, setQrUpdatingId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const [stats, setStats] = useState({
@@ -87,6 +89,7 @@ export default function AdminPage() {
     today: 0,
     totalRevenue: 0,
     todayRevenue: 0,
+    totalCommission: 0,
     todayCommission: 0,
   });
 
@@ -213,7 +216,8 @@ export default function AdminPage() {
         today: todayOrders.length,
         totalRevenue,
         todayRevenue,
-        todayCommission: todayRevenue * COMMISSION_RATE,
+        totalCommission: deliveredOrders.length * COMMISSION_PER_SUCCESSFUL_ORDER,
+        todayCommission: todayDeliveredOrders.length * COMMISSION_PER_SUCCESSFUL_ORDER,
       });
     } catch (error: any) {
       setMsg(error?.message || "Unable to load platform data.");
@@ -239,6 +243,48 @@ export default function AdminPage() {
       setMsg(error.message);
     } else {
       await load();
+    }
+  }
+
+  async function toggleQrAccess(restaurant: Restaurant) {
+    if (!supabase || qrUpdatingId) return;
+
+    const enable = !restaurant.qr_enabled;
+
+    if (enable && restaurant.status !== "approved") {
+      setMsg("Approve this restaurant before enabling QR ordering.");
+      return;
+    }
+
+    setQrUpdatingId(restaurant.id);
+    setMsg("");
+
+    try {
+      const { data, error } = await supabase
+        .from("restaurants")
+        .update({ qr_enabled: enable })
+        .eq("id", restaurant.id)
+        .select("id,qr_enabled")
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) throw new Error("QR access was not updated. Check admin permissions.");
+
+      setRestaurants((current) =>
+        current.map((item) =>
+          item.id === restaurant.id
+            ? { ...item, qr_enabled: Boolean(data.qr_enabled) }
+            : item
+        )
+      );
+      setMsg(
+        restaurant.name + ": QR ordering " + (enable ? "enabled." : "disabled.") +
+          (enable ? " The restaurant can now set up its table QR codes." : "")
+      );
+    } catch (error: any) {
+      setMsg(error?.message || "Unable to update QR access.");
+    } finally {
+      setQrUpdatingId(null);
     }
   }
 
@@ -291,17 +337,21 @@ export default function AdminPage() {
       0
     );
 
-    const today = restaurantOrders
-      .filter((order) => isToday(order.created_at))
-      .reduce(
-        (sum, order) => sum + Number(order.total_amount || 0),
-        0
-      );
+    const todayOrders = restaurantOrders.filter((order) =>
+      isToday(order.created_at)
+    );
+    const today = todayOrders.reduce(
+      (sum, order) => sum + Number(order.total_amount || 0),
+      0
+    );
 
     return {
       total,
       today,
-      commission: today * COMMISSION_RATE,
+      totalCommission:
+        restaurantOrders.length * COMMISSION_PER_SUCCESSFUL_ORDER,
+      todayCommission:
+        todayOrders.length * COMMISSION_PER_SUCCESSFUL_ORDER,
     };
   }
 
@@ -444,9 +494,18 @@ export default function AdminPage() {
                   <div className="revenue-icon">
                     <ShieldCheck size={19} />
                   </div>
-                  <span>Today's 10% commission</span>
+                  <span>Total Tho'am revenue</span>
+                  <strong>{money(stats.totalCommission)}</strong>
+                  <small>₹3 for every delivered / completed order</small>
+                </div>
+
+                <div className="admin-revenue-card commission-card">
+                  <div className="revenue-icon">
+                    <ShieldCheck size={19} />
+                  </div>
+                  <span>Today's Tho'am revenue</span>
                   <strong>{money(stats.todayCommission)}</strong>
-                  <small>10% of today's delivered revenue</small>
+                  <small>₹3 × today's delivered / completed orders</small>
                 </div>
               </div>
             </section>
@@ -507,7 +566,8 @@ export default function AdminPage() {
                           <th>{t("QR")}</th>
                           <th>{t("Total revenue")}</th>
                           <th>Today's revenue</th>
-                          <th>Today's 10%</th>
+                          <th>Tho'am total</th>
+                          <th>Today's Tho'am</th>
                           <th>{t("Actions")}</th>
                         </tr>
                       </thead>
@@ -540,15 +600,37 @@ export default function AdminPage() {
                               </td>
 
                               <td>
-                                <span
-                                  className={
-                                    r.qr_enabled
-                                      ? "qr-enabled"
-                                      : "qr-disabled"
-                                  }
-                                >
-                                  {r.qr_enabled ? "Enabled" : "Off"}
-                                </span>
+                                <div className="admin-actions">
+                                  <span
+                                    className={
+                                      r.qr_enabled
+                                        ? "qr-enabled"
+                                        : "qr-disabled"
+                                    }
+                                  >
+                                    {r.qr_enabled ? "Enabled" : "Off"}
+                                  </span>
+                                  <button
+                                    className={"admin-action " + (r.qr_enabled ? "suspend" : "approve")}
+                                    onClick={() => toggleQrAccess(r)}
+                                    disabled={
+                                      qrUpdatingId === r.id ||
+                                      (!r.qr_enabled && r.status !== "approved")
+                                    }
+                                    title={
+                                      !r.qr_enabled && r.status !== "approved"
+                                        ? "Approve the restaurant first"
+                                        : "Change QR ordering access"
+                                    }
+                                  >
+                                    <QrCode size={13} />
+                                    {qrUpdatingId === r.id
+                                      ? "Updating..."
+                                      : r.qr_enabled
+                                        ? "Disable QR"
+                                        : "Enable QR"}
+                                  </button>
+                                </div>
                               </td>
 
                               <td className="revenue-cell">
@@ -560,7 +642,11 @@ export default function AdminPage() {
                               </td>
 
                               <td className="commission-cell">
-                                {money(revenue.commission)}
+                                {money(revenue.totalCommission)}
+                              </td>
+
+                              <td className="commission-cell">
+                                {money(revenue.todayCommission)}
                               </td>
 
                               <td>
@@ -614,9 +700,9 @@ export default function AdminPage() {
               )}
 
               <p className="admin-note">
-                Commission is calculated as 10% of today's delivered order
-                revenue. This page calculates commission but does not collect
-                or transfer payments.
+                Tho'am revenue is calculated at ₹3 per delivered / completed
+                order, including delivery and QR dine-in orders. This dashboard
+                reports the amount; collection and settlement are handled separately.
               </p>
             </section>
 
@@ -846,7 +932,7 @@ export default function AdminPage() {
 
         .admin-revenue-grid {
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 14px;
         }
 
