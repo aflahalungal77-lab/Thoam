@@ -336,7 +336,7 @@ export default function QRMenu() {
             {r?.name || "Tho’am"}
             <small>{t("GOOD FOOD. GOOD MOMENTS.")}</small>
           </span>
-        </a>
+        </Link>
 
         <div className="premium-table-badge">
           <span className="live-dot" />
