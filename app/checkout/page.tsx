@@ -544,7 +544,7 @@ function CheckoutInner() {
                 <div><span>{t("Items subtotal")}</span><strong>{formatPrice(subtotal)}</strong></div>
                 {discount > 0 && <div className="tc-discount"><span><Percent size={14} /> {t("Offer discount")}</span><strong>−{formatPrice(discount)}</strong></div>}
                 <div><span><Truck size={14} /> {t("Delivery fee")}</span><strong>{formatPrice(deliveryFee)}</strong></div>
-                <div><span>{t("Platform fee")}</span><strong>{formatPrice(platformFee)}</strong></div>
+                <div><span>{t("Customer platform fee")}</span><strong>{formatPrice(platformFee)}</strong></div>
                 <div className="tc-total"><span>{t("Total amount")}</span><strong>{formatPrice(total)}</strong></div>
               </div>
 
