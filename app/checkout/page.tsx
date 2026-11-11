@@ -16,7 +16,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { supabase } from "@/lib/supabase";
 import {
-  ArrowLeft, ArrowRight, CheckCircle2, Clock3, LoaderCircle,
+  ArrowLeft, ArrowRight, CheckCircle2, LoaderCircle,
   MapPin, Minus, Plus, ShoppingBag, ShoppingCart, Truck,
   UtensilsCrossed, Wallet, XCircle, Tag, Percent
 } from "lucide-react";
@@ -28,6 +28,8 @@ type Item = {
   image_url?: string | null;
   quantity: number;
 };
+
+type ProductRecord = { id: string; name: string; price: number | string; image_url: string | null; is_available: boolean; };
 
 type Restaurant = {
   id: string;
@@ -245,9 +247,9 @@ function CheckoutInner() {
 
         if (!active) return;
 
-        const availableProducts = (products || [])
-          .filter((product: any) => product.is_available)
-          .map((product: any) => ({
+        const availableProducts = ((products || []) as ProductRecord[])
+          .filter((product) => product.is_available)
+          .map((product) => ({
             id: product.id,
             name: product.name,
             price: Number(product.price),
