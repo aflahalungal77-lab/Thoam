@@ -71,6 +71,7 @@ export default function QRMenu() {
 
   const [items, setItems] = useState<FoodProduct[]>([]);
   const [offers, setOffers] = useState<QROffer[]>([]);
+  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
   const [qty, setQty] = useState<Record<string, number>>({});
   const [selectedProduct, setSelectedProduct] = useState<FoodProduct | null>(null);
   const [selectedVariantName, setSelectedVariantName] = useState("");
@@ -249,6 +250,34 @@ export default function QRMenu() {
   });
   const total = selectedItems.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
   const cartCount = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
+  const now = Date.now();
+  const activeOffers = offers.filter((offer) =>
+    (!offer.starts_at || new Date(offer.starts_at).getTime() <= now) &&
+    (!offer.ends_at || new Date(offer.ends_at).getTime() > now)
+  );
+  const selectedOffer = activeOffers.find((offer) => offer.id === selectedOfferId) ?? null;
+  const selectedOfferEligibleSubtotal = selectedOffer
+    ? selectedOffer.scope === "order"
+      ? total
+      : selectedItems.reduce((sum, item) =>
+          (selectedOffer.product_ids ?? []).includes(item.id)
+            ? sum + Number(item.price) * item.quantity
+            : sum, 0)
+    : 0;
+  const offerMinimumMet = !!selectedOffer && total >= Number(selectedOffer.min_order_amount || 0);
+  const offerHasEligibleItems = !!selectedOffer && selectedOfferEligibleSubtotal > 0;
+  const rawOfferDiscount = selectedOffer && offerMinimumMet && offerHasEligibleItems
+    ? selectedOffer.discount_type === "percentage"
+      ? selectedOfferEligibleSubtotal * Number(selectedOffer.discount_value) / 100
+      : Number(selectedOffer.discount_value)
+    : 0;
+  const discountAmount = selectedOffer
+    ? Math.round(Math.min(
+        selectedOfferEligibleSubtotal,
+        selectedOffer.max_discount == null ? rawOfferDiscount : Math.min(rawOfferDiscount, Number(selectedOffer.max_discount))
+      ) * 100) / 100
+    : 0;
+  const payableTotal = Math.max(0, total - discountAmount);
 
   function changeQty(id: string, amount: number) {
     setQty((current) => ({
@@ -321,6 +350,7 @@ export default function QRMenu() {
           restaurantId: r.id,
           tableCode,
           notes: notes.trim(),
+          offerId: discountAmount > 0 ? selectedOfferId : null,
           items: selectedItems.map((p) => ({
             productId: p.id,
             variantName: p.variantName || null,
@@ -646,6 +676,14 @@ export default function QRMenu() {
                           <p className="qr-offer-note">
                             Offer details are subject to the restaurant&apos;s terms.
                           </p>
+                          <button
+                            type="button"
+                            className={selectedOfferId === offer.id ? "qr-offer-apply is-selected" : "qr-offer-apply"}
+                            disabled={total < Number(offer.min_order_amount || 0) || (offer.scope === "products" && !selectedItems.some((item) => (offer.product_ids ?? []).includes(item.id)))}
+                            onClick={() => setSelectedOfferId((current) => current === offer.id ? null : offer.id)}
+                          >
+                            {selectedOfferId === offer.id ? "Remove offer" : "Apply offer"}
+                          </button>
                         </div>
                       </article>
                     );
@@ -1012,10 +1050,22 @@ export default function QRMenu() {
                   </div>
 
                   <strong className="checkout-total">
-                    ₹{total.toFixed(2)}
+                    ₹{payableTotal.toFixed(2)}
                   </strong>
                 </div>
 
+                <div className="qr-checkout-offer">
+                  {selectedOfferId && !selectedOffer ? (
+                    <p className="qr-offer-feedback">This offer is no longer active. Choose another offer.</p>
+                  ) : selectedOffer ? (
+                    <>
+                      <div><Tag size={15}/><span><strong>{selectedOffer.title}</strong><small>{offerMinimumMet && offerHasEligibleItems ? "Offer applied to this order" : "Add eligible items or meet the minimum order"}</small></span></div>
+                      <button type="button" onClick={() => setSelectedOfferId(null)}>Remove</button>
+                    </>
+                  ) : (
+                    <span><Tag size={15}/> Have an offer? Select one above.</span>
+                  )}
+                </div>
                 <div className="checkout-items">
                   {selectedItems.map((p) => (
                     <div
@@ -1071,7 +1121,13 @@ export default function QRMenu() {
                     </p>
                   )}
 
-                  <div className="checkout-payment">
+                  <div className="qr-checkout-totals">
+                  <div><span>Subtotal</span><strong>₹{total.toFixed(2)}</strong></div>
+                  {discountAmount > 0 && <div className="qr-discount-line"><span>{selectedOffer?.title || "Offer discount"}</span><strong>−₹{discountAmount.toFixed(2)}</strong></div>}
+                  <div className="qr-payable-line"><span>To pay at restaurant</span><strong>₹{payableTotal.toFixed(2)}</strong></div>
+                </div>
+
+                <div className="checkout-payment">
                     <div className="cash-symbol">₹</div>
 
                     <div>
@@ -1086,7 +1142,7 @@ export default function QRMenu() {
 
                   <button
                     className="premium-button premium-button-black place-order-button"
-                    disabled={total <= 0 || submitting}
+                    disabled={payableTotal <= 0 || submitting || (!!selectedOfferId && (!selectedOffer || !offerMinimumMet || !offerHasEligibleItems))}
                     onClick={order}
                   >
                     {submitting ? (
@@ -2704,6 +2760,19 @@ export default function QRMenu() {
     width: calc(100% - 26px);
   }
 
+  .qr-offer-apply{display:inline-flex;min-height:38px;align-items:center;justify-content:center;margin-top:12px;padding:0 15px;border:1px solid #173e2b;border-radius:10px;background:#173e2b;color:#fff;font-size:10px;font-weight:850;cursor:pointer}
+  .qr-offer-apply.is-selected{border-color:#b6d9c2;background:#eaf6ee;color:#17643a}
+  .qr-offer-apply:disabled{cursor:not-allowed;opacity:.45}
+  .qr-checkout-offer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0;padding:13px 14px;border:1px solid #dcebe0;border-radius:12px;background:#f5faf6;color:#315640;font-size:11px}
+  .qr-checkout-offer>div,.qr-checkout-offer>span{display:flex;align-items:center;gap:9px}
+  .qr-checkout-offer span span{display:grid;gap:3px}
+  .qr-checkout-offer small{display:block;color:#7c8d80;font-size:9px}
+  .qr-checkout-offer button{border:0;background:transparent;color:#9b3f35;font-size:10px;font-weight:800}
+  .qr-offer-feedback{margin:0;color:#a34b40;font-size:10px}
+  .qr-checkout-totals{display:grid;gap:9px;padding:14px 0;border-top:1px solid var(--border)}
+  .qr-checkout-totals>div{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:12px}
+  .qr-checkout-totals .qr-discount-line{color:#18834c}
+  .qr-checkout-totals .qr-payable-line{padding-top:10px;border-top:1px dashed var(--border);color:var(--foreground);font-size:14px;font-weight:900}
   .qr-offers-section {
     margin-bottom: 30px;
     padding: 19px 15px;
