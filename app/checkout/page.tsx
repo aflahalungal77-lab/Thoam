@@ -41,6 +41,9 @@ type Restaurant = {
   status: string;
 };
 
+type CheckoutProductVariant = { name: string; price: number | string; is_available?: boolean | null };
+type CheckoutProduct = { id: string; name: string; image_url?: string | null; is_available: boolean; price: number | string; variants?: CheckoutProductVariant[] | null };
+
 type Offer = {
   id: string;
   restaurant_id: string;
@@ -252,10 +255,10 @@ function CheckoutInner() {
         if (!active) return;
 
         const availableProducts = parsedEntries.flatMap((entry) => {
-          const product: any = (products || []).find((candidate: any) => candidate.id === entry.productId);
+          const product = (products || []).find((candidate) => candidate.id === entry.productId) as CheckoutProduct | undefined;
           if (!product || !product.is_available || entry.quantity <= 0) return [];
           const variant = entry.variantName
-            ? (product.variants || []).find((v: any) => String(v.name).toLowerCase() === entry.variantName.toLowerCase() && v.is_available !== false)
+            ? (product.variants || []).find((v: CheckoutProductVariant) => String(v.name).toLowerCase() === entry.variantName.toLowerCase() && v.is_available !== false)
             : null;
           if (entry.variantName && !variant) return [];
           if (!entry.variantName && (product.variants || []).length > 0) return [];
