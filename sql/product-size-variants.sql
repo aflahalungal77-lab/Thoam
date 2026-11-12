@@ -232,7 +232,7 @@ create or replace function public.create_qr_dine_in_order_v2(
 ) returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
   v_restaurant public.restaurants%rowtype;
