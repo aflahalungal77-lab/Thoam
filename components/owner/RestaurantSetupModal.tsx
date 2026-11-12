@@ -232,7 +232,7 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
       >
         <div className="setup-main">
           <div className="setup-topbar">
-            <a href="/" className="setup-brand" aria-label="Tho'am home">
+            <Link href="/" className="setup-brand" aria-label="Tho'am home">
               <span className="brand-mark">
                 <UtensilsCrossed size={19} strokeWidth={2.1} />
               </span>
