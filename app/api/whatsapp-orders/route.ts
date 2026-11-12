@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
+type ProductVariant = { name: string; price: number | string; is_available?: boolean | null };
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -163,9 +165,10 @@ export async function POST(request: Request) {
         return jsonError("A selected product is unavailable.", 400);
       }
 
-      const productVariants = Array.isArray((product as any).variants) ? (product as any).variants : [];
+      const productWithVariants = product as typeof product & { variants?: ProductVariant[] | null };
+      const productVariants = productWithVariants.variants ?? [];
       const variant = item.variantName
-        ? productVariants.find((v: any) => String(v.name).toLowerCase() === item.variantName!.toLowerCase() && v.is_available !== false)
+        ? productVariants.find((v: ProductVariant) => String(v.name).toLowerCase() === item.variantName!.toLowerCase() && v.is_available !== false)
         : null;
       if (productVariants.length && !variant) return jsonError("Please select an available size for each item.", 400);
       if (!productVariants.length && item.variantName) return jsonError("This product does not have size options.", 400);
