@@ -111,6 +111,9 @@ export default function RestaurantPage() {
   const [category, setCategory] = useState("All");
   const [foodFilter, setFoodFilter] = useState<FoodFilter>("all");
   const [cartOpen, setCartOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<FoodProduct | null>(null);
+  const [selectedVariantName, setSelectedVariantName] = useState("");
+  const [variantQuantity, setVariantQuantity] = useState(1);
 
   useEffect(() => {
     const refreshClock = () => setIndiaClock(getIndiaClock());
@@ -155,7 +158,7 @@ export default function RestaurantPage() {
           supabase
             .from("products")
             .select(
-              "id,restaurant_id,name,description,price,image_url,category,is_veg,is_available"
+              "id,restaurant_id,name,description,price,image_url,category,is_veg,is_available,variants"
             )
             .eq("restaurant_id", restaurantData.id)
             .eq("is_available", true)
@@ -273,7 +276,7 @@ export default function RestaurantPage() {
     );
   }, [scheduleReady, menuSchedules, indiaClock]);
 
-  function changeQuantity(product: FoodProduct, amount: number) {
+  function changeQuantity(product: FoodProduct, amount: number, variantName = "") {
     if (amount > 0 && !restaurant?.is_open) return;
     if (amount > 0 && !isProductAvailableNow(product.id)) {
       setMessage("This item is outside its scheduled serving time.");
@@ -282,15 +285,11 @@ export default function RestaurantPage() {
 
     setMessage("");
 
+    const key = variantName ? `${product.id}::${variantName}` : product.id;
     const next = { ...cart };
-    const quantity = Math.max(0, (next[product.id] || 0) + amount);
-
-    if (quantity === 0) {
-      delete next[product.id];
-    } else {
-      next[product.id] = quantity;
-    }
-
+    const quantity = Math.max(0, (next[key] || 0) + amount);
+    if (quantity === 0) delete next[key];
+    else next[key] = quantity;
     saveCart(next);
   }
 
@@ -301,7 +300,20 @@ export default function RestaurantPage() {
       return;
     }
 
+    if (product.variants?.length) {
+      setSelectedProduct(product);
+      setSelectedVariantName(product.variants[0].name);
+      setVariantQuantity(1);
+      return;
+    }
     changeQuantity(product, 1);
+    setCartOpen(true);
+  }
+
+  function confirmVariantAdd() {
+    if (!selectedProduct || !selectedVariantName) return;
+    changeQuantity(selectedProduct, variantQuantity, selectedVariantName);
+    setSelectedProduct(null);
     setCartOpen(true);
   }
 
@@ -342,24 +354,21 @@ export default function RestaurantPage() {
     });
   }, [products, search, category, foodFilter, isProductAvailableNow]);
 
-  const cartItems = products.filter(
-    (product) => (cart[product.id] || 0) > 0
-  );
+  const cartItems = products.flatMap((product) => {
+    if (product.variants?.length) {
+      return product.variants.map((variant) => {
+        const key = `${product.id}::${variant.name}`;
+        return { ...product, cartKey: key, variantName: variant.name, price: Number(variant.price), quantity: cart[key] || 0 };
+      }).filter((item) => item.quantity > 0);
+    }
+    return cart[product.id] > 0
+      ? [{ ...product, cartKey: product.id, variantName: "", quantity: cart[product.id] }]
+      : [];
+  });
 
-  const cartCount = cartItems.reduce(
-    (sum, product) => sum + (cart[product.id] || 0),
-    0
-  );
-
-  const total = cartItems.reduce(
-    (sum, product) =>
-      sum + Number(product.price) * (cart[product.id] || 0),
-    0
-  );
-
-  const unavailableCartItems = cartItems.filter(
-    (product) => !isProductAvailableNow(product.id)
-  );
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const total = cartItems.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
+  const unavailableCartItems = cartItems.filter((product) => !isProductAvailableNow(product.id));
 
   function checkout() {
     if (!supabase) {
@@ -658,7 +667,7 @@ export default function RestaurantPage() {
                 ) : (
                   <div className="premium-food-grid">
                     {filteredProducts.map((product) => {
-                      const quantity = cart[product.id] || 0;
+                      const quantity = (cart[product.id] || 0) + Object.entries(cart).filter(([key]) => key.startsWith(`${product.id}::`)).reduce((sum, [, value]) => sum + Number(value || 0), 0);
 
                       return (
                         <article
@@ -726,11 +735,15 @@ export default function RestaurantPage() {
 
                           <div className="premium-food-bottom">
                             <div className="premium-food-price">
-                              <span>₹</span>
-                              {Number(product.price).toFixed(0)}
+                              <span>{product.variants?.length ? "From ₹" : "₹"}</span>
+                              {Number(product.variants?.length ? Math.min(...product.variants.map((v) => Number(v.price))) : product.price).toFixed(0)}
                             </div>
 
-                            {quantity === 0 ? (
+                            {product.variants?.length ? (
+                              <button className="premium-add-button" onClick={() => addToCart(product)} disabled={!restaurant.is_open}>
+                                {quantity > 0 ? "Add another" : "Choose size"} <Plus size={15} />
+                              </button>
+                            ) : quantity === 0 ? (
                               <button
                                 className="premium-add-button"
                                 onClick={() => addToCart(product)}
@@ -742,7 +755,7 @@ export default function RestaurantPage() {
                               <div className="premium-card-quantity">
                                 <button
                                   onClick={() =>
-                                    changeQuantity(product, -1)
+                                    changeQuantity(product, -1, product.variantName)
                                   }
                                   aria-label={`Remove one ${product.name}`}
                                 >
@@ -753,7 +766,7 @@ export default function RestaurantPage() {
 
                                 <button
                                   onClick={() =>
-                                    changeQuantity(product, 1)
+                                    changeQuantity(product, 1, product.variantName)
                                   }
                                   disabled={!restaurant.is_open}
                                   aria-label={`Add one ${product.name}`}
@@ -790,6 +803,33 @@ export default function RestaurantPage() {
           )}
         </div>
       </main>
+
+      {selectedProduct && (
+        <div className="thoam-variant-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedProduct(null); }}>
+          <section className="thoam-variant-modal" role="dialog" aria-modal="true" aria-labelledby="thoam-variant-title">
+            <button className="thoam-variant-close" onClick={() => setSelectedProduct(null)} aria-label="Close size selector"><X size={19} /></button>
+            {selectedProduct.image_url ? <img className="thoam-variant-image" src={selectedProduct.image_url} alt={selectedProduct.name} /> : <div className="thoam-variant-image thoam-variant-placeholder"><Utensils size={32} /></div>}
+            <span className="premium-label">CHOOSE YOUR PORTION</span>
+            <h2 id="thoam-variant-title">{selectedProduct.name}</h2>
+            {selectedProduct.description && <p>{selectedProduct.description}</p>}
+            <div className="thoam-variant-options">
+              {(selectedProduct.variants || []).map((variant) => (
+                <button type="button" key={variant.name} className={selectedVariantName === variant.name ? "selected" : ""} onClick={() => setSelectedVariantName(variant.name)}>
+                  <span><strong>{variant.name}</strong><small>Portion size</small></span><b>₹{Number(variant.price).toFixed(0)}</b>
+                </button>
+              ))}
+            </div>
+            <div className="thoam-variant-bottom">
+              <div className="premium-quantity-control">
+                <button type="button" onClick={() => setVariantQuantity((n) => Math.max(1, n - 1))}><Minus size={14} /></button>
+                <strong>{variantQuantity}</strong>
+                <button type="button" onClick={() => setVariantQuantity((n) => Math.min(50, n + 1))}><Plus size={14} /></button>
+              </div>
+              <button className="premium-checkout-button" type="button" onClick={confirmVariantAdd}>Done · Add to cart <ArrowRight size={17} /></button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {/* Floating cart */}
       {restaurant && cartCount > 0 && !cartOpen && (
@@ -878,12 +918,12 @@ export default function RestaurantPage() {
               <>
                 <div className="premium-cart-items">
                   {cartItems.map((product) => {
-                    const quantity = cart[product.id] || 0;
+                    const quantity = product.quantity;
 
                     return (
                       <article
                         className="premium-cart-item"
-                        key={product.id}
+                        key={product.cartKey}
                       >
                         <div className="premium-cart-item-image">
                           {product.image_url ? (
@@ -903,7 +943,7 @@ export default function RestaurantPage() {
                             <button
                               className="premium-cart-remove"
                               onClick={() =>
-                                changeQuantity(product, -quantity)
+                                changeQuantity(product, -quantity, product.variantName)
                               }
                               aria-label={`Remove ${product.name}`}
                             >
@@ -912,7 +952,7 @@ export default function RestaurantPage() {
                           </div>
 
                           <p>
-                            ₹{Number(product.price).toFixed(0)} each
+                            {product.variantName ? `${product.variantName} · ` : ""}₹{Number(product.price).toFixed(0)} each
                           </p>
 
                           <div className="premium-cart-item-bottom">
@@ -1001,6 +1041,20 @@ export default function RestaurantPage() {
 
       {/* Internal CSS */}
       <style jsx global>{`
+        .thoam-variant-backdrop{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:18px;background:#0009;backdrop-filter:blur(5px)}
+        .thoam-variant-modal{position:relative;width:min(100%,430px);max-height:90vh;overflow:auto;padding:22px;border-radius:20px;background:#fff;color:#111;box-shadow:0 25px 80px #0004}
+        .thoam-variant-close{position:absolute;top:12px;right:12px;width:36px;height:36px;border:0;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;z-index:2;cursor:pointer}
+        .thoam-variant-image{display:block;width:100%;height:190px;object-fit:cover;border-radius:13px;margin-bottom:18px;background:#f3f3f3}
+        .thoam-variant-placeholder{display:grid;place-items:center;color:#999}
+        .thoam-variant-modal h2{margin:7px 0;font-size:24px;letter-spacing:-.8px}
+        .thoam-variant-modal>p{margin:0 0 14px;color:#777;font-size:12px;line-height:1.6}
+        .thoam-variant-options{display:grid;gap:9px;margin-top:16px}
+        .thoam-variant-options button{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;border:1px solid #e8e8e8;border-radius:11px;background:#fff;text-align:left;cursor:pointer}
+        .thoam-variant-options button.selected{border-color:#176b49;background:#f2f8f4;box-shadow:0 0 0 2px #176b4918}
+        .thoam-variant-options button span{display:grid;gap:4px}.thoam-variant-options button strong{font-size:13px}.thoam-variant-options button small{font-size:10px;color:#999}.thoam-variant-options button b{font-size:14px}
+        .thoam-variant-bottom{display:flex;align-items:center;gap:10px;margin-top:18px}
+        .thoam-variant-bottom .premium-checkout-button{flex:1;justify-content:center}
+        @media(max-width:480px){.thoam-variant-modal{padding:16px}.thoam-variant-image{height:165px}}
         /* --------------------------------
            THO'AM - PREMIUM OFFER SLIDER
         --------------------------------- */
