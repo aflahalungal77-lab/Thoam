@@ -4031,3 +4031,42 @@ to{transform:rotate(360deg);}
   white-space: nowrap;
   box-shadow: 0 2px 8px #00000020;
 }
+
+/* Premium product size builder */
+.ta-size-builder{overflow:hidden;border:1px solid #e7e5de;border-radius:16px;background:#fbfaf7;transition:border-color .2s,box-shadow .2s}
+.ta-size-builder.is-active{border-color:#c9c5b8;box-shadow:0 8px 24px rgb(25 25 22 / 5%)}
+.ta-size-builder-toggle{display:flex;align-items:center;gap:12px;min-height:78px;padding:14px;cursor:pointer}
+.ta-size-builder-icon{display:grid;width:40px;height:40px;flex-shrink:0;place-items:center;border:1px solid #e8e6de;border-radius:12px;background:#fff;color:#24241f}
+.ta-size-builder-copy{display:grid;flex:1;gap:4px;min-width:0}
+.ta-size-builder-copy strong{color:#24241f;font-size:12px;font-weight:850}
+.ta-size-builder-copy small{color:#85847b;font-size:10px;line-height:1.5}
+.ta-size-builder-toggle input{position:absolute;width:1px;height:1px;opacity:0}
+.ta-size-switch{position:relative;width:40px;height:23px;flex-shrink:0;border-radius:99px;background:#d8d7d0;transition:background .2s}
+.ta-size-switch:after{position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;box-shadow:0 1px 4px #0002;content:"";transition:transform .2s}
+.ta-size-builder-toggle input:checked + .ta-size-switch{background:#24241f}
+.ta-size-builder-toggle input:checked + .ta-size-switch:after{transform:translateX(17px)}
+.ta-size-builder-toggle input:focus-visible + .ta-size-switch{outline:3px solid #bdb9a9;outline-offset:3px}
+.ta-size-builder-content{padding:0 14px 14px;border-top:1px solid #eeece5}
+.ta-size-builder-intro{display:flex;align-items:center;justify-content:space-between;padding:14px 0 10px}
+.ta-size-builder-intro>div{display:grid;gap:3px}
+.ta-size-builder-intro strong{color:#282821;font-size:11px;font-weight:900}
+.ta-size-builder-intro small{color:#89877e;font-size:9px}
+.ta-size-builder-intro>span{padding:5px 8px;border:1px solid #e5e2d8;border-radius:99px;background:#fff;color:#77756b;font-size:9px;font-weight:850}
+.ta-size-rows{display:grid;gap:8px}
+.ta-size-row{display:grid;grid-template-columns:25px minmax(0,1fr) minmax(95px,.72fr) 30px;align-items:end;gap:8px;padding:10px;border:1px solid #e8e6df;border-radius:12px;background:#fff}
+.ta-size-index{align-self:center;color:#aaa89e;font-size:9px;font-weight:900}
+.ta-size-row label{display:grid;gap:5px;min-width:0}
+.ta-size-row label>span{color:#99978d;font-size:8px;font-weight:900;letter-spacing:.1em}
+.ta-size-row input{width:100%;min-width:0;height:37px;padding:0 9px;border:1px solid #e8e6df;border-radius:8px;outline:none;background:#fbfaf7;color:#24241f;font-size:11px}
+.ta-size-row input:focus{border-color:#77756b;background:#fff;box-shadow:0 0 0 3px #1717150b}
+.ta-size-remove{display:grid;width:30px;height:37px;place-items:center;border:1px solid #eeeae3;border-radius:8px;background:#faf9f6;color:#888;font-size:19px}
+.ta-size-remove:hover:not(:disabled){border-color:#e7c9c5;background:#fff5f3;color:#a33}
+.ta-size-remove:disabled{cursor:not-allowed;opacity:.35}
+.ta-size-add{display:flex;width:100%;min-height:39px;align-items:center;justify-content:center;gap:7px;margin-top:9px;border:1px dashed #d4d1c7;border-radius:10px;background:#fff;color:#37362f;font-size:10px;font-weight:850}
+.ta-size-add:hover:not(:disabled){border-color:#77756b;background:#f7f6f1}
+.ta-size-add:disabled{cursor:not-allowed;opacity:.45}
+.ta-size-preview{display:grid;gap:5px;margin-top:10px;padding:11px 12px;border-radius:10px;background:#f0efe9}
+.ta-size-preview span{color:#8b897e;font-size:8px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+.ta-size-preview strong{color:#44433b;font-size:10px;font-weight:750;line-height:1.6;overflow-wrap:anywhere}
+@media(max-width:520px){.ta-size-builder-toggle{gap:9px;padding:12px}.ta-size-builder-icon{width:35px;height:35px}.ta-size-builder-copy strong{font-size:11px}.ta-size-builder-copy small{font-size:9px}.ta-size-builder-content{padding:0 10px 10px}.ta-size-row{grid-template-columns:20px minmax(0,1fr) minmax(82px,.72fr) 28px;gap:6px;padding:8px}.ta-size-row input{height:35px;padding-inline:7px;font-size:10px}.ta-size-remove{width:28px;height:35px}}
+@media(prefers-reduced-motion:reduce){.ta-size-builder,.ta-size-switch,.ta-size-switch:after{transition:none}}
