@@ -6,6 +6,7 @@ export const runtime = "nodejs";
 type InputItem = {
   productId: string;
   quantity: number;
+  variantName?: string;
 };
 
 const UUID_REGEX =
@@ -117,7 +118,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const quantities = new Map<string, number>();
+  const quantities = new Map<string, { productId: string; variantName: string | null; quantity: number }>();
 
   for (const item of inputItems) {
     const id = String(item.productId || "");
@@ -135,10 +136,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    quantities.set(id, (quantities.get(id) || 0) + quantity);
+    const variantName = item.variantName == null ? null : String(item.variantName).trim();
+    if (variantName && variantName.length > 40) {
+      return NextResponse.json({ error: "Invalid product size." }, { status: 400 });
+    }
+    const key = `${id}::${variantName || ""}`;
+    const previous = quantities.get(key);
+    quantities.set(key, { productId: id, variantName, quantity: (previous?.quantity || 0) + quantity });
   }
 
-  if ([...quantities.values()].some((quantity) => quantity > 50)) {
+  if ([...quantities.values()].some((item) => item.quantity > 50)) {
     return NextResponse.json(
       { error: "Maximum 50 of each item per order." },
       { status: 400 }
@@ -161,12 +168,11 @@ export async function POST(req: NextRequest) {
       p_customer_phone: customerPhone,
       p_delivery_address: deliveryAddress,
       p_notes: notes || null,
-      p_items: [...quantities.entries()].map(
-        ([productId, quantity]) => ({
-          productId,
-          quantity,
-        })
-      ),
+      p_items: [...quantities.values()].map((item) => ({
+        productId: item.productId,
+        variantName: item.variantName,
+        quantity: item.quantity,
+      })),
       p_offer_id: offerId,
     }
   );
