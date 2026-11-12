@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
   // 3. Read and normalize input
   const restaurantId = String(body.restaurantId ?? "").trim();
   const tableCode = String(body.tableCode ?? "").trim();
+  const deviceToken = String(body.deviceToken ?? "").trim();
   const notes = String(body.notes ?? "").trim();
   const offerId = body.offerId == null || body.offerId === "" ? null : String(body.offerId).trim();
 
@@ -81,6 +82,10 @@ export async function POST(req: NextRequest) {
   // 5. Validate table
   if (!tableCode || tableCode.length > 50) {
     return errorResponse("Invalid table QR code.", 400);
+  }
+
+  if (!uuidPattern.test(deviceToken)) {
+    return errorResponse("Invalid device session. Please refresh and try again.", 400);
   }
 
   // QR dine-in orders intentionally do not collect customer identity.
@@ -156,10 +161,11 @@ export async function POST(req: NextRequest) {
   // 9. Create the dine-in order
   try {
     const { data, error } = await db.rpc(
-      "create_qr_dine_in_order_v4",
+      "create_qr_dine_in_order_v5",
       {
         p_restaurant_id: restaurantId,
         p_table_code: tableCode,
+        p_device_token: deviceToken,
         p_notes: notes,
         p_offer_id: offerId,
         p_items: items.map((item) => ({
