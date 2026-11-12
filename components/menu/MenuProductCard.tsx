@@ -12,6 +12,9 @@ export interface MenuProduct {
   image_url?: string | null;
   category?: string | null;
   is_available: boolean;
+  variants?: { name: string; price: number; is_available?: boolean }[];
+  variantName?: string;
+  cartKey?: string;
 }
 
 interface Props {
@@ -54,9 +57,13 @@ export default function MenuProductCard({ product, quantity, onAdd, onRemove }: 
         <div className="product-bottom">
           <div className="price-block">
             <span className="price-label">{t("PRICE")}</span>
-            <span className="product-price">₹{Number(product.price).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</span>
+            <span className="product-price">{product.variants?.length ? "From " : ""}₹{Number(product.variants?.length ? Math.min(...product.variants.map((v) => Number(v.price))) : product.price).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</span>
           </div>
-          {quantity === 0 ? (
+          {product.variants?.length ? (
+            <button type="button" disabled={!product.is_available} onClick={() => onAdd(product)} className="add-button">
+              {t("Choose size")} <span className="add-symbol">+</span>
+            </button>
+          ) : quantity === 0 ? (
             <button type="button" disabled={!product.is_available} onClick={() => onAdd(product)} className="add-button">
               {product.is_available ? <>{t("Add")} <span className="add-symbol">+</span></>  : t("Unavailable")}
             </button>
