@@ -809,7 +809,7 @@ export default function QRMenu() {
                           </strong>
 
                           {p.variants?.length ? (
-                            <button className="premium-add-button" onClick={() => { setSelectedProduct(p); setSelectedVariantName(p.variants?.[0]?.name || ""); setVariantQuantity(1); }}>
+                            <button className="premium-add-button" onClick={() => { setSelectedProduct(p); setSelectedVariantName(p.variants?.find((variant) => variant.is_available !== false)?.name || ""); setVariantQuantity(1); }}>
                               {count ? "ADD MORE" : "CHOOSE SIZE"} <Plus size={15} />
                             </button>
                           ) : count === 0 ? (
@@ -854,7 +854,7 @@ export default function QRMenu() {
                   <button type="button" className="thoam-variant-close" onClick={() => setSelectedProduct(null)} aria-label="Close"><X size={19} /></button>
                   {selectedProduct.image_url ? <img src={selectedProduct.image_url} alt={selectedProduct.name} /> : <div className="thoam-variant-image-placeholder"><UtensilsCrossed size={30} /></div>}
                   <span className="premium-kicker">CHOOSE YOUR PORTION</span><h2 id="qr-variant-title">{selectedProduct.name}</h2>
-                  <div className="thoam-variant-options">{(selectedProduct.variants || []).map((variant) => <button type="button" key={variant.name} className={selectedVariantName === variant.name ? "selected" : ""} onClick={() => setSelectedVariantName(variant.name)}><strong>{variant.name}</strong><b>₹{Number(variant.price).toFixed(0)}</b></button>)}</div>
+                  <div className="thoam-variant-options">{(selectedProduct.variants || []).filter((variant) => variant.is_available !== false).map((variant) => <button type="button" key={variant.name} className={selectedVariantName === variant.name ? "selected" : ""} onClick={() => setSelectedVariantName(variant.name)}><strong>{variant.name}</strong><b>₹{Number(variant.price).toFixed(0)}</b></button>)}</div>
                   <div className="thoam-variant-bottom"><div className="premium-quantity"><button type="button" onClick={() => setVariantQuantity((n) => Math.max(1,n-1))}><Minus size={14}/></button><strong>{variantQuantity}</strong><button type="button" onClick={() => setVariantQuantity((n) => Math.min(50,n+1))}><Plus size={14}/></button></div><button type="button" className="premium-button premium-button-black" onClick={() => { if (selectedProduct && selectedVariantName) { changeQty(`${selectedProduct.id}::${selectedVariantName}`, variantQuantity); setSelectedProduct(null); } }}>Done · Add <ArrowRight size={16}/></button></div>
                 </section>
               </div>
