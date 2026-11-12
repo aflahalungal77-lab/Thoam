@@ -180,6 +180,10 @@ export async function POST(req: NextRequest) {
 
       const message = error.message ?? "";
 
+      if (/offer|discount|minimum|eligible/i.test(message)) {
+        return errorResponse("This offer is no longer valid for your cart. Please update your offer selection.", 409);
+      }
+
       const unavailable =
         /closed|unavailable|inactive|invalid|not enough stock|disabled/i.test(
           message
