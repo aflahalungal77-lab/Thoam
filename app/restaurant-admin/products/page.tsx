@@ -150,7 +150,8 @@ export default function ProductsPage() {
       ? variants.map((v) => ({ name: v.name.trim(), price: Number(v.price) }))
           .filter((v) => v.name && Number.isFinite(v.price) && v.price > 0)
       : [];
-    if (useVariants && (cleanVariants.length < 1 || cleanVariants.length !== variants.filter((v) => v.name.trim() || v.price.trim()).length)) {
+    const uniqueVariantNames = new Set(cleanVariants.map((v) => v.name.toLowerCase()));
+    if (useVariants && (cleanVariants.length < 1 || cleanVariants.length !== variants.filter((v) => v.name.trim() || v.price.trim()).length || uniqueVariantNames.size !== cleanVariants.length)) {
       setMsg("Enter a valid name and price for every size.");
       return;
     }
