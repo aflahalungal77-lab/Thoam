@@ -29,7 +29,7 @@ begin
     exception when others then
       return false;
     end;
-    if v_price <= 0 then return false; end if;
+    if v_price <= 0 or v_price::text in ('NaN', 'Infinity', '-Infinity') then return false; end if;
     if v ? 'is_available' and jsonb_typeof(v->'is_available') <> 'boolean' then return false; end if;
     seen_names := array_append(seen_names, v_name);
   end loop;
