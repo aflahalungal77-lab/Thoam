@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { ArrowLeft, ChefHat, CheckCircle2, Clock3, LoaderCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, ChefHat, CheckCircle2, Clock3, LoaderCircle, RefreshCw, Search } from "lucide-react";
 
 type KitchenItem = {
   id: string;
