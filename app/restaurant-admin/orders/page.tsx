@@ -28,8 +28,6 @@ const statuses = [
 ];
 
 type AdminOrderItem = { id: string; product_name?: string | null; variant_name?: string | null; quantity: number; unit_price?: number | string; line_total?: number | string };
-type BillingSessionOrder = { id: string; order_number?: number | string; status?: string; total_amount: number | string; subtotal?: number | string; discount_amount?: number | string; created_at: string; order_items?: AdminOrderItem[] };
-type BillingSession = { id: string; billing_code: string; table_id: string; status: string; created_at: string; closed_at?: string | null; restaurant_tables?: { table_code?: string } | null; orders?: BillingSessionOrder[] };
 type AdminOrder = { id: string; session_id?: string | null; status?: string; total_amount: number | string; created_at: string; payment_status?: string; payment_method?: string; order_number?: number | string; order_type?: string; customer_name?: string | null; customer_phone?: string | null; delivery_address?: string | null; delivery_fee?: number | string; discount_amount?: number | string; platform_fee?: number | string; subtotal?: number | string; notes?: string | null; restaurant?: { name?: string; area?: string | null; city?: string | null } | null; order_items?: AdminOrderItem[] };
 
 const PAGE_SIZE = 1000;
@@ -79,9 +77,6 @@ export default function OrdersPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
-  const [billingSessions, setBillingSessions] = useState<BillingSession[]>([]);
-  const [billingSearch, setBillingSearch] = useState("");
-  const [selectedSession, setSelectedSession] = useState<BillingSession | null>(null);
 
   const load = useCallback(async (manual = false) => {
     const client = supabase;
@@ -148,14 +143,6 @@ export default function OrdersPage() {
 
       setItems(allOrders);
 
-      const { data: sessionRows, error: sessionsError } = await client
-        .from("order_sessions")
-        .select("id,billing_code,table_id,status,created_at,closed_at,restaurant_tables(table_code),orders(id,order_number,status,total_amount,subtotal,discount_amount,created_at,order_items(id,product_name,variant_name,quantity,unit_price,line_total))")
-        .eq("restaurant_id", profile.restaurant_id)
-        .eq("status", "open")
-        .order("created_at", { ascending: false });
-      if (sessionsError) throw sessionsError;
-      setBillingSessions((sessionRows || []) as unknown as BillingSession[]);
       setMsg("");
     } catch (error) {
       console.error("Orders load failed:", error);
@@ -237,33 +224,6 @@ export default function OrdersPage() {
     }
   }
 
-  async function closeBillingSession(id: string) {
-    const client = supabase;
-    if (!client || updatingId) return;
-    const confirmed = window.confirm("Close this billing session? Do this only after entering the combined bill in Petpooja. New QR orders will start a new billing code.");
-    if (!confirmed) return;
-    setUpdatingId(id);
-    setMsg("");
-    try {
-      const { error } = await client
-        .from("order_sessions")
-        .update({ status: "closed", closed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-        .eq("id", id)
-        .eq("status", "open");
-      if (error) throw error;
-      setSelectedSession(null);
-      setMsg("Billing session closed. Its short code is now available for reuse.");
-      await load(true);
-    } catch (error) {
-      setMsg(error instanceof Error ? error.message : "Could not close billing session.");
-    } finally {
-      setUpdatingId("");
-    }
-  }
-
-  const visibleBillingSessions = billingSessions.filter((session) =>
-    session.billing_code.toLowerCase().includes(billingSearch.trim().toLowerCase())
-  );
 
   // Delivered orders remain included in revenue calculations.
   // Cancelled/rejected orders are excluded.
@@ -290,7 +250,7 @@ const todayRevenue = revenueOrders
     (order) => getStatus(order) === "placed"
   );
 
-  const visibleItems = items;
+  const visibleItems = items.filter((order) => !isDelivered(getStatus(order)));
 
   const activeCount = items.filter(
     (order) => !isDelivered(getStatus(order)) && !isCancelled(getStatus(order))
@@ -324,7 +284,7 @@ const todayRevenue = revenueOrders
         !isCancelled(status) &&
         status !== "placed") ||
       (filter === "Cancelled" && isCancelled(status)) ||
-      (filter === "Delivered" && isDelivered(status));
+
 
     return matchesSearch && matchesFilter;
   });
@@ -402,54 +362,6 @@ const todayRevenue = revenueOrders
         </div>
       </section>
 
-      <section className="ta-orders-workspace ta-billing-sessions">
-        <div className="ta-menu-heading">
-          <div>
-            <span className="ta-eyebrow">QR BILLING</span>
-            <h2>Open table bills <span>({visibleBillingSessions.length})</span></h2>
-            <p>Search the short code printed after the first QR order, then view all orders together.</p>
-          </div>
-        </div>
-        <label className="ta-menu-search ta-billing-search">
-          <Search size={17} />
-          <input
-            value={billingSearch}
-            onChange={(event) => setBillingSearch(event.target.value.toUpperCase().slice(0, 4))}
-            placeholder="Enter code e.g. MA32"
-            aria-label="Search billing code"
-            maxLength={4}
-          />
-        </label>
-        {visibleBillingSessions.length === 0 ? (
-          <div className="ta-billing-empty">
-            {billingSessions.length ? "No open bill matches that code." : "No open QR billing sessions right now."}
-          </div>
-        ) : (
-          <div className="ta-billing-grid">
-            {visibleBillingSessions.map((session) => {
-              const sessionOrders = session.orders || [];
-              const total = sessionOrders.reduce((sum, order) => sum + Number(order.total_amount || 0), 0);
-              return (
-                <article className="ta-billing-card" key={session.id}>
-                  <div className="ta-billing-card-top">
-                    <div>
-                      <span className="ta-eyebrow">BILLING CODE</span>
-                      <strong>{session.billing_code}</strong>
-                    </div>
-                    <span className="ta-billing-open">OPEN</span>
-                  </div>
-                  <p>{session.restaurant_tables?.table_code || "Table"} · {sessionOrders.length} {sessionOrders.length === 1 ? "order" : "orders"}</p>
-                  <div className="ta-billing-card-bottom">
-                    <strong>{money(total)}</strong>
-                    <button type="button" className="ta-view-bill" onClick={() => setSelectedSession(session)}>View combined bill</button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
       <section className="ta-orders-workspace">
         <div className="ta-menu-heading">
           <div>
@@ -517,7 +429,7 @@ const todayRevenue = revenueOrders
             <p>
               {visibleItems.length
                 ? "Try changing your search or filter."
-                : "Delivered orders are hidden. New orders will appear here."}
+                : "New orders will appear here. Delivered orders are hidden."}
             </p>
           </div>
         ) : (
@@ -738,49 +650,6 @@ const todayRevenue = revenueOrders
             </div>
             {selectedOrder.notes && <div className="ta-bill-notes"><span>Notes</span><p>{selectedOrder.notes}</p></div>}
             <button type="button" className="ta-bill-done" onClick={() => setSelectedOrder(null)}>Close bill</button>
-          </section>
-        </div>
-      )}
-
-      {selectedSession && (
-        <div className="ta-bill-backdrop" role="presentation" onMouseDown={(event) => {
-          if (event.target === event.currentTarget) setSelectedSession(null);
-        }}>
-          <section className="ta-bill-modal" role="dialog" aria-modal="true" aria-labelledby="ta-session-bill-title">
-            <div className="ta-bill-header">
-              <div>
-                <span className="ta-eyebrow">QR TABLE BILL</span>
-                <h2 id="ta-session-bill-title">Combined bill · {selectedSession.billing_code}</h2>
-                <p>{selectedSession.restaurant_tables?.table_code || "Table"} · {selectedSession.orders?.length || 0} orders</p>
-              </div>
-              <button type="button" className="ta-bill-close" onClick={() => setSelectedSession(null)} aria-label="Close bill">×</button>
-            </div>
-            <div className="ta-bill-items-wrap">
-              <h3>All items</h3>
-              {(selectedSession.orders || []).map((order) => (
-                <div key={order.id} className="ta-session-order-group">
-                  <strong>Order #{order.order_number || order.id.slice(0, 8)}</strong>
-                  {(order.order_items || []).map((item) => (
-                    <div className="ta-bill-row" key={item.id}>
-                      <span>{item.product_name || "Item"}{item.variant_name ? ` · ${item.variant_name}` : ""}</span>
-                      <span>{Number(item.quantity || 0)}</span>
-                      <span>{money(Number(item.unit_price || 0))}</span>
-                      <strong>{money(Number(item.line_total ?? Number(item.quantity || 0) * Number(item.unit_price || 0)))}</strong>
-                    </div>
-                  ))}
-                  {Number(order.discount_amount || 0) > 0 && <p className="ta-session-discount">Offer discount: −{money(Number(order.discount_amount))}</p>}
-                </div>
-              ))}
-            </div>
-            <div className="ta-bill-totals">
-              <div><span>Subtotal</span><strong>{money((selectedSession.orders || []).reduce((sum, order) => sum + Number(order.subtotal ?? order.total_amount ?? 0), 0))}</strong></div>
-              <div><span>Total discounts</span><strong>−{money((selectedSession.orders || []).reduce((sum, order) => sum + Number(order.discount_amount || 0), 0))}</strong></div>
-              <div className="ta-bill-grand-total"><span>Combined total</span><strong>{money((selectedSession.orders || []).reduce((sum, order) => sum + Number(order.total_amount || 0), 0))}</strong></div>
-            </div>
-            <p className="ta-session-hint">Enter this combined total and item list in Petpooja. Then close the session to release the short code.</p>
-            <button type="button" className="ta-bill-done" disabled={Boolean(updatingId)} onClick={() => void closeBillingSession(selectedSession.id)}>
-              {updatingId === selectedSession.id ? "Closing…" : "Close session after Petpooja entry"}
-            </button>
           </section>
         </div>
       )}
