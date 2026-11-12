@@ -1,5 +1,5 @@
 -- Tho'am product size / price options.
--- Apply this migration in Supabase SQL Editor after the existing COD and QR order migrations.
+-- Apply this migration after the core schema, offers, COD, and QR/KOT migrations exist.
 -- Existing products remain single-price products because variants defaults to an empty array.
 alter table public.products add column if not exists variants jsonb not null default '[]'::jsonb;
 alter table public.order_items add column if not exists variant_name text;
