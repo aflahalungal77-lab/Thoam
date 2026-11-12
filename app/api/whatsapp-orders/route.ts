@@ -301,6 +301,7 @@ export async function POST(request: Request) {
         delivery_address: orderType === "DELIVERY" ? address : null,
         notes: [notes, appliedOffer ? `Offer applied: ${appliedOffer.title} (Discount: ₹${discountAmount.toFixed(2)})` : ""].filter(Boolean).join("\n") || null,
         subtotal,
+        discount_amount: discountAmount,
         delivery_fee: deliveryFee,
         platform_fee: platformFee,
         total_amount: total,
