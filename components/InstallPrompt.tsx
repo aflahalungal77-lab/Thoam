@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import { Download, Globe, X, Smartphone, Zap, ShieldCheck } from "lucide-react";
 
+type BeforeInstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }> };
+
 export default function InstallPrompt({
   audience,
 }: {
   audience: "customer" | "owner";
 }) {
   const [open, setOpen] = useState(false);
-  const [prompt, setPrompt] = useState<any>(null);
+  const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
@@ -18,7 +20,7 @@ export default function InstallPrompt({
     const dismissed = sessionStorage.getItem(`thoam-install-${audience}`);
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as any).standalone;
+      (navigator as Navigator & { standalone?: boolean }).standalone;
 
     if (!dismissed && !standalone) {
       const timer = window.setTimeout(() => setOpen(true), 900);
@@ -28,7 +30,7 @@ export default function InstallPrompt({
 
     const handler = (e: Event) => {
       e.preventDefault();
-      setPrompt(e);
+      setPrompt(e as BeforeInstallPromptEvent);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
