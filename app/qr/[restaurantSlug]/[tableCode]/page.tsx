@@ -35,6 +35,7 @@ type PlacedOrder = {
   discount_amount?: number | string;
   offer_title?: string | null;
   status?: string;
+  billing_code?: string;
 };
 
 type QROffer = {
@@ -57,6 +58,23 @@ type NeedType =
   | "Additional food"
   | "Message to kitchen"
   | "Other";
+
+
+function getOrCreateQRDeviceToken(restaurantId: string, tableCode: string): string {
+  const key = `thoam:qr-device:${restaurantId}:${tableCode.toUpperCase()}:v1`;
+  const existing = window.localStorage.getItem(key);
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (existing && uuidPattern.test(existing)) return existing;
+
+  const bytes = new Uint8Array(16);
+  window.crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
+  const token = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  window.localStorage.setItem(key, token);
+  return token;
+}
 
 export default function QRMenu() {
   const { t } = useLanguage();
@@ -351,6 +369,7 @@ export default function QRMenu() {
         body: JSON.stringify({
           restaurantId: r.id,
           tableCode,
+          deviceToken: getOrCreateQRDeviceToken(r.id, tableCode),
           notes: notes.trim(),
           offerId: discountAmount > 0 ? selectedOfferId : null,
           items: selectedItems.map((p) => ({
@@ -474,6 +493,13 @@ export default function QRMenu() {
               <strong>{r.name}</strong>
             </div>
 
+            {placedOrder.billing_code && (
+              <div className="receipt-row">
+                <span>Table billing code</span>
+                <strong style={{ color: "#176b49", letterSpacing: 2, fontSize: 18 }}>{placedOrder.billing_code}</strong>
+              </div>
+            )}
+
             {placedOrder.order_number != null && (
               <div className="receipt-row">
                 <span>{t("KOT number")}</span>
@@ -522,7 +548,7 @@ export default function QRMenu() {
           </button>
 
           <p className="premium-footnote">
-            Thank you for choosing Tho’am.
+            {placedOrder.billing_code ? `Use ${placedOrder.billing_code} for your next order from this device at this table.` : "Your order is confirmed."} Thank you for choosing Tho’am.
           </p>
         </section>
       ) : (
