@@ -53,7 +53,7 @@ export default function ChallengesPage(){
           const {data:earned}=await supabase.from("challenge_progress")
             .select("challenge_id,progress_count,collected_letters,reward_status")
             .eq("customer_id",user.id);
-          if(alive){const map:Record<string,Progress>={};(earned||[]).forEach((p:any)=>{map[p.challenge_id]=p;});setProgress(map);}
+          if(alive){const map:Record<string,Progress>={};(earned||[]).forEach((p:Progress)=>{map[p.challenge_id]=p;});setProgress(map);}
         }
       }
       setLoading(false);
