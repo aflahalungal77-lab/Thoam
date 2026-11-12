@@ -423,24 +423,6 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
         </div>
 
         <style jsx>{` 
-        .thoam-public-variant-backdrop{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:18px;background:rgb(15 15 13 / 62%);backdrop-filter:blur(9px);animation:thoamVariantFade .18s ease}
-        .thoam-public-variant{position:relative;width:min(100%,440px);max-height:min(90vh,760px);overflow:auto;padding:18px;border:1px solid rgb(255 255 255 / 70%);border-radius:25px;background:#fff;color:#191916;box-shadow:0 30px 100px rgb(0 0 0 / 28%);animation:thoamVariantRise .22s cubic-bezier(.2,.8,.2,1)}
-        .thoam-public-variant>img,.thoam-public-variant-placeholder{display:grid;width:100%;height:205px;object-fit:cover;place-items:center;margin-bottom:17px;border-radius:17px;background:linear-gradient(135deg,#f4f3ee,#e9e7df);color:#999}
-        .thoam-public-variant-close{position:absolute;top:27px;right:27px;z-index:2;display:grid;width:38px;height:38px;place-items:center;border:1px solid #ffffffb8;border-radius:50%;background:#ffffffed;color:#25251f;box-shadow:0 4px 16px #0002}
-        .thoam-public-variant .checkout-kicker{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:99px;background:#f2f1ec;color:#77766d;font-size:9px;font-weight:900;letter-spacing:.14em}
-        .thoam-public-variant h2{margin:12px 0 5px;font-size:25px;font-weight:950;letter-spacing:-.9px;line-height:1.15}.thoam-public-variant>p{margin:0 0 16px;color:#77766e;font-size:12px;line-height:1.65}.thoam-public-variant .thoam-variant-hint{margin:0;color:#88867d;font-size:11px}
-        .thoam-public-variant-options{display:grid;gap:9px;margin-top:14px}.thoam-public-variant-options button{display:flex;min-height:60px;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid #e8e6de;border-radius:13px;background:#fff;color:#24241f;text-align:left;transition:border-color .18s,background .18s,box-shadow .18s}
-        .thoam-public-variant-options button:hover{border-color:#aaa79a;background:#fbfaf7}.thoam-public-variant-options button.selected{border-color:#24241f;background:#f5f4ef;box-shadow:inset 0 0 0 1px #24241f}
-        .thoam-public-variant-options button strong{font-size:12px;font-weight:850}.thoam-public-variant-options button b{font-size:14px;font-weight:950;letter-spacing:-.3px}
-        .thoam-public-variant-footer{display:flex;align-items:center;gap:10px;margin-top:17px;padding-top:14px;border-top:1px solid #eeede8}
-        .thoam-public-variant-footer .quantity-control{min-height:46px;gap:8px;padding:5px;border:1px solid #e7e5dc;border-radius:12px;background:#f8f7f3}
-        .thoam-public-variant-footer .quantity-control button{width:30px;height:30px;border-radius:8px;background:#fff;color:#222;font-size:18px}
-        .thoam-public-variant-footer .quantity-control span{min-width:17px;font-size:12px;font-weight:900;text-align:center}
-        .thoam-public-variant-footer .add-button{flex:1;min-height:46px;border-radius:12px;font-size:11px;font-weight:900}
-        @keyframes thoamVariantFade{from{opacity:0}to{opacity:1}}@keyframes thoamVariantRise{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
-        @media(max-width:520px){.thoam-public-variant-backdrop{align-items:flex-end;padding:10px}.thoam-public-variant{width:100%;max-height:88vh;padding:14px;border-radius:22px 22px 16px 16px}.thoam-public-variant>img,.thoam-public-variant-placeholder{height:170px;border-radius:15px}.thoam-public-variant h2{font-size:22px}.thoam-public-variant-footer{position:sticky;bottom:-14px;margin:15px -14px -14px;padding:12px 14px 14px;background:#fff;border-top:1px solid #eeede8}.thoam-public-variant-close{top:22px;right:22px}}
-        @media(prefers-reduced-motion:reduce){.thoam-public-variant-backdrop,.thoam-public-variant{animation:none}}
-
           .thoam-checkout {
             min-height: 100vh;
             padding: 0 20px 60px;
@@ -1086,6 +1068,25 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
       )}
 
       <style jsx>{`
+        .thoam-public-variant-backdrop{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:18px;background:rgb(15 15 13 / 62%);backdrop-filter:blur(9px);animation:thoamVariantFade .18s ease}
+        .thoam-public-variant{position:relative;width:min(100%,440px);max-height:min(90vh,760px);overflow:auto;padding:18px;border:1px solid rgb(255 255 255 / 70%);border-radius:25px;background:#fff;color:#191916;box-shadow:0 30px 100px rgb(0 0 0 / 28%);animation:thoamVariantRise .22s cubic-bezier(.2,.8,.2,1)}
+        .thoam-public-variant>img,.thoam-public-variant-placeholder{display:grid;width:100%;height:205px;object-fit:cover;place-items:center;margin-bottom:17px;border-radius:17px;background:linear-gradient(135deg,#f4f3ee,#e9e7df);color:#999}
+        .thoam-public-variant-close{position:absolute;top:27px;right:27px;z-index:2;display:grid;width:38px;height:38px;place-items:center;border:1px solid #ffffffb8;border-radius:50%;background:#ffffffed;color:#25251f;box-shadow:0 4px 16px #0002}
+        .thoam-public-variant .checkout-kicker{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:99px;background:#f2f1ec;color:#77766d;font-size:9px;font-weight:900;letter-spacing:.14em}
+        .thoam-public-variant h2{margin:12px 0 5px;font-size:25px;font-weight:950;letter-spacing:-.9px;line-height:1.15}.thoam-public-variant>p{margin:0 0 16px;color:#77766e;font-size:12px;line-height:1.65}.thoam-public-variant .thoam-variant-hint{margin:0;color:#88867d;font-size:11px}
+        .thoam-public-variant-options{display:grid;gap:9px;margin-top:14px}.thoam-public-variant-options button{display:flex;min-height:60px;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid #e8e6de;border-radius:13px;background:#fff;color:#24241f;text-align:left;transition:border-color .18s,background .18s,box-shadow .18s}
+        .thoam-public-variant-options button:hover{border-color:#aaa79a;background:#fbfaf7}.thoam-public-variant-options button.selected{border-color:#24241f;background:#f5f4ef;box-shadow:inset 0 0 0 1px #24241f}
+        .thoam-public-variant-options button strong{font-size:12px;font-weight:850}.thoam-public-variant-options button b{font-size:14px;font-weight:950;letter-spacing:-.3px}
+        .thoam-public-variant-footer{display:flex;align-items:center;gap:10px;margin-top:17px;padding-top:14px;border-top:1px solid #eeede8}
+        .thoam-public-variant-footer .quantity-control{min-height:46px;gap:8px;padding:5px;border:1px solid #e7e5dc;border-radius:12px;background:#f8f7f3}
+        .thoam-public-variant-footer .quantity-control button{width:30px;height:30px;border-radius:8px;background:#fff;color:#222;font-size:18px}
+        .thoam-public-variant-footer .quantity-control span{min-width:17px;font-size:12px;font-weight:900;text-align:center}
+        .thoam-public-variant-footer .add-button{flex:1;min-height:46px;border-radius:12px;font-size:11px;font-weight:900}
+        @keyframes thoamVariantFade{from{opacity:0}to{opacity:1}}@keyframes thoamVariantRise{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+        @media(max-width:520px){.thoam-public-variant-backdrop{align-items:flex-end;padding:10px}.thoam-public-variant{width:100%;max-height:88vh;padding:14px;border-radius:22px 22px 16px 16px}.thoam-public-variant>img,.thoam-public-variant-placeholder{height:170px;border-radius:15px}.thoam-public-variant h2{font-size:22px}.thoam-public-variant-footer{position:sticky;bottom:-14px;margin:15px -14px -14px;padding:12px 14px 14px;background:#fff;border-top:1px solid #eeede8}.thoam-public-variant-close{top:22px;right:22px}}
+        @media(prefers-reduced-motion:reduce){.thoam-public-variant-backdrop,.thoam-public-variant{animation:none}}
+
+
         
 .thoam-menu {
   --ink: #171715;
