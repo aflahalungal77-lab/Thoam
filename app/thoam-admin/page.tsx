@@ -65,6 +65,10 @@ function isToday(date: string) {
   return orderDay === todayDay;
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 function money(amount: number) {
   return `₹${amount.toLocaleString("en-IN", {
     maximumFractionDigits: 2,
@@ -219,8 +223,8 @@ export default function AdminPage() {
         totalCommission: deliveredOrders.length * COMMISSION_PER_SUCCESSFUL_ORDER,
         todayCommission: todayDeliveredOrders.length * COMMISSION_PER_SUCCESSFUL_ORDER,
       });
-    } catch (error: any) {
-      setMsg(error?.message || "Unable to load platform data.");
+    } catch (error: unknown) {
+      setMsg(getErrorMessage(error, "Unable to load platform data."));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -228,7 +232,7 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    load();
+    void load();
   }, []);
 
   async function updateRestaurant(id: string, status: string) {
@@ -281,8 +285,8 @@ export default function AdminPage() {
         restaurant.name + ": QR ordering " + (enable ? "enabled." : "disabled.") +
           (enable ? " The restaurant can now set up its table QR codes." : "")
       );
-    } catch (error: any) {
-      setMsg(error?.message || "Unable to update QR access.");
+    } catch (error: unknown) {
+      setMsg(getErrorMessage(error, "Unable to update QR access."));
     } finally {
       setQrUpdatingId(null);
     }
@@ -309,11 +313,8 @@ export default function AdminPage() {
 
       await load();
       setMsg(`"${r.name}" and its associated data were permanently deleted.`);
-    } catch (error: any) {
-      setMsg(
-        error?.message ||
-          "Could not delete this restaurant. Check related database records."
-      );
+    } catch (error: unknown) {
+      setMsg(getErrorMessage(error, "Could not delete this restaurant. Check related database records."));
     } finally {
       setDeletingId(null);
     }
@@ -390,7 +391,7 @@ export default function AdminPage() {
       <main className="container admin-container">
         <div className="page-head admin-page-head">
           <div className="eyebrow">{t("PLATFORM OPERATIONS")}</div>
-          <h1>Tho'am control centre.</h1>
+          <h1>Tho&apos;am control centre.</h1>
           <p className="muted">
             Manage restaurant partners, monitor platform revenue and review
             order activity.
@@ -441,7 +442,7 @@ export default function AdminPage() {
 
               <div className="admin-stat-card">
                 <div className="admin-stat-top">
-                  <span>Today's orders</span>
+                  <span>Today&apos;s orders</span>
                   <ClipboardList size={18} />
                 </div>
                 <strong>{stats.today}</strong>
@@ -485,16 +486,16 @@ export default function AdminPage() {
                   <div className="revenue-icon">
                     <IndianRupee size={19} />
                   </div>
-                  <span>Today's revenue</span>
+                  <span>Today&apos;s revenue</span>
                   <strong>{money(stats.todayRevenue)}</strong>
-                  <small>Today's delivered / completed orders</small>
+                  <small>Today&apos;s delivered / completed orders</small>
                 </div>
 
                 <div className="admin-revenue-card commission-card">
                   <div className="revenue-icon">
                     <ShieldCheck size={19} />
                   </div>
-                  <span>Total Tho'am revenue</span>
+                  <span>Total Tho&apos;am revenue</span>
                   <strong>{money(stats.totalCommission)}</strong>
                   <small>₹3 for every delivered / completed order</small>
                 </div>
@@ -503,9 +504,9 @@ export default function AdminPage() {
                   <div className="revenue-icon">
                     <ShieldCheck size={19} />
                   </div>
-                  <span>Today's Tho'am revenue</span>
+                  <span>Today&apos;s Tho&apos;am revenue</span>
                   <strong>{money(stats.todayCommission)}</strong>
-                  <small>₹3 × today's delivered / completed orders</small>
+                  <small>₹3 × today&apos;s delivered / completed orders</small>
                 </div>
               </div>
             </section>
@@ -565,9 +566,9 @@ export default function AdminPage() {
                           <th>{t("Status")}</th>
                           <th>{t("QR")}</th>
                           <th>{t("Total revenue")}</th>
-                          <th>Today's revenue</th>
-                          <th>Tho'am total</th>
-                          <th>Today's Tho'am</th>
+                          <th>Today&apos;s revenue</th>
+                          <th>Tho&apos;am total</th>
+                          <th>Today&apos;s Tho&apos;am</th>
                           <th>{t("Actions")}</th>
                         </tr>
                       </thead>
@@ -700,7 +701,7 @@ export default function AdminPage() {
               )}
 
               <p className="admin-note">
-                Tho'am revenue is calculated at ₹3 per delivered / completed
+                Tho&apos;am revenue is calculated at ₹3 per delivered / completed
                 order, including delivery and QR dine-in orders. This dashboard
                 reports the amount; collection and settlement are handled separately.
               </p>
