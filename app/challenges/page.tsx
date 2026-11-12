@@ -5,7 +5,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { ArrowRight, CalendarDays, Check, Clock3, Gift, MapPin, Sparkles, Trophy } from "lucide-react";
+import { ArrowRight, CalendarDays, Check, Gift, MapPin, Sparkles, Trophy } from "lucide-react";
 
 type Progress = { challenge_id:string; progress_count:number; collected_letters:string[]; reward_status:string };
 
@@ -53,7 +53,7 @@ export default function ChallengesPage(){
           const {data:earned}=await supabase.from("challenge_progress")
             .select("challenge_id,progress_count,collected_letters,reward_status")
             .eq("customer_id",user.id);
-          if(alive){const map:Record<string,Progress>={};(earned||[]).forEach((p:any)=>{map[p.challenge_id]=p;});setProgress(map);}
+          if(alive){const map:Record<string,Progress>={};((earned||[]) as Progress[]).forEach((p)=>{map[p.challenge_id]=p;});setProgress(map);}
         }
       }
       setLoading(false);

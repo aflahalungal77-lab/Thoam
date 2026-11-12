@@ -16,12 +16,14 @@ const categories = [
   "Pizza", "Snacks", "Drinks", "Other",
 ];
 
+type ProductRow = { id: string; restaurant_id: string; name: string; price: number | string; category: string | null; description: string | null; image_url: string | null; is_available: boolean; is_veg: boolean; created_at?: string };
+
 export default function ProductsPage() {
   const { t } = useLanguage();
   const router = useRouter();
 
   const [rid, setRid] = useState("");
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<ProductRow[]>([]);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("Biriyani");
@@ -76,7 +78,7 @@ export default function ProductsPage() {
       .order("created_at", { ascending: false });
 
     if (error) setMsg(error.message);
-    else setItems(data || []);
+    else setItems((data || []) as ProductRow[]);
   }, [router]);
 
   useEffect(() => {
@@ -179,7 +181,7 @@ export default function ProductsPage() {
     setSaving(false);
   }
 
-  async function toggle(product: any) {
+  async function toggle(product: ProductRow) {
     if (!supabase || busyId) return;
 
     setBusyId(product.id);
@@ -205,7 +207,7 @@ export default function ProductsPage() {
     setBusyId("");
   }
 
-  async function remove(product: any) {
+  async function remove(product: ProductRow) {
     if (!supabase || busyId) return;
 
     if (!window.confirm(`Delete "${product.name}"? This cannot be undone.`)) {

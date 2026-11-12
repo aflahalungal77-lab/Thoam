@@ -21,6 +21,8 @@ import {
   UtensilsCrossed, Wallet, XCircle, Tag, Percent
 } from "lucide-react";
 
+type CheckoutProduct = { id: string; name: string; price: number | string; image_url: string | null; is_available: boolean; };
+
 type Item = {
   id: string;
   name: string;
@@ -245,9 +247,9 @@ function CheckoutInner() {
 
         if (!active) return;
 
-        const availableProducts = (products || [])
-          .filter((product: any) => product.is_available)
-          .map((product: any) => ({
+        const availableProducts = ((products || []) as CheckoutProduct[])
+          .filter((product) => product.is_available)
+          .map((product) => ({
             id: product.id,
             name: product.name,
             price: Number(product.price),
