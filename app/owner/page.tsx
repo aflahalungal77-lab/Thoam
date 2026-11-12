@@ -92,7 +92,7 @@ export default function OwnerPage() {
           <div className="owner-hero-content">
             <div className="owner-eyebrow">
               <span className="owner-eyebrow-line" />
-              THE THO'AM PARTNER EXPERIENCE
+              THE THO&apos;AM PARTNER EXPERIENCE
             </div>
 
             <h1>
@@ -284,7 +284,7 @@ export default function OwnerPage() {
 
                   <div className="owner-feature-bottom">
                     <span />
-                    THO'AM PARTNER TOOLS
+                    THO&apos;AM PARTNER TOOLS
                   </div>
                 </article>
               );
