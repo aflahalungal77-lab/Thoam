@@ -11,6 +11,7 @@ import { ArrowLeft, ChefHat, CheckCircle2, Clock3, LoaderCircle, RefreshCw } fro
 type KitchenItem = {
   id: string;
   product_name: string;
+  variant_name: string | null;
   quantity: number;
   unit_price: number;
   line_total: number;
