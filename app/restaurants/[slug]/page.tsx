@@ -938,7 +938,7 @@ export default function RestaurantPage() {
 
                         <div className="premium-cart-item-details">
                           <div className="premium-cart-item-name-row">
-                            <h3>{product.name}</h3>
+                            <h3>{product.name}{product.variantName ? ` · ${product.variantName}` : ""}</h3>
 
                             <button
                               className="premium-cart-remove"
@@ -959,7 +959,7 @@ export default function RestaurantPage() {
                             <div className="premium-quantity-control">
                               <button
                                 onClick={() =>
-                                  changeQuantity(product, -1)
+                                  changeQuantity(product, -1, product.variantName)
                                 }
                                 aria-label={`Remove one ${product.name}`}
                               >
@@ -970,7 +970,7 @@ export default function RestaurantPage() {
 
                               <button
                                 onClick={() =>
-                                  changeQuantity(product, 1)
+                                  changeQuantity(product, 1, product.variantName)
                                 }
                                 disabled={!restaurant.is_open}
                                 aria-label={`Add one ${product.name}`}
