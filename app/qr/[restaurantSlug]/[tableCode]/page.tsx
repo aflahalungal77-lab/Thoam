@@ -996,7 +996,7 @@ export default function QRMenu() {
       <footer className="premium-menu-footer">
         <Link className="premium-footer-brand" href="/">
           THO’AM<span>.</span>
-        </a>
+        </Link>
 
         <span>{t("Good food. Good moments.")}</span>
 
