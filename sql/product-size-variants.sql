@@ -8,6 +8,7 @@ create or replace function public.valid_product_variants(p_variants jsonb)
 returns boolean
 language plpgsql
 immutable
+set search_path = pg_catalog
 as $valid_product_variants$
 declare
   v jsonb;
@@ -54,7 +55,7 @@ create or replace function public.create_cod_delivery_order(
 ) returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
   v_restaurant public.restaurants%rowtype;
