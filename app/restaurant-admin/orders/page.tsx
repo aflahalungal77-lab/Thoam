@@ -245,9 +245,7 @@ const todayRevenue = revenueOrders
     (order) => getStatus(order) === "placed"
   );
 
-  const visibleItems = filter === "Delivered"
-    ? items.filter((order) => isDelivered(getStatus(order)))
-    : items.filter((order) => !isDelivered(getStatus(order)));
+  const visibleItems = items;
 
   const activeCount = items.filter(
     (order) => !isDelivered(getStatus(order)) && !isCancelled(getStatus(order))
