@@ -25,6 +25,7 @@ type KitchenOrder = {
   id: string;
   order_number: number;
   session_id?: string | null;
+  order_sessions?: { billing_code?: string } | null;
   total_amount: number;
   created_at: string;
   status: string;
@@ -77,7 +78,7 @@ export default function KitchenPage() {
       setRestaurantId(profile.restaurant_id);
       const { data, error } = await supabase
         .from("orders")
-        .select("id,order_number,session_id,total_amount,created_at,status,notes,restaurant_tables(table_code),order_items(id,product_name,variant_name,quantity,unit_price,line_total,special_instructions)")
+        .select("id,order_number,session_id,total_amount,created_at,status,notes,restaurant_tables(table_code),order_sessions(billing_code),order_items(id,product_name,variant_name,quantity,unit_price,line_total,special_instructions)")
         .eq("restaurant_id", profile.restaurant_id)
         .eq("order_type", "dine_in")
         .order("created_at", { ascending: false })
@@ -217,6 +218,7 @@ export default function KitchenPage() {
                   <span style={{ fontSize: 11, letterSpacing: 1.5, color: "#777", fontWeight: 700 }}>{t("KITCHEN ORDER TICKET")}</span>
                   <h2 style={{ fontSize: 27, margin: "4px 0", fontWeight: 800 }}>#{order.order_number}</h2>
                   <strong style={{ fontSize: 15 }}>TABLE {order.restaurant_tables?.table_code || "—"}</strong>
+                  {order.order_sessions?.billing_code && <div style={{ marginTop: 5, color: "#26724a", fontSize: 11, fontWeight: 800, letterSpacing: 1 }}>BILL · {order.order_sessions.billing_code}</div>}
                 </div>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#555" }}><Clock3 size={14} />{new Date(order.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", timeZone: zone })}</span>
               </div>
