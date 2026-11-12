@@ -118,6 +118,10 @@ export async function POST(req: NextRequest) {
       return errorResponse("Invalid product or quantity.", 400);
     }
 
+    const specialInstructions = String(item.specialInstructions ?? "").trim();
+    const variantName = item.variantName == null ? "" : String(item.variantName).trim();
+    if (variantName.length > 40) return errorResponse("Invalid product size.", 400);
+
     const itemKey = `${productId}::${variantName.toLowerCase()}`;
     if (seen.has(itemKey)) {
       return errorResponse(
@@ -125,10 +129,6 @@ export async function POST(req: NextRequest) {
         400
       );
     }
-
-    const specialInstructions = String(item.specialInstructions ?? "").trim();
-    const variantName = item.variantName == null ? "" : String(item.variantName).trim();
-    if (variantName.length > 40) return errorResponse("Invalid product size.", 400);
     if (specialInstructions.length > 300) {
       return errorResponse("Item instructions must be under 300 characters.", 400);
     }
