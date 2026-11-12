@@ -17,6 +17,8 @@ type OrderResult = {
   order_number?: number | string;
   total_amount?: number | string;
   status?: string;
+  session_id?: string;
+  billing_code?: string;
 };
 
 const uuidPattern =
@@ -154,7 +156,7 @@ export async function POST(req: NextRequest) {
   // 9. Create the dine-in order
   try {
     const { data, error } = await db.rpc(
-      "create_qr_dine_in_order_v3",
+      "create_qr_dine_in_order_v4",
       {
         p_restaurant_id: restaurantId,
         p_table_code: tableCode,
