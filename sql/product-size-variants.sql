@@ -3,6 +3,7 @@
 -- Existing products remain single-price products because variants defaults to an empty array.
 alter table public.products add column if not exists variants jsonb not null default '[]'::jsonb;
 alter table public.order_items add column if not exists variant_name text;
+alter table public.orders add column if not exists discount_amount numeric(10,2) not null default 0 check (discount_amount >= 0);
 create or replace function public.valid_product_variants(p_variants jsonb)
 returns boolean
 language plpgsql
@@ -48,7 +49,8 @@ create or replace function public.create_cod_delivery_order(
   p_customer_phone text,
   p_delivery_address text,
   p_notes text,
-  p_items jsonb
+  p_items jsonb,
+  p_offer_id uuid default null
 ) returns jsonb
 language plpgsql
 security definer
@@ -61,7 +63,11 @@ declare
   v_subtotal numeric(10,2) := 0;
   v_delivery_fee numeric(10,2);
   v_platform_fee numeric(10,2) := 1;
+  v_discount_amount numeric(10,2) := 0;
+  v_eligible_subtotal numeric(10,2) := 0;
+  v_raw_discount numeric(10,2) := 0;
   v_total numeric(10,2);
+  v_offer public.offers%rowtype;
   v_item jsonb;
   v_product public.products%rowtype;
   v_variant jsonb;
@@ -87,6 +93,24 @@ begin
   if not found then raise exception 'Restaurant is not approved or available.'; end if;
   if not v_restaurant.is_open then raise exception 'This restaurant is currently closed.'; end if;
   if not v_restaurant.delivery_enabled then raise exception 'This restaurant has disabled delivery.'; end if;
+
+  if p_offer_id is not null then
+    select * into v_offer from public.offers
+    where id = p_offer_id and restaurant_id = p_restaurant_id
+    for share;
+    if not found or not v_offer.is_active then raise exception 'Selected offer is no longer available.'; end if;
+    if (v_offer.starts_at is not null and now() < v_offer.starts_at)
+       or (v_offer.ends_at is not null and now() > v_offer.ends_at) then
+      raise exception 'Selected offer is not currently valid.';
+    end if;
+    if v_subtotal < coalesce(v_offer.min_order_amount,0) then
+      raise exception 'Order does not meet the selected offer minimum.';
+    end if;
+    if coalesce(v_offer.discount_value,0) <= 0
+       or (v_offer.discount_type = 'percentage' and v_offer.discount_value > 100) then
+      raise exception 'Selected offer has an invalid discount configuration.';
+    end if;
+  end if;
 
   for v_item in select value from jsonb_array_elements(p_items)
   loop
@@ -120,18 +144,36 @@ begin
       v_unit_price := v_product.price;
     end if;
     v_subtotal := v_subtotal + v_unit_price * v_qty;
+    if p_offer_id is not null and v_offer.scope = 'products'
+       and coalesce(to_jsonb(v_offer.product_ids),'[]'::jsonb) @> jsonb_build_array(v_product.id::text) then
+      v_eligible_subtotal := v_eligible_subtotal + v_unit_price * v_qty;
+    end if;
   end loop;
 
+  if p_offer_id is not null then
+    if v_offer.scope = 'order' then v_eligible_subtotal := v_subtotal; end if;
+    if v_eligible_subtotal <= 0 then raise exception 'Your cart has no items eligible for this offer.'; end if;
+    if v_offer.discount_type = 'percentage' then
+      v_raw_discount := v_eligible_subtotal * v_offer.discount_value / 100;
+    else
+      v_raw_discount := v_offer.discount_value;
+    end if;
+    if v_offer.max_discount is not null then
+      v_raw_discount := least(v_raw_discount, v_offer.max_discount);
+    end if;
+    v_discount_amount := round(least(v_eligible_subtotal, v_raw_discount), 2);
+  end if;
+
   v_delivery_fee := coalesce(v_restaurant.delivery_fee,0);
-  v_total := v_subtotal + v_delivery_fee + v_platform_fee;
+  v_total := v_subtotal - v_discount_amount + v_delivery_fee + v_platform_fee;
 
   insert into public.orders (
     customer_id, restaurant_id, order_type, status, payment_method, payment_status,
-    customer_name, customer_phone, delivery_address, notes, subtotal, delivery_fee, platform_fee, total_amount
+    customer_name, customer_phone, delivery_address, notes, subtotal, discount_amount, delivery_fee, platform_fee, total_amount
   ) values (
     p_customer_id, p_restaurant_id, 'delivery', 'placed', 'cod', 'pending',
     trim(p_customer_name), trim(p_customer_phone), trim(p_delivery_address), nullif(trim(coalesce(p_notes,'')),''),
-    v_subtotal, v_delivery_fee, v_platform_fee, v_total
+    v_subtotal, v_discount_amount, v_delivery_fee, v_platform_fee, v_total
   ) returning id, order_number into v_order_id, v_order_number;
 
   for v_item in select value from jsonb_array_elements(p_items)
@@ -155,12 +197,13 @@ begin
   insert into public.order_status_history(order_id, old_status, new_status, changed_by, note)
   values (v_order_id, null, 'placed', p_customer_id, 'Customer placed COD delivery order');
 
-  return jsonb_build_object('id',v_order_id,'order_number',v_order_number,'total_amount',v_total,'status','placed','created_at',now());
+  return jsonb_build_object('id',v_order_id,'order_number',v_order_number,'discount_amount',v_discount_amount,'total_amount',v_total,'status','placed','created_at',now());
 end;
 $$;
 
 revoke all on function public.create_cod_delivery_order(uuid,uuid,text,text,text,text,jsonb) from public, anon, authenticated;
-grant execute on function public.create_cod_delivery_order(uuid,uuid,text,text,text,text,jsonb) to service_role;
+revoke all on function public.create_cod_delivery_order(uuid,uuid,text,text,text,text,jsonb,uuid) from public, anon, authenticated;
+grant execute on function public.create_cod_delivery_order(uuid,uuid,text,text,text,text,jsonb,uuid) to service_role;
 
 
 -- Tho'am QR Table Ordering + KOT
