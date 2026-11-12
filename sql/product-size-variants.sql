@@ -8,7 +8,7 @@ create or replace function public.valid_product_variants(p_variants jsonb)
 returns boolean
 language plpgsql
 immutable
-as $
+as $valid_product_variants$
 declare
   v jsonb;
   v_name text;
@@ -32,7 +32,7 @@ begin
   end loop;
   return true;
 end;
-$;
+$valid_product_variants$;
 
 alter table public.products drop constraint if exists products_variants_array_check;
 alter table public.products drop constraint if exists products_variants_valid_check;
