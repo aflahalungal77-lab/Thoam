@@ -103,9 +103,6 @@ begin
        or (v_offer.ends_at is not null and now() > v_offer.ends_at) then
       raise exception 'Selected offer is not currently valid.';
     end if;
-    if v_subtotal < coalesce(v_offer.min_order_amount,0) then
-      raise exception 'Order does not meet the selected offer minimum.';
-    end if;
     if coalesce(v_offer.discount_value,0) <= 0
        or (v_offer.discount_type = 'percentage' and v_offer.discount_value > 100) then
       raise exception 'Selected offer has an invalid discount configuration.';
@@ -151,6 +148,9 @@ begin
   end loop;
 
   if p_offer_id is not null then
+    if v_subtotal < coalesce(v_offer.min_order_amount,0) then
+      raise exception 'Order does not meet the selected offer minimum.';
+    end if;
     if v_offer.scope = 'order' then v_eligible_subtotal := v_subtotal; end if;
     if v_eligible_subtotal <= 0 then raise exception 'Your cart has no items eligible for this offer.'; end if;
     if v_offer.discount_type = 'percentage' then
