@@ -52,7 +52,7 @@ export default async function PublicMenuPage({ params }: Props) {
   const { data: products, error: productsError } = await supabase
     .from("products")
     .select(
-      "id, name, description, price, image_url, category, is_available"
+      "id, name, description, price, image_url, category, is_available, variants"
     )
     .eq("restaurant_id", restaurant.id)
     .eq("is_available", true)
