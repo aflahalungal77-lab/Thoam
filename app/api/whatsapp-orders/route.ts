@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       return jsonError("Your cart is empty or invalid.", 400);
     }
 
-    const normalizedItems: { productId: string; quantity: number }[] = [];
+    const normalizedItems: { productId: string; quantity: number; variantName: string | null }[] = [];
 
     for (const item of items) {
       const productId = String(item?.productId ?? "").trim();
@@ -80,7 +80,9 @@ export async function POST(request: Request) {
         return jsonError("One or more cart items are invalid.", 400);
       }
 
-      normalizedItems.push({ productId, quantity });
+      const variantName = item?.variantName == null ? null : String(item.variantName).trim();
+      if (variantName && variantName.length > 40) return jsonError("Invalid product size.", 400);
+      normalizedItems.push({ productId, quantity, variantName });
     }
 
     const supabase = getAdminClient();
@@ -130,7 +132,7 @@ export async function POST(request: Request) {
 
     const { data: products, error: productError } = await supabase
       .from("products")
-      .select("id, name, price, is_available, restaurant_id")
+      .select("id, name, price, is_available, restaurant_id, variants")
       .eq("restaurant_id", restaurant.id)
       .in("id", uniqueProductIds);
 
@@ -151,6 +153,7 @@ export async function POST(request: Request) {
       price: number;
       quantity: number;
       lineTotal: number;
+      variantName: string | null;
     }[] = [];
 
     for (const item of normalizedItems) {
@@ -160,16 +163,22 @@ export async function POST(request: Request) {
         return jsonError("A selected product is unavailable.", 400);
       }
 
-      const price = Number(product.price);
-
-      if (!Number.isFinite(price) || price < 0) {
-        console.error("Invalid product price:", product.id, product.price);
+      const productVariants = Array.isArray((product as any).variants) ? (product as any).variants : [];
+      const variant = item.variantName
+        ? productVariants.find((v: any) => String(v.name).toLowerCase() === item.variantName!.toLowerCase() && v.is_available !== false)
+        : null;
+      if (productVariants.length && !variant) return jsonError("Please select an available size for each item.", 400);
+      if (!productVariants.length && item.variantName) return jsonError("This product does not have size options.", 400);
+      const price = variant ? Number(variant.price) : Number(product.price);
+      if (!Number.isFinite(price) || price <= 0) {
+        console.error("Invalid product price:", product.id, price);
         return jsonError("Invalid product price.", 500);
       }
 
       validatedItems.push({
         productId: product.id,
         name: product.name,
+        variantName: variant?.name || null,
         price,
         quantity: item.quantity,
         lineTotal: Number((price * item.quantity).toFixed(2)),
@@ -315,6 +324,7 @@ export async function POST(request: Request) {
       order_id: order.id,
       product_id: item.productId,
       product_name: item.name,
+      variant_name: item.variantName,
       unit_price: item.price,
       quantity: item.quantity,
       line_total: item.lineTotal,
@@ -350,7 +360,7 @@ export async function POST(request: Request) {
         whatsappNumber: restaurant.whatsapp_number,
         restaurantName: restaurant.name,
         items: validatedItems.map((item) => ({
-          name: item.name,
+          name: item.variantName ? `${item.name} (${item.variantName})` : item.name,
           price: item.price,
           quantity: item.quantity,
         })),
