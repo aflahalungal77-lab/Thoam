@@ -33,7 +33,7 @@ const TIME_ZONE = "Asia/Kolkata";
 type OrderItemRow = { id: string; product_name: string | null; quantity: number | string; unit_price: number | string; line_total: number | string | null };
 type RestaurantOrder = {
   id: string; order_number?: number | string | null; restaurant_id?: string; status?: string | null;
-  total_amount?: number | string | null; created_at?: string | null; order_type?: string | null;
+  total_amount?: number | string | null; created_at?: string; order_type?: string | null;
   payment_status?: string | null; payment_method?: string | null; customer_name?: string | null;
   customer_phone?: string | null; delivery_address?: string | null; notes?: string | null;
   subtotal?: number | string | null; delivery_fee?: number | string | null; platform_fee?: number | string | null;
@@ -623,7 +623,7 @@ const todayRevenue = revenueOrders
               {(selectedOrder.order_items || []).length > 0 ? (
                 <div className="ta-bill-table">
                   <div className="ta-bill-row ta-bill-table-head"><span>Item</span><span>Qty</span><span>Price</span><span>Amount</span></div>
-                  {selectedOrder.order_items.map((item) => (
+                  {(selectedOrder.order_items || []).map((item) => (
                     <div className="ta-bill-row" key={item.id}>
                       <span>{item.product_name || "Item"}</span>
                       <span>{Number(item.quantity || 0)}</span>
