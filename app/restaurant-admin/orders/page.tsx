@@ -245,9 +245,9 @@ const todayRevenue = revenueOrders
     (order) => getStatus(order) === "placed"
   );
 
-  const visibleItems = items.filter(
-    (order) => !isDelivered(getStatus(order))
-  );
+  const visibleItems = filter === "Delivered"
+    ? items.filter((order) => isDelivered(getStatus(order)))
+    : items.filter((order) => !isDelivered(getStatus(order)));
 
   const activeCount = visibleItems.filter(
     (order) => !isCancelled(getStatus(order))
@@ -267,6 +267,9 @@ const todayRevenue = revenueOrders
       order.order_type,
       order.status,
       order.payment_status,
+      order.customer_name,
+      order.customer_phone,
+      order.delivery_address,
     ].some((value) =>
       String(value || "").toLowerCase().includes(query)
     );
@@ -277,7 +280,8 @@ const todayRevenue = revenueOrders
       (filter === "Active" &&
         !isCancelled(status) &&
         status !== "placed") ||
-      (filter === "Cancelled" && isCancelled(status));
+      (filter === "Cancelled" && isCancelled(status)) ||
+      (filter === "Delivered" && isDelivered(status));
 
     return matchesSearch && matchesFilter;
   });
@@ -402,6 +406,7 @@ const todayRevenue = revenueOrders
             <option>{t("New")}</option>
             <option>{t("Active")}</option>
             <option>{t("Cancelled")}</option>
+            <option>{t("Delivered")}</option>
           </select>
         </div>
 
@@ -465,6 +470,13 @@ const todayRevenue = revenueOrders
                   </div>
 
                   <div className="ta-order-meta">
+                    <div className="ta-order-customer">
+                      <span>Customer</span>
+                      <strong>{order.customer_name || "Guest"}</strong>
+                      {order.customer_phone ? (
+                        <a href={`tel:${order.customer_phone}`}>{order.customer_phone}</a>
+                      ) : <small>Phone not provided</small>}
+                    </div>
                     <div>
                       <span>{t("Order type")}</span>
                       <strong>
@@ -672,6 +684,13 @@ const todayRevenue = revenueOrders
         .ta-bill-done{width:100%;margin-top:18px;min-height:43px;border:0;border-radius:10px;background:#171717;color:#fff;font-weight:800;cursor:pointer}
         @media(max-width:520px){.ta-bill-modal{padding:17px;border-radius:14px}.ta-bill-info{gap:11px;padding:12px}.ta-bill-row{grid-template-columns:minmax(0,1.5fr) .35fr .8fr .8fr;gap:5px;font-size:10px}.ta-bill-header h2{font-size:22px}}
         .ta-order-meta>div{min-width:0}
+        .ta-order-customer a{display:inline-flex;width:max-content;max-width:100%;margin-top:3px;color:#176b49;font-size:11px;font-weight:750;text-decoration:none;overflow-wrap:anywhere}
+        .ta-order-customer a:hover{text-decoration:underline}
+        .ta-order-customer small{margin-top:3px;color:#999;font-size:10px}
+        .ta-order-card{transition:border-color .18s ease,box-shadow .18s ease}
+        .ta-order-card:hover{border-color:#cfd8d1;box-shadow:0 12px 30px #102b2010}
+        .ta-order-card-new{border-color:#b9d8c5;background:linear-gradient(135deg,#fff,#f7fbf8)}
+        @media(max-width:640px){.ta-order-customer{grid-column:1/-1;padding:12px;border:1px solid #e8e8e8;border-radius:12px;background:#fafafa}}
         .ta-payment-collect{
           display:inline-flex;align-items:center;justify-content:center;gap:7px;
           min-height:36px;margin-top:9px;padding:0 13px;border:1px solid #171717;
