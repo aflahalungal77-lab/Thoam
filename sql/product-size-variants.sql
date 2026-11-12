@@ -3,7 +3,9 @@
 -- Existing products remain single-price products because variants defaults to an empty array.
 alter table public.products add column if not exists variants jsonb not null default '[]'::jsonb;
 alter table public.order_items add column if not exists variant_name text;
-alter table public.orders add column if not exists discount_amount numeric(10,2) not null default 0 check (discount_amount >= 0);
+alter table public.orders add column if not exists discount_amount numeric(10,2) not null default 0;
+alter table public.orders drop constraint if exists orders_discount_amount_check;
+alter table public.orders add constraint orders_discount_amount_check check (discount_amount >= 0);
 create or replace function public.valid_product_variants(p_variants jsonb)
 returns boolean
 language plpgsql
