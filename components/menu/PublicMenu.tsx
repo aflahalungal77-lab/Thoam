@@ -258,7 +258,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
             Back to menu
           </button>
 
-          <span className="checkout-brand">THO'AM.</span>
+          <span className="checkout-brand">THO&apos;AM.</span>
         </div>
 
         <div className="checkout-container">
@@ -717,7 +717,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
             )}
 
             <div>
-              <strong>THO'AM</strong>
+              <strong>THO&apos;AM</strong>
               <span>{t("ORDER DIRECTLY")}</span>
             </div>
           </div>
@@ -885,7 +885,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
 
               <h3>{t("No dishes found")}</h3>
               <p>
-                We couldn't find anything matching your search.
+                We couldn&apos;t find anything matching your search.
                 Try another dish or category.
               </p>
 
@@ -985,12 +985,12 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
       <footer className="menu-footer">
         <div className="footer-inner">
           <div className="footer-brand">
-            <strong>THO'AM<span>.</span></strong>
+            <strong>THO&apos;AM<span>.</span></strong>
             <p>{t("Good food. Good moments.")}</p>
           </div>
 
           <div className="footer-right">
-            <span>POWERED BY THO'AM</span>
+            <span>POWERED BY THO&apos;AM</span>
             <span>© {new Date().getFullYear()}</span>
           </div>
         </div>
