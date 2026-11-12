@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { ArrowRight, Check, ChevronRight, Clock3, MapPin, PackageCheck, RefreshCw, ShoppingBag, X, CreditCard, Utensils, Truck, CircleCheck } from "lucide-react";
 
 const TZ = "Asia/Kolkata";
+type OrderHistoryEntry = { order_id: string; new_status: string; created_at: string; note?: string | null };
 type Order = {
   id: string; order_number: number | null; status: string; total_amount: number | string;
   created_at: string; updated_at?: string; order_type: string; payment_status: string;
@@ -71,7 +72,7 @@ export default function MyOrders() {
       if (ids.length) {
         const { data: history } = await supabase.from("order_status_history")
           .select("order_id,new_status,created_at,note").in("order_id", ids).order("created_at", { ascending: true });
-        historyByOrder = (history || []).reduce((acc: Record<string, any[]>, item: any) => {
+        historyByOrder = ((history || []) as OrderHistoryEntry[]).reduce((acc: Record<string, OrderHistoryEntry[]>, item) => {
           (acc[item.order_id] ||= []).push(item); return acc;
         }, {});
       }
