@@ -63,12 +63,17 @@ export async function POST(req: NextRequest) {
   const restaurantId = String(body.restaurantId ?? "").trim();
   const tableCode = String(body.tableCode ?? "").trim();
   const notes = String(body.notes ?? "").trim();
+  const offerId = body.offerId == null || body.offerId === "" ? null : String(body.offerId).trim();
 
   const rawItems = Array.isArray(body.items) ? body.items : [];
 
   // 4. Validate restaurant
   if (!uuidPattern.test(restaurantId)) {
     return errorResponse("Invalid restaurant.", 400);
+  }
+
+  if (offerId !== null && !uuidPattern.test(offerId)) {
+    return errorResponse("Invalid offer.", 400);
   }
 
   // 5. Validate table
@@ -149,11 +154,12 @@ export async function POST(req: NextRequest) {
   // 9. Create the dine-in order
   try {
     const { data, error } = await db.rpc(
-      "create_qr_dine_in_order_v2",
+      "create_qr_dine_in_order_v3",
       {
         p_restaurant_id: restaurantId,
         p_table_code: tableCode,
         p_notes: notes,
+        p_offer_id: offerId,
         p_items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
