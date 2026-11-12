@@ -154,8 +154,8 @@ export default function ProductsPage() {
           .filter((v) => v.name && Number.isFinite(v.price) && v.price > 0)
       : [];
     const uniqueVariantNames = new Set(cleanVariants.map((v) => v.name.toLowerCase()));
-    if (useVariants && (cleanVariants.length < 1 || cleanVariants.length !== variants.filter((v) => v.name.trim() || v.price.trim()).length || uniqueVariantNames.size !== cleanVariants.length)) {
-      setMsg("Enter a valid name and price for every size.");
+    if (useVariants && (cleanVariants.length < 1 || cleanVariants.length > 8 || cleanVariants.length !== variants.filter((v) => v.name.trim() || v.price.trim()).length || uniqueVariantNames.size !== cleanVariants.length)) {
+      setMsg("Add 1–8 sizes. Every size needs a unique name and a price greater than zero.");
       return;
     }
     if (!useVariants && (!Number.isFinite(Number(price)) || Number(price) <= 0)) {
@@ -320,27 +320,48 @@ export default function ProductsPage() {
               />
             </label>
 
-            <label className="ta-veg-toggle ta-size-toggle">
-              <input type="checkbox" checked={useVariants} onChange={(e) => setUseVariants(e.target.checked)} />
-              <span className="ta-veg-indicator" />
-              <span><strong>Offer multiple sizes</strong><small>Example: Quarter, Half and Full with separate prices.</small></span>
-            </label>
+            <section className={`ta-size-builder ${useVariants ? "is-active" : ""}`}>
+              <label className="ta-size-builder-toggle">
+                <span className="ta-size-builder-icon"><Package size={18} /></span>
+                <span className="ta-size-builder-copy">
+                  <strong>Offer multiple sizes</strong>
+                  <small>Let customers choose a portion with its own price.</small>
+                </span>
+                <input type="checkbox" checked={useVariants} onChange={(e) => setUseVariants(e.target.checked)} />
+                <span className="ta-size-switch" aria-hidden="true" />
+              </label>
 
-            {useVariants ? (
-              <div className="ta-variant-editor">
-                <div className="ta-variant-heading">
-                  <strong>Size & price options</strong>
-                  <button type="button" onClick={() => setVariants((current) => [...current, { name: "", price: "" }])}>+ Add size</button>
-                </div>
-                {variants.map((variant, index) => (
-                  <div className="ta-variant-row" key={index}>
-                    <input aria-label={`Size ${index + 1} name`} value={variant.name} maxLength={40} onChange={(e) => setVariants((current) => current.map((v, i) => i === index ? { ...v, name: e.target.value } : v))} placeholder="e.g. Half" />
-                    <input aria-label={`Size ${index + 1} price`} type="number" min="0.01" step="0.01" value={variant.price} onChange={(e) => setVariants((current) => current.map((v, i) => i === index ? { ...v, price: e.target.value } : v))} placeholder="Price ₹" />
-                    <button type="button" disabled={variants.length === 1} onClick={() => setVariants((current) => current.filter((_, i) => i !== index))} aria-label="Remove size">×</button>
+              {useVariants && (
+                <div className="ta-size-builder-content">
+                  <div className="ta-size-builder-intro">
+                    <div><strong>Size options</strong><small>Example: Half and Full</small></div>
+                    <span>{variants.length}/8</span>
                   </div>
-                ))}
-              </div>
-            ) : (
+                  <div className="ta-size-rows">
+                    {variants.map((variant, index) => (
+                      <div className="ta-size-row" key={index}>
+                        <span className="ta-size-index">{String(index + 1).padStart(2, "0")}</span>
+                        <label>
+                          <span>SIZE NAME</span>
+                          <input aria-label={`Size ${index + 1} name`} value={variant.name} maxLength={40} onChange={(e) => setVariants((current) => current.map((v, i) => i === index ? { ...v, name: e.target.value } : v))} placeholder="e.g. Half" />
+                        </label>
+                        <label className="ta-size-price-field">
+                          <span>PRICE (₹)</span>
+                          <input aria-label={`Size ${index + 1} price`} type="number" min="0.01" step="0.01" value={variant.price} onChange={(e) => setVariants((current) => current.map((v, i) => i === index ? { ...v, price: e.target.value } : v))} placeholder="180" />
+                        </label>
+                        <button className="ta-size-remove" type="button" disabled={variants.length === 1} onClick={() => setVariants((current) => current.filter((_, i) => i !== index))} aria-label={`Remove ${variant.name || "size"}`}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                  <button className="ta-size-add" type="button" disabled={variants.length >= 8} onClick={() => setVariants((current) => [...current, { name: "", price: "" }])}><Plus size={15} /> Add another size</button>
+                  <div className="ta-size-preview">
+                    <span>Customer sees</span>
+                    <strong>{variants.filter((v) => v.name.trim() && Number(v.price) > 0).length ? variants.filter((v) => v.name.trim() && Number(v.price) > 0).map((v) => `${v.name.trim()} · ₹${Number(v.price).toLocaleString("en-IN")}`).join("  /  ") : "Your size and price options will appear here"}</strong>
+                  </div>
+                </div>
+              )}
+            </section>
+            {!useVariants ? (
               <label className="ta-field">
                 Price (₹)
                 <input required type="number" min="0.01" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="180" />
