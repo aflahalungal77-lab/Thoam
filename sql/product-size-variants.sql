@@ -50,7 +50,7 @@ create or replace function public.create_cod_delivery_order(
   p_delivery_address text,
   p_notes text,
   p_items jsonb,
-  p_offer_id uuid
+  p_offer_id uuid default null
 ) returns jsonb
 language plpgsql
 security definer
@@ -68,6 +68,7 @@ declare
   v_raw_discount numeric(10,2) := 0;
   v_total numeric(10,2);
   v_offer public.offers%rowtype;
+  v_offer_title text := null;
   v_item jsonb;
   v_product public.products%rowtype;
   v_variant jsonb;
@@ -97,6 +98,9 @@ begin
   if p_offer_id is not null then
     select * into v_offer from public.offers
     where id = p_offer_id and restaurant_id = p_restaurant_id
+      and is_active = true
+      and (starts_at is null or starts_at <= now())
+      and (ends_at is null or ends_at > now())
     for share;
     if not found or not v_offer.is_active then raise exception 'Selected offer is no longer available.'; end if;
     if (v_offer.starts_at is not null and now() < v_offer.starts_at)
@@ -107,6 +111,7 @@ begin
        or (v_offer.discount_type = 'percentage' and v_offer.discount_value > 100) then
       raise exception 'Selected offer has an invalid discount configuration.';
     end if;
+    v_offer_title := v_offer.title;
   end if;
 
   for v_item in select value from jsonb_array_elements(p_items)
@@ -142,7 +147,7 @@ begin
     end if;
     v_subtotal := v_subtotal + v_unit_price * v_qty;
     if p_offer_id is not null and v_offer.scope = 'products'
-       and coalesce(to_jsonb(v_offer.product_ids),'[]'::jsonb) @> jsonb_build_array(v_product.id::text) then
+       and v_product.id = any(v_offer.product_ids) then
       v_eligible_subtotal := v_eligible_subtotal + v_unit_price * v_qty;
     end if;
   end loop;
@@ -169,11 +174,14 @@ begin
 
   insert into public.orders (
     customer_id, restaurant_id, order_type, status, payment_method, payment_status,
-    customer_name, customer_phone, delivery_address, notes, subtotal, discount_amount, delivery_fee, platform_fee, total_amount
+    customer_name, customer_phone, delivery_address, notes, subtotal, discount_amount, delivery_fee, platform_fee, offer_id, offer_title, total_amount
   ) values (
     p_customer_id, p_restaurant_id, 'delivery', 'placed', 'cod', 'pending',
     trim(p_customer_name), trim(p_customer_phone), trim(p_delivery_address), nullif(trim(coalesce(p_notes,'')),''),
-    v_subtotal, v_discount_amount, v_delivery_fee, v_platform_fee, v_total
+    v_subtotal, v_discount_amount, v_delivery_fee, v_platform_fee,
+    case when v_discount_amount > 0 then p_offer_id else null end,
+    case when v_discount_amount > 0 then v_offer_title else null end,
+    v_total
   ) returning id, order_number into v_order_id, v_order_number;
 
   for v_item in select value from jsonb_array_elements(p_items)
@@ -197,11 +205,10 @@ begin
   insert into public.order_status_history(order_id, old_status, new_status, changed_by, note)
   values (v_order_id, null, 'placed', p_customer_id, 'Customer placed COD delivery order');
 
-  return jsonb_build_object('id',v_order_id,'order_number',v_order_number,'discount_amount',v_discount_amount,'total_amount',v_total,'status','placed','created_at',now());
+  return jsonb_build_object('id',v_order_id,'order_number',v_order_number,'discount_amount',v_discount_amount,'offer_title',v_offer_title,'total_amount',v_total,'status','placed','created_at',now());
 end;
 $$;
 
-revoke all on function public.create_cod_delivery_order(uuid,uuid,text,text,text,text,jsonb) from public, anon, authenticated, service_role;
 revoke all on function public.create_cod_delivery_order(uuid,uuid,text,text,text,text,jsonb,uuid) from public, anon, authenticated;
 grant execute on function public.create_cod_delivery_order(uuid,uuid,text,text,text,text,jsonb,uuid) to service_role;
 
