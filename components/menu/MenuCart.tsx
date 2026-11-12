@@ -35,10 +35,10 @@ export default function MenuCart({ items, onIncrease, onDecrease, onCheckout }: 
         <>
           <div className="cart-items">
             {items.map(({ product, quantity }) => (
-              <div className="cart-item" key={product.id}>
-                <div className="item-details"><p className="item-name" title={product.name}>{product.name}</p><p className="item-price">₹{Number(product.price).toFixed(2)} {t("each")}</p><p className="item-line-total">₹{(Number(product.price) * quantity).toFixed(2)}</p></div>
+              <div className="cart-item" key={product.cartKey || product.id}>
+                <div className="item-details"><p className="item-name" title={product.name}>{product.name}{product.variantName ? ` · ${product.variantName}` : ""}</p><p className="item-price">₹{Number(product.price).toFixed(2)} {t("each")}</p><p className="item-line-total">₹{(Number(product.price) * quantity).toFixed(2)}</p></div>
                 <div className="quantity-control" aria-label={`Quantity of ${product.name}`}>
-                  <button type="button" onClick={() => onDecrease(product.id)} aria-label={`Remove one ${product.name}`}>−</button><span aria-live="polite">{quantity}</span><button type="button" onClick={() => onIncrease(product)} aria-label={`Add one ${product.name}`}>+</button>
+                  <button type="button" onClick={() => onDecrease(product.cartKey || product.id)} aria-label={`Remove one ${product.name}`}>−</button><span aria-live="polite">{quantity}</span><button type="button" onClick={() => onIncrease(product)} aria-label={`Add one ${product.name}`}>+</button>
                 </div>
               </div>
             ))}
