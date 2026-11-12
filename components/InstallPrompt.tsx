@@ -3,10 +3,7 @@
 import { useEffect, useState } from "react";
 import { Download, Globe, X, Smartphone, Zap, ShieldCheck } from "lucide-react";
 
-type BeforeInstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
-};
+type BeforeInstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }> };
 
 export default function InstallPrompt({
   audience,

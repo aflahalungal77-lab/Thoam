@@ -9,6 +9,7 @@ type InputItem = {
   productId: string;
   quantity: number;
   specialInstructions?: string;
+  variantName?: string;
 };
 
 type OrderResult = {
@@ -62,12 +63,17 @@ export async function POST(req: NextRequest) {
   const restaurantId = String(body.restaurantId ?? "").trim();
   const tableCode = String(body.tableCode ?? "").trim();
   const notes = String(body.notes ?? "").trim();
+  const offerId = body.offerId == null || body.offerId === "" ? null : String(body.offerId).trim();
 
   const rawItems = Array.isArray(body.items) ? body.items : [];
 
   // 4. Validate restaurant
   if (!uuidPattern.test(restaurantId)) {
     return errorResponse("Invalid restaurant.", 400);
+  }
+
+  if (offerId !== null && !uuidPattern.test(offerId)) {
+    return errorResponse("Invalid offer.", 400);
   }
 
   // 5. Validate table
@@ -117,20 +123,23 @@ export async function POST(req: NextRequest) {
       return errorResponse("Invalid product or quantity.", 400);
     }
 
-    if (seen.has(productId)) {
+    const specialInstructions = String(item.specialInstructions ?? "").trim();
+    const variantName = item.variantName == null ? "" : String(item.variantName).trim();
+    if (variantName.length > 40) return errorResponse("Invalid product size.", 400);
+
+    const itemKey = `${productId}::${variantName.toLowerCase()}`;
+    if (seen.has(itemKey)) {
       return errorResponse(
         "Duplicate products in cart. Please refresh the menu.",
         400
       );
     }
-
-    const specialInstructions = String(item.specialInstructions ?? "").trim();
     if (specialInstructions.length > 300) {
       return errorResponse("Item instructions must be under 300 characters.", 400);
     }
 
-    seen.add(productId);
-    items.push({ productId, quantity, specialInstructions });
+    seen.add(itemKey);
+    items.push({ productId, quantity, specialInstructions, variantName: variantName || undefined });
   }
 
   // 8. Create server-side Supabase client
@@ -145,15 +154,17 @@ export async function POST(req: NextRequest) {
   // 9. Create the dine-in order
   try {
     const { data, error } = await db.rpc(
-      "create_qr_dine_in_order_v2",
+      "create_qr_dine_in_order_v3",
       {
         p_restaurant_id: restaurantId,
         p_table_code: tableCode,
         p_notes: notes,
+        p_offer_id: offerId,
         p_items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
           specialInstructions: item.specialInstructions || "",
+          variantName: item.variantName || null,
         })),
       }
     );
@@ -168,6 +179,10 @@ export async function POST(req: NextRequest) {
       });
 
       const message = error.message ?? "";
+
+      if (/offer|discount|minimum|eligible/i.test(message)) {
+        return errorResponse("This offer is no longer valid for your cart. Please update your offer selection.", 409);
+      }
 
       const unavailable =
         /closed|unavailable|inactive|invalid|not enough stock|disabled/i.test(

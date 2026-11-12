@@ -124,8 +124,10 @@ export default function WhatsAppOrderForm({ loading, onSubmit, onCancel }: Props
       </div>
 
       <style jsx>{`
-        .customer-form{padding:22px;border:1px solid #e5e9e5;border-radius:20px;background:#fff;box-shadow:0 12px 32px rgb(20 40 25 / 5%);color:#17231c;font-family:Arial,Helvetica,sans-serif}
-        .form-heading{margin-bottom:18px}
+        .customer-form{padding:25px;border:1px solid #e5e9e5;border-radius:22px;background:linear-gradient(180deg,#fff 0%,#fdfefd 100%);box-shadow:0 18px 48px rgb(20 40 25 / 7%);color:#17231c;font-family:Arial,Helvetica,sans-serif}
+        .customer-form:before{display:block;width:42px;height:4px;margin:0 auto 20px;border-radius:99px;background:#e5e9e5;content:""}
+        .form-heading{margin-bottom:20px}
+        .form-heading:before{display:inline-flex;align-items:center;margin-bottom:10px;padding:6px 9px;border:1px solid #dcebe0;border-radius:99px;background:#f1f8f3;color:#26794a;font-size:8px;font-weight:900;letter-spacing:.12em;content:"STEP 2 OF 2 · ORDER DETAILS"}
         .form-eyebrow{color:#16834b;font-size:9px;font-weight:900;letter-spacing:.18em}
         .form-heading h2{margin-top:7px;font-size:20px;font-weight:850;letter-spacing:-.7px;line-height:1.25}
         .form-heading h2 span{color:#65736a}
@@ -134,7 +136,7 @@ export default function WhatsAppOrderForm({ loading, onSubmit, onCancel }: Props
         .form-field{display:grid;gap:6px;margin-top:13px;min-width:0}
         .form-field label,.order-type-field legend{color:#34443a;font-size:11px;font-weight:800}
         .form-field label span{margin-left:5px;color:#929d95;font-size:9px;font-weight:600}
-        .form-field input,.form-field textarea{width:100%;min-height:43px;padding:10px 12px;border:1px solid #dfe7e1;border-radius:10px;outline:none;background:#f9fbf9;color:#1e2b22;font:inherit;font-size:12px;line-height:1.45;transition:border-color .18s,box-shadow .18s,background .18s}
+        .form-field input,.form-field textarea{width:100%;min-height:47px;padding:11px 13px;border:1px solid #dfe7e1;border-radius:11px;outline:none;background:#f9fbf9;color:#1e2b22;font:inherit;font-size:12px;line-height:1.45;transition:border-color .18s,box-shadow .18s,background .18s}
         .form-field textarea{min-height:58px;resize:vertical}
         .form-field input::placeholder,.form-field textarea::placeholder{color:#a0aaa3}
         .form-field input:focus,.form-field textarea:focus{border-color:#2b9b60;background:#fff;box-shadow:0 0 0 3px rgb(43 155 96 / 11%)}
@@ -152,7 +154,7 @@ export default function WhatsAppOrderForm({ loading, onSubmit, onCancel }: Props
         .selected .radio-mark{border-color:#16834b}
         .selected .radio-mark:after{position:absolute;inset:3px;border-radius:50%;background:#16834b;content:""}
         .form-actions{display:grid;grid-template-columns:1fr auto;gap:9px;margin-top:18px}
-        .submit-button{display:flex;min-height:48px;align-items:center;justify-content:space-between;gap:10px;padding:0 15px;border:1px solid #16834b;border-radius:11px;background:#16834b;color:#fff;font-size:12px;font-weight:850;box-shadow:0 6px 14px rgb(22 131 75 / 18%);transition:background .18s,transform .18s,box-shadow .18s}
+        .submit-button{display:flex;min-height:52px;align-items:center;justify-content:space-between;gap:10px;padding:0 17px;border:1px solid #16834b;border-radius:12px;background:linear-gradient(135deg,#16834b,#0e6b3a);color:#fff;font-size:12px;font-weight:900;box-shadow:0 8px 18px rgb(22 131 75 / 20%);transition:background .18s,transform .18s,box-shadow .18s}
         .submit-button:hover:not(:disabled){transform:translateY(-1px);background:#116b3d;box-shadow:0 8px 18px rgb(22 131 75 / 22%)}
         .submit-button:disabled{cursor:wait;opacity:.65}
         .submit-arrow{font-size:19px;font-weight:400}
@@ -164,7 +166,7 @@ export default function WhatsAppOrderForm({ loading, onSubmit, onCancel }: Props
         .whatsapp-notice>span{display:grid;width:18px;height:18px;flex-shrink:0;place-items:center;border-radius:50%;background:#e7f5eb;color:#16834b;font-size:10px;font-weight:900}
         .whatsapp-notice p{color:#7c8980;font-size:10px;line-height:1.6}
         .whatsapp-notice strong{color:#53645a}
-        @media(max-width:520px){.customer-form{padding:17px;border-radius:16px}.form-grid{grid-template-columns:1fr;gap:0}.form-field{margin-top:11px}.form-heading h2{font-size:18px}.order-type-option{gap:6px;padding:8px}.option-icon{width:28px;height:28px}.form-actions{grid-template-columns:1fr}.cancel-button{min-height:42px}}
+        @media(max-width:520px){.customer-form{padding:18px;border-radius:18px}.customer-form:before{margin-bottom:16px}.form-grid{grid-template-columns:1fr;gap:0}.form-field{margin-top:11px}.form-heading h2{font-size:18px}.order-type-option{gap:6px;padding:8px}.option-icon{width:28px;height:28px}.form-actions{grid-template-columns:1fr}.cancel-button{min-height:42px}}
         @media(prefers-reduced-motion:reduce){.customer-form *{transition:none!important}}
       `}</style>
     </form>

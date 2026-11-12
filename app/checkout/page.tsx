@@ -21,10 +21,10 @@ import {
   UtensilsCrossed, Wallet, XCircle, Tag, Percent
 } from "lucide-react";
 
-type CheckoutProduct = { id: string; name: string; price: number | string; image_url: string | null; is_available: boolean; };
-
 type Item = {
   id: string;
+  productId: string;
+  variantName: string;
   name: string;
   price: number;
   image_url?: string | null;
@@ -40,6 +40,9 @@ type Restaurant = {
   delivery_fee: number | null;
   status: string;
 };
+
+type CheckoutProductVariant = { name: string; price: number | string; is_available?: boolean | null };
+type CheckoutProduct = { id: string; name: string; image_url?: string | null; is_available: boolean; price: number | string; variants?: CheckoutProductVariant[] | null };
 
 type Offer = {
   id: string;
@@ -73,7 +76,7 @@ function calculateOffer(offer: Offer, items: Item[], subtotal: number) {
 
   if (offer.scope === "products") {
     eligible = items.reduce((sum, item) => {
-      return offer.product_ids?.includes(item.id)
+      return offer.product_ids?.includes(item.productId)
         ? sum + item.price * item.quantity
         : sum;
     }, 0);
@@ -216,7 +219,11 @@ function CheckoutInner() {
           return;
         }
 
-        const productIds = cartEntries.map(([id]) => id);
+        const parsedEntries = cartEntries.map(([key, quantity]) => {
+          const separator = key.indexOf("::");
+          return { key, productId: separator >= 0 ? key.slice(0, separator) : key, variantName: separator >= 0 ? key.slice(separator + 2) : "", quantity: Number(quantity) };
+        });
+        const productIds = [...new Set(parsedEntries.map((entry) => entry.productId))];
 
         const [
           { data: products, error: productsError },
@@ -224,7 +231,7 @@ function CheckoutInner() {
         ] = await Promise.all([
           supabase
             .from("products")
-            .select("id,name,price,image_url,is_available,restaurant_id")
+            .select("id,name,price,image_url,is_available,restaurant_id,variants")
             .eq("restaurant_id", restaurantData.id)
             .in("id", productIds),
 
@@ -247,20 +254,27 @@ function CheckoutInner() {
 
         if (!active) return;
 
-        const availableProducts = ((products || []) as CheckoutProduct[])
-          .filter((product) => product.is_available)
-          .map((product) => ({
-            id: product.id,
+        const availableProducts = parsedEntries.flatMap((entry) => {
+          const product = (products || []).find((candidate) => candidate.id === entry.productId) as CheckoutProduct | undefined;
+          if (!product || !product.is_available || entry.quantity <= 0) return [];
+          const variant = entry.variantName
+            ? (product.variants || []).find((v: CheckoutProductVariant) => String(v.name).toLowerCase() === entry.variantName.toLowerCase() && v.is_available !== false)
+            : null;
+          if (entry.variantName && !variant) return [];
+          if (!entry.variantName && (product.variants || []).length > 0) return [];
+          const price = variant ? Number(variant.price) : Number(product.price);
+          return [{
+            id: entry.key,
+            productId: product.id,
+            variantName: variant?.name || "",
             name: product.name,
-            price: Number(product.price),
+            price,
             image_url: product.image_url || null,
-            quantity: Number(parsedCart[product.id] || 0),
-          }))
-          .filter((product: Item) =>
-            product.quantity > 0 &&
-            Number.isFinite(product.price) &&
-            product.price >= 0
-          );
+            quantity: entry.quantity,
+          }];
+        }).filter((product: Item) =>
+          product.quantity > 0 && Number.isFinite(product.price) && product.price > 0
+        );
 
         setRestaurant(restaurantData as Restaurant);
         setItems(availableProducts);
@@ -368,7 +382,8 @@ function CheckoutInner() {
           notes: notes.trim(),
           offerId: bestOffer?.offer.id || null,
           items: items.map((item) => ({
-            productId: item.id,
+            productId: item.productId,
+            variantName: item.variantName || null,
             quantity: item.quantity,
           })),
         }),
@@ -510,7 +525,7 @@ function CheckoutInner() {
                       {item.image_url ? <img src={item.image_url} alt={item.name} /> : <UtensilsCrossed size={20} />}
                     </div>
                     <div className="tc-product">
-                      <strong>{item.name}</strong>
+                      <strong>{item.name}{item.variantName ? ` · ${item.variantName}` : ""}</strong>
                       <small>{formatPrice(item.price)} each</small>
                       <div className="tc-quantity">
                         <button type="button" onClick={() => updateQuantity(item.id, -1)} aria-label={`Decrease ${item.name}`}><Minus size={13} /></button>

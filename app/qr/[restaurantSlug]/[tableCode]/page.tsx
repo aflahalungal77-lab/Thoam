@@ -1,11 +1,11 @@
 
 "use client";
 
+import Link from "next/link";
 import { useLanguage } from "@/components/LanguageProvider";
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import type { FoodProduct, Restaurant } from "@/lib/types";
@@ -32,6 +32,8 @@ type PlacedOrder = {
   id?: string;
   order_number?: number | string;
   total_amount?: number | string;
+  discount_amount?: number | string;
+  offer_title?: string | null;
   status?: string;
 };
 
@@ -71,7 +73,11 @@ export default function QRMenu() {
 
   const [items, setItems] = useState<FoodProduct[]>([]);
   const [offers, setOffers] = useState<QROffer[]>([]);
+  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
   const [qty, setQty] = useState<Record<string, number>>({});
+  const [selectedProduct, setSelectedProduct] = useState<FoodProduct | null>(null);
+  const [selectedVariantName, setSelectedVariantName] = useState("");
+  const [variantQuantity, setVariantQuantity] = useState(1);
 
   const [notes, setNotes] = useState("");
   const [itemNotes, setItemNotes] = useState<Record<string, string>>({});
@@ -154,7 +160,7 @@ export default function QRMenu() {
           supabase
             .from("products")
             .select(
-              "id,restaurant_id,name,description,price,image_url,category,is_veg,is_available"
+              "id,restaurant_id,name,description,price,image_url,category,is_veg,is_available,variants"
             )
             .eq("restaurant_id", rest.id)
             .eq("is_available", true)
@@ -171,7 +177,6 @@ export default function QRMenu() {
 
         if (productsError) throw productsError;
         if (offersError) {
-          // Offers are optional: never block the menu if the offers query is unavailable.
           console.warn("QR offers could not be loaded:", offersError.message);
         }
 
@@ -238,20 +243,43 @@ export default function QRMenu() {
     return matchesSearch && matchesCategory;
   });
 
-  const selectedItems = items.filter(
-    (p) => (qty[p.id] || 0) > 0
+  const selectedItems = items.flatMap((product) => {
+    if (product.variants?.length) return product.variants.map((variant) => {
+      const key = `${product.id}::${variant.name}`;
+      return { ...product, cartKey: key, variantName: variant.name, price: Number(variant.price), quantity: qty[key] || 0 };
+    }).filter((item) => item.quantity > 0);
+    return qty[product.id] > 0 ? [{ ...product, cartKey: product.id, variantName: "", quantity: qty[product.id] }] : [];
+  });
+  const total = selectedItems.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
+  const cartCount = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
+  const now = Date.now();
+  const activeOffers = offers.filter((offer) =>
+    (!offer.starts_at || new Date(offer.starts_at).getTime() <= now) &&
+    (!offer.ends_at || new Date(offer.ends_at).getTime() > now)
   );
-
-  const total = selectedItems.reduce(
-    (sum, p) =>
-      sum + Number(p.price) * (qty[p.id] || 0),
-    0
-  );
-
-  const cartCount = selectedItems.reduce(
-    (sum, item) => sum + (qty[item.id] || 0),
-    0
-  );
+  const selectedOffer = activeOffers.find((offer) => offer.id === selectedOfferId) ?? null;
+  const selectedOfferEligibleSubtotal = selectedOffer
+    ? selectedOffer.scope === "order"
+      ? total
+      : selectedItems.reduce((sum, item) =>
+          (selectedOffer.product_ids ?? []).includes(item.id)
+            ? sum + Number(item.price) * item.quantity
+            : sum, 0)
+    : 0;
+  const offerMinimumMet = !!selectedOffer && total >= Number(selectedOffer.min_order_amount || 0);
+  const offerHasEligibleItems = !!selectedOffer && selectedOfferEligibleSubtotal > 0;
+  const rawOfferDiscount = selectedOffer && offerMinimumMet && offerHasEligibleItems
+    ? selectedOffer.discount_type === "percentage"
+      ? selectedOfferEligibleSubtotal * Number(selectedOffer.discount_value) / 100
+      : Number(selectedOffer.discount_value)
+    : 0;
+  const discountAmount = selectedOffer
+    ? Math.round(Math.min(
+        selectedOfferEligibleSubtotal,
+        selectedOffer.max_discount == null ? rawOfferDiscount : Math.min(rawOfferDiscount, Number(selectedOffer.max_discount))
+      ) * 100) / 100
+    : 0;
+  const payableTotal = Math.max(0, total - discountAmount);
 
   function changeQty(id: string, amount: number) {
     setQty((current) => ({
@@ -324,10 +352,12 @@ export default function QRMenu() {
           restaurantId: r.id,
           tableCode,
           notes: notes.trim(),
+          offerId: discountAmount > 0 ? selectedOfferId : null,
           items: selectedItems.map((p) => ({
             productId: p.id,
-            quantity: qty[p.id],
-            specialInstructions: (itemNotes[p.id] || "").trim(),
+            variantName: p.variantName || null,
+            quantity: p.quantity,
+            specialInstructions: (itemNotes[p.cartKey] || "").trim(),
           })),
         }),
       });
@@ -371,36 +401,7 @@ export default function QRMenu() {
           aria-label="Tho'am home"
         >
           {r?.logo_url ? (
-            <span
-              className="premium-logo-frame"
-              style={{
-                position: "relative",
-                display: "block",
-                width: 48,
-                height: 48,
-                minWidth: 48,
-                flex: "0 0 48px",
-                overflow: "hidden",
-                borderRadius: 12,
-              }}
-            >
-              <Image
-                src={r.logo_url}
-                alt={`${r.name} logo`}
-                width={48}
-                height={48}
-                unoptimized
-                className="premium-logo-image"
-                style={{
-                  display: "block",
-                  width: 48,
-                  height: 48,
-                  maxWidth: 48,
-                  maxHeight: 48,
-                  objectFit: "contain",
-                }}
-              />
-            </span>
+            <img src={r.logo_url} alt={`${r.name} logo`} className="premium-restaurant-logo" />
           ) : (
             <span className="premium-brand-mark">T.</span>
           )}
@@ -492,6 +493,13 @@ export default function QRMenu() {
               <strong>{t("Cash at restaurant")}</strong>
             </div>
 
+            {Number(placedOrder.discount_amount || 0) > 0 && (
+              <div className="receipt-row">
+                <span>{placedOrder.offer_title || "Offer discount"}</span>
+                <strong>−₹{Number(placedOrder.discount_amount).toFixed(2)}</strong>
+              </div>
+            )}
+
             <div className="receipt-total">
               <span>{t("Total amount")}</span>
               <strong>
@@ -581,7 +589,7 @@ export default function QRMenu() {
 
           <section className="premium-menu-content">
             {/* ACTIVE RESTAURANT OFFERS */}
-            {offers.length > 0 && (
+            {activeOffers.length > 0 && (
               <section className="qr-offers-section" aria-labelledby="qr-offers-title">
                 <div className="qr-offers-heading">
                   <div>
@@ -592,12 +600,12 @@ export default function QRMenu() {
                     <p>Explore current deals from {r.name}.</p>
                   </div>
                   <span className="qr-offers-count">
-                    {offers.length.toString().padStart(2, "0")} ACTIVE
+                    {activeOffers.length.toString().padStart(2, "0")} ACTIVE
                   </span>
                 </div>
 
                 <div className="qr-offers-grid">
-                  {offers.map((offer) => {
+                  {activeOffers.map((offer) => {
                     const discountLabel =
                       offer.discount_type === "percentage"
                         ? `${Number(offer.discount_value)}% OFF`
@@ -677,6 +685,14 @@ export default function QRMenu() {
                           <p className="qr-offer-note">
                             Offer details are subject to the restaurant&apos;s terms.
                           </p>
+                          <button
+                            type="button"
+                            className={selectedOfferId === offer.id ? "qr-offer-apply is-selected" : "qr-offer-apply"}
+                            disabled={total < Number(offer.min_order_amount || 0) || (offer.scope === "products" && !selectedItems.some((item) => (offer.product_ids ?? []).includes(item.id)))}
+                            onClick={() => setSelectedOfferId((current) => current === offer.id ? null : offer.id)}
+                          >
+                            {selectedOfferId === offer.id ? "Remove offer" : "Apply offer"}
+                          </button>
                         </div>
                       </article>
                     );
@@ -917,7 +933,7 @@ export default function QRMenu() {
             ) : (
               <div className="premium-food-grid">
                 {filteredItems.map((p, index) => {
-                  const count = qty[p.id] || 0;
+                  const count = (qty[p.id] || 0) + Object.entries(qty).filter(([key]) => key.startsWith(`${p.id}::`)).reduce((sum, [, value]) => sum + Number(value || 0), 0);
 
                   return (
                     <article
@@ -962,17 +978,15 @@ export default function QRMenu() {
 
                         <div className="premium-food-bottom">
                           <strong className="premium-food-price">
-                            ₹{Number(p.price).toFixed(0)}
+                            {p.variants?.length ? "From " : ""}₹{Number(p.variants?.length ? Math.min(...p.variants.map((v) => Number(v.price))) : p.price).toFixed(0)}
                           </strong>
 
-                          {count === 0 ? (
-                            <button
-                              className="premium-add-button"
-                              onClick={() =>
-                                changeQty(p.id, 1)
-                              }
-                              aria-label={`Add ${p.name} to your order`}
-                            >
+                          {p.variants?.length ? (
+                            <button className="premium-add-button" onClick={() => { setSelectedProduct(p); setSelectedVariantName(p.variants?.find((variant) => variant.is_available !== false)?.name || ""); setVariantQuantity(1); }}>
+                              {count ? "ADD MORE" : "CHOOSE SIZE"} <Plus size={15} />
+                            </button>
+                          ) : count === 0 ? (
+                            <button className="premium-add-button" onClick={() => changeQty(p.id, 1)} aria-label={`Add ${p.name} to your order`}>
                               ADD <Plus size={15} />
                             </button>
                           ) : (
@@ -1007,6 +1021,18 @@ export default function QRMenu() {
               </div>
             )}
 
+            {selectedProduct && (
+              <div className="thoam-variant-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedProduct(null); }}>
+                <section className="thoam-variant-modal" role="dialog" aria-modal="true" aria-labelledby="qr-variant-title">
+                  <button type="button" className="thoam-variant-close" onClick={() => setSelectedProduct(null)} aria-label="Close"><X size={19} /></button>
+                  {selectedProduct.image_url ? <img src={selectedProduct.image_url} alt={selectedProduct.name} /> : <div className="thoam-variant-image-placeholder"><UtensilsCrossed size={30} /></div>}
+                  <span className="premium-kicker">CHOOSE YOUR PORTION</span><h2 id="qr-variant-title">{selectedProduct.name}</h2>
+                  <div className="thoam-variant-options">{(selectedProduct.variants || []).filter((variant) => variant.is_available !== false).map((variant) => <button type="button" key={variant.name} className={selectedVariantName === variant.name ? "selected" : ""} onClick={() => setSelectedVariantName(variant.name)}><strong>{variant.name}</strong><b>₹{Number(variant.price).toFixed(0)}</b></button>)}</div>
+                  <div className="thoam-variant-bottom"><div className="premium-quantity"><button type="button" onClick={() => setVariantQuantity((n) => Math.max(1,n-1))}><Minus size={14}/></button><strong>{variantQuantity}</strong><button type="button" onClick={() => setVariantQuantity((n) => Math.min(50,n+1))}><Plus size={14}/></button></div><button type="button" className="premium-button premium-button-black" onClick={() => { if (selectedProduct && selectedVariantName) { changeQty(`${selectedProduct.id}::${selectedVariantName}`, variantQuantity); setSelectedProduct(null); } }}>Done · Add <ArrowRight size={16}/></button></div>
+                </section>
+              </div>
+            )}
+
             {/* CHECKOUT */}
             {cartCount > 0 && (
               <section
@@ -1033,31 +1059,33 @@ export default function QRMenu() {
                   </div>
 
                   <strong className="checkout-total">
-                    ₹{total.toFixed(2)}
+                    ₹{payableTotal.toFixed(2)}
                   </strong>
                 </div>
 
+                <div className="qr-checkout-offer">
+                  {selectedOfferId && !selectedOffer ? (
+                    <p className="qr-offer-feedback">This offer is no longer active. Choose another offer.</p>
+                  ) : selectedOffer ? (
+                    <>
+                      <div><Tag size={15}/><span><strong>{selectedOffer.title}</strong><small>{offerMinimumMet && offerHasEligibleItems ? "Offer applied to this order" : "Add eligible items or meet the minimum order"}</small></span></div>
+                      <button type="button" onClick={() => setSelectedOfferId(null)}>Remove</button>
+                    </>
+                  ) : (
+                    <span><Tag size={15}/> Have an offer? Select one above.</span>
+                  )}
+                </div>
                 <div className="checkout-items">
                   {selectedItems.map((p) => (
                     <div
                       className="checkout-item"
-                      key={p.id}
+                      key={p.cartKey}
                     >
                       <div>
-                        <strong>{p.name}</strong>
-
-                        <span>
-                          ₹{Number(p.price).toFixed(2)} ×{" "}
-                          {qty[p.id]}
-                        </span>
+                        <strong>{p.name}{p.variantName ? ` · ${p.variantName}` : ""}</strong>
+                        <span>₹{Number(p.price).toFixed(2)} × {p.quantity}</span>
                       </div>
-
-                      <strong>
-                        ₹
-                        {(
-                          Number(p.price) * qty[p.id]
-                        ).toFixed(2)}
-                      </strong>
+                      <strong>₹{(Number(p.price) * p.quantity).toFixed(2)}</strong>
                     </div>
                   ))}
                 </div>
@@ -1069,12 +1097,12 @@ export default function QRMenu() {
                   </div>
 
                   {selectedItems.map((p) => (
-                    <label className="premium-field notes-field" key={p.id}>
-                      <span>{p.name} · Special instruction</span>
+                    <label className="premium-field notes-field" key={p.cartKey}>
+                      <span>{p.name}{p.variantName ? ` · ${p.variantName}` : ""} · Special instruction</span>
                       <textarea
                         maxLength={300}
-                        value={itemNotes[p.id] || ""}
-                        onChange={(e) => setItemNotes((current) => ({ ...current, [p.id]: e.target.value }))}
+                        value={itemNotes[p.cartKey] || ""}
+                        onChange={(e) => setItemNotes((current) => ({ ...current, [p.cartKey]: e.target.value }))}
                         placeholder={t("Less spicy, no onions, etc. (optional)")}
                         rows={2}
                       />
@@ -1102,7 +1130,13 @@ export default function QRMenu() {
                     </p>
                   )}
 
-                  <div className="checkout-payment">
+                  <div className="qr-checkout-totals">
+                  <div><span>Subtotal</span><strong>₹{total.toFixed(2)}</strong></div>
+                  {discountAmount > 0 && <div className="qr-discount-line"><span>{selectedOffer?.title || "Offer discount"}</span><strong>−₹{discountAmount.toFixed(2)}</strong></div>}
+                  <div className="qr-payable-line"><span>To pay at restaurant</span><strong>₹{payableTotal.toFixed(2)}</strong></div>
+                </div>
+
+                <div className="checkout-payment">
                     <div className="cash-symbol">₹</div>
 
                     <div>
@@ -1117,7 +1151,7 @@ export default function QRMenu() {
 
                   <button
                     className="premium-button premium-button-black place-order-button"
-                    disabled={total <= 0 || submitting}
+                    disabled={payableTotal <= 0 || submitting || (!!selectedOfferId && (!selectedOffer || !offerMinimumMet || !offerHasEligibleItems))}
                     onClick={order}
                   >
                     {submitting ? (
@@ -1208,6 +1242,17 @@ export default function QRMenu() {
 
       {/* INTERNAL CSS */}
       <style jsx>{`
+.thoam-variant-backdrop{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:18px;background:#0009;backdrop-filter:blur(5px)}
+.thoam-variant-modal{position:relative;width:min(100%,430px);padding:22px;border-radius:20px;background:#fff;color:#111;box-shadow:0 25px 80px #0004}
+.thoam-variant-modal>img,.thoam-variant-image-placeholder{width:100%;height:180px;object-fit:cover;border-radius:13px;margin-bottom:16px;background:#f4f4f4}
+.thoam-variant-image-placeholder{display:grid;place-items:center;color:#999}
+.thoam-variant-close{position:absolute;right:12px;top:12px;z-index:2;width:35px;height:35px;border:0;border-radius:50%;background:white;display:grid;place-items:center}
+.thoam-variant-modal h2{margin:7px 0 14px;font-size:23px}
+.thoam-variant-options{display:grid;gap:8px}
+.thoam-variant-options button{display:flex;justify-content:space-between;padding:13px;border:1px solid #e8e8e8;border-radius:10px;background:white}
+.thoam-variant-options button.selected{border-color:#176b49;background:#f1f8f4}
+.thoam-variant-bottom{display:flex;gap:10px;margin-top:16px}.thoam-variant-bottom .premium-button{flex:1}
+
 
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
 
@@ -2724,6 +2769,19 @@ export default function QRMenu() {
     width: calc(100% - 26px);
   }
 
+  .qr-offer-apply{display:inline-flex;min-height:38px;align-items:center;justify-content:center;margin-top:12px;padding:0 15px;border:1px solid #173e2b;border-radius:10px;background:#173e2b;color:#fff;font-size:10px;font-weight:850;cursor:pointer}
+  .qr-offer-apply.is-selected{border-color:#b6d9c2;background:#eaf6ee;color:#17643a}
+  .qr-offer-apply:disabled{cursor:not-allowed;opacity:.45}
+  .qr-checkout-offer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0;padding:13px 14px;border:1px solid #dcebe0;border-radius:12px;background:#f5faf6;color:#315640;font-size:11px}
+  .qr-checkout-offer>div,.qr-checkout-offer>span{display:flex;align-items:center;gap:9px}
+  .qr-checkout-offer span span{display:grid;gap:3px}
+  .qr-checkout-offer small{display:block;color:#7c8d80;font-size:9px}
+  .qr-checkout-offer button{border:0;background:transparent;color:#9b3f35;font-size:10px;font-weight:800}
+  .qr-offer-feedback{margin:0;color:#a34b40;font-size:10px}
+  .qr-checkout-totals{display:grid;gap:9px;padding:14px 0;border-top:1px solid var(--border)}
+  .qr-checkout-totals>div{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:12px}
+  .qr-checkout-totals .qr-discount-line{color:#18834c}
+  .qr-checkout-totals .qr-payable-line{padding-top:10px;border-top:1px dashed var(--border);color:var(--foreground);font-size:14px;font-weight:900}
   .qr-offers-section {
     margin-bottom: 30px;
     padding: 19px 15px;

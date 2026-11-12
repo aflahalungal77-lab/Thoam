@@ -11,6 +11,7 @@ import { ArrowLeft, ChefHat, CheckCircle2, Clock3, LoaderCircle, RefreshCw } fro
 type KitchenItem = {
   id: string;
   product_name: string;
+  variant_name: string | null;
   quantity: number;
   unit_price: number;
   line_total: number;
@@ -69,7 +70,7 @@ export default function KitchenPage() {
       setRestaurantId(profile.restaurant_id);
       const { data, error } = await supabase
         .from("orders")
-        .select("id,order_number,total_amount,created_at,status,notes,restaurant_tables(table_code),order_items(id,product_name,quantity,unit_price,line_total,special_instructions)")
+        .select("id,order_number,total_amount,created_at,status,notes,restaurant_tables(table_code),order_items(id,product_name,variant_name,quantity,unit_price,line_total,special_instructions)")
         .eq("restaurant_id", profile.restaurant_id)
         .eq("order_type", "dine_in")
         .order("created_at", { ascending: false })
@@ -152,7 +153,7 @@ export default function KitchenPage() {
                 {(order.order_items || []).map((item) => (
                   <div key={item.id} style={{ display: "flex", justifyContent: "space-between", gap: 14 }}>
                     <div>
-                      <strong style={{ fontSize: 16 }}>{item.quantity} × {item.product_name}</strong>
+                      <strong style={{ fontSize: 16 }}>{item.quantity} × {item.product_name}{item.variant_name ? ` · ${item.variant_name}` : ""}</strong>
                       {item.special_instructions && <p style={{ margin: "5px 0 0", fontSize: 13, color: "#555", background: "#f5f5f5", borderRadius: 8, padding: "7px 9px" }}>Note: {item.special_instructions}</p>}
                     </div>
                     <strong>{money(Number(item.line_total || 0))}</strong>

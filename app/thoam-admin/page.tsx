@@ -65,10 +65,6 @@ function isToday(date: string) {
   return orderDay === todayDay;
 }
 
-function getErrorMessage(error: unknown, fallback: string) {
-  return error instanceof Error ? error.message : fallback;
-}
-
 function money(amount: number) {
   return `₹${amount.toLocaleString("en-IN", {
     maximumFractionDigits: 2,
@@ -224,7 +220,7 @@ export default function AdminPage() {
         todayCommission: todayDeliveredOrders.length * COMMISSION_PER_SUCCESSFUL_ORDER,
       });
     } catch (error: unknown) {
-      setMsg(getErrorMessage(error, "Unable to load platform data."));
+      setMsg(error instanceof Error ? error.message : "Unable to load platform data.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -232,7 +228,7 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    void load();
+    load();
   }, []);
 
   async function updateRestaurant(id: string, status: string) {
@@ -286,7 +282,7 @@ export default function AdminPage() {
           (enable ? " The restaurant can now set up its table QR codes." : "")
       );
     } catch (error: unknown) {
-      setMsg(getErrorMessage(error, "Unable to update QR access."));
+      setMsg(error instanceof Error ? error.message : "Unable to update QR access.");
     } finally {
       setQrUpdatingId(null);
     }
@@ -314,7 +310,10 @@ export default function AdminPage() {
       await load();
       setMsg(`"${r.name}" and its associated data were permanently deleted.`);
     } catch (error: unknown) {
-      setMsg(getErrorMessage(error, "Could not delete this restaurant. Check related database records."));
+      setMsg(
+        error instanceof Error ? error.message :
+          "Could not delete this restaurant. Check related database records."
+      );
     } finally {
       setDeletingId(null);
     }

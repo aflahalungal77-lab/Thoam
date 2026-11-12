@@ -27,21 +27,13 @@ const statuses = [
   "cancelled",
 ];
 
+type AdminOrderItem = { id: string; product_name?: string | null; variant_name?: string | null; quantity: number; unit_price?: number | string; line_total?: number | string };
+type AdminOrder = { id: string; status?: string; total_amount: number | string; created_at: string; payment_status?: string; payment_method?: string; order_number?: number | string; order_type?: string; customer_name?: string | null; customer_phone?: string | null; delivery_address?: string | null; delivery_fee?: number | string; discount_amount?: number | string; platform_fee?: number | string; subtotal?: number | string; notes?: string | null; restaurant?: { name?: string; area?: string | null; city?: string | null } | null; order_items?: AdminOrderItem[] };
+
 const PAGE_SIZE = 1000;
 const TIME_ZONE = "Asia/Kolkata";
 
-type OrderItemRow = { id: string; product_name: string | null; quantity: number | string; unit_price: number | string; line_total: number | string | null };
-type RestaurantOrder = {
-  id: string; order_number?: number | string | null; restaurant_id?: string; status?: string | null;
-  total_amount?: number | string | null; created_at?: string; order_type?: string | null;
-  payment_status?: string | null; payment_method?: string | null; customer_name?: string | null;
-  customer_phone?: string | null; delivery_address?: string | null; notes?: string | null;
-  subtotal?: number | string | null; delivery_fee?: number | string | null; platform_fee?: number | string | null;
-  restaurant?: { name?: string | null; area?: string | null; city?: string | null } | null;
-  order_items?: OrderItemRow[] | null;
-};
-
-function getStatus(order: RestaurantOrder) {
+function getStatus(order: AdminOrder) {
   return String(order.status || "pending").toLowerCase();
 }
 
@@ -77,14 +69,14 @@ export default function OrdersPage() {
   const { t } = useLanguage();
   const router = useRouter();
 
-  const [items, setItems] = useState<RestaurantOrder[]>([]);
+  const [items, setItems] = useState<AdminOrder[]>([]);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [updatingId, setUpdatingId] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
-  const [selectedOrder, setSelectedOrder] = useState<RestaurantOrder | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
 
   const load = useCallback(async (manual = false) => {
     const client = supabase;
@@ -129,20 +121,20 @@ export default function OrdersPage() {
       }
 
       // Fetch all orders in pages for accurate revenue totals.
-      const allOrders: RestaurantOrder[] = [];
+      const allOrders: AdminOrder[] = [];
       let from = 0;
 
       while (true) {
         const { data, error } = await client
           .from("orders")
-          .select("*,order_items(id,product_name,quantity,unit_price,line_total),restaurant:restaurants(name,area,city)")
+          .select("*,order_items(id,product_name,variant_name,quantity,unit_price,line_total),restaurant:restaurants(name,area,city)")
           .eq("restaurant_id", profile.restaurant_id)
           .order("created_at", { ascending: false })
           .range(from, from + PAGE_SIZE - 1);
 
         if (error) throw error;
 
-        const page = (data || []) as RestaurantOrder[];
+        const page = data || [];
         allOrders.push(...page);
 
         if (page.length < PAGE_SIZE) break;
@@ -256,12 +248,10 @@ const todayRevenue = revenueOrders
     (order) => getStatus(order) === "placed"
   );
 
-  const visibleItems = items.filter(
-    (order) => !isDelivered(getStatus(order))
-  );
+  const visibleItems = items;
 
-  const activeCount = visibleItems.filter(
-    (order) => !isCancelled(getStatus(order))
+  const activeCount = items.filter(
+    (order) => !isDelivered(getStatus(order)) && !isCancelled(getStatus(order))
   ).length;
 
   const deliveredCount = items.filter(
@@ -278,6 +268,9 @@ const todayRevenue = revenueOrders
       order.order_type,
       order.status,
       order.payment_status,
+      order.customer_name,
+      order.customer_phone,
+      order.delivery_address,
     ].some((value) =>
       String(value || "").toLowerCase().includes(query)
     );
@@ -288,7 +281,8 @@ const todayRevenue = revenueOrders
       (filter === "Active" &&
         !isCancelled(status) &&
         status !== "placed") ||
-      (filter === "Cancelled" && isCancelled(status));
+      (filter === "Cancelled" && isCancelled(status)) ||
+      (filter === "Delivered" && isDelivered(status));
 
     return matchesSearch && matchesFilter;
   });
@@ -413,6 +407,7 @@ const todayRevenue = revenueOrders
             <option>{t("New")}</option>
             <option>{t("Active")}</option>
             <option>{t("Cancelled")}</option>
+            <option>{t("Delivered")}</option>
           </select>
         </div>
 
@@ -476,6 +471,13 @@ const todayRevenue = revenueOrders
                   </div>
 
                   <div className="ta-order-meta">
+                    <div className="ta-order-customer">
+                      <span>Customer</span>
+                      <strong>{order.customer_name || "Guest"}</strong>
+                      {order.customer_phone ? (
+                        <a href={`tel:${order.customer_phone}`}>{order.customer_phone}</a>
+                      ) : <small>Phone not provided</small>}
+                    </div>
                     <div>
                       <span>{t("Order type")}</span>
                       <strong>
@@ -623,9 +625,9 @@ const todayRevenue = revenueOrders
               {(selectedOrder.order_items || []).length > 0 ? (
                 <div className="ta-bill-table">
                   <div className="ta-bill-row ta-bill-table-head"><span>Item</span><span>Qty</span><span>Price</span><span>Amount</span></div>
-                  {(selectedOrder.order_items || []).map((item) => (
+                  {(selectedOrder.order_items ?? []).map((item: AdminOrderItem) => (
                     <div className="ta-bill-row" key={item.id}>
-                      <span>{item.product_name || "Item"}</span>
+                      <span>{item.product_name || "Item"}{item.variant_name ? ` · ${item.variant_name}` : ""}</span>
                       <span>{Number(item.quantity || 0)}</span>
                       <span>{money(Number(item.unit_price || 0))}</span>
                       <strong>{money(Number(item.line_total ?? Number(item.quantity || 0) * Number(item.unit_price || 0)))}</strong>
@@ -639,6 +641,7 @@ const todayRevenue = revenueOrders
 
             <div className="ta-bill-totals">
               <div><span>Subtotal</span><strong>{money(Number(selectedOrder.subtotal ?? selectedOrder.total_amount ?? 0))}</strong></div>
+              {Number(selectedOrder.discount_amount || 0) > 0 && <div><span>Offer discount</span><strong>−{money(Number(selectedOrder.discount_amount))}</strong></div>}
               {Number(selectedOrder.delivery_fee || 0) > 0 && <div><span>Delivery fee</span><strong>{money(Number(selectedOrder.delivery_fee))}</strong></div>}
               {Number(selectedOrder.platform_fee || 0) > 0 && <div><span>Platform fee</span><strong>{money(Number(selectedOrder.platform_fee))}</strong></div>}
               <div className="ta-bill-grand-total"><span>Total</span><strong>{money(Number(selectedOrder.total_amount || 0))}</strong></div>
@@ -683,6 +686,13 @@ const todayRevenue = revenueOrders
         .ta-bill-done{width:100%;margin-top:18px;min-height:43px;border:0;border-radius:10px;background:#171717;color:#fff;font-weight:800;cursor:pointer}
         @media(max-width:520px){.ta-bill-modal{padding:17px;border-radius:14px}.ta-bill-info{gap:11px;padding:12px}.ta-bill-row{grid-template-columns:minmax(0,1.5fr) .35fr .8fr .8fr;gap:5px;font-size:10px}.ta-bill-header h2{font-size:22px}}
         .ta-order-meta>div{min-width:0}
+        .ta-order-customer a{display:inline-flex;width:max-content;max-width:100%;margin-top:3px;color:#176b49;font-size:11px;font-weight:750;text-decoration:none;overflow-wrap:anywhere}
+        .ta-order-customer a:hover{text-decoration:underline}
+        .ta-order-customer small{margin-top:3px;color:#999;font-size:10px}
+        .ta-order-card{transition:border-color .18s ease,box-shadow .18s ease}
+        .ta-order-card:hover{border-color:#cfd8d1;box-shadow:0 12px 30px #102b2010}
+        .ta-order-card-new{border-color:#b9d8c5;background:linear-gradient(135deg,#fff,#f7fbf8)}
+        @media(max-width:640px){.ta-order-customer{grid-column:1/-1;padding:12px;border:1px solid #e8e8e8;border-radius:12px;background:#fafafa}}
         .ta-payment-collect{
           display:inline-flex;align-items:center;justify-content:center;gap:7px;
           min-height:36px;margin-top:9px;padding:0 13px;border:1px solid #171717;

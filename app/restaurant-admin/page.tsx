@@ -1,9 +1,10 @@
 "use client";
 
+import type { User } from "@supabase/supabase-js";
+
 import { useLanguage } from "@/components/LanguageProvider";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";

@@ -12,6 +12,9 @@ export interface MenuProduct {
   image_url?: string | null;
   category?: string | null;
   is_available: boolean;
+  variants?: { name: string; price: number; is_available?: boolean }[];
+  variantName?: string;
+  cartKey?: string;
 }
 
 interface Props {
@@ -54,9 +57,13 @@ export default function MenuProductCard({ product, quantity, onAdd, onRemove }: 
         <div className="product-bottom">
           <div className="price-block">
             <span className="price-label">{t("PRICE")}</span>
-            <span className="product-price">₹{Number(product.price).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</span>
+            <span className="product-price">{product.variants?.length ? "From " : ""}₹{Number(product.variants?.length ? Math.min(...product.variants.map((v) => Number(v.price))) : product.price).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</span>
           </div>
-          {quantity === 0 ? (
+          {product.variants?.length ? (
+            <button type="button" disabled={!product.is_available} onClick={() => onAdd(product)} className="add-button">
+              {quantity > 0 ? `${quantity} added · ` : ""}{t("Choose size")} <span className="add-symbol">+</span>
+            </button>
+          ) : quantity === 0 ? (
             <button type="button" disabled={!product.is_available} onClick={() => onAdd(product)} className="add-button">
               {product.is_available ? <>{t("Add")} <span className="add-symbol">+</span></>  : t("Unavailable")}
             </button>
@@ -88,6 +95,7 @@ export default function MenuProductCard({ product, quantity, onAdd, onRemove }: 
         .product-bottom{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-top:auto;padding-top:15px}
         .price-block{display:grid;gap:4px;min-width:0}.price-label{color:#99988f;font-size:8px;font-weight:850;letter-spacing:.15em}
         .product-price{color:#171715;font-size:16px;font-weight:950;letter-spacing:-.55px;white-space:nowrap}
+        .product-price:has(+ .add-button){max-width:100%}
         .add-button{display:inline-flex;min-height:37px;align-items:center;justify-content:center;gap:8px;padding:0 12px;border:1px solid #191916;border-radius:10px;background:#191916;color:#fff;font-size:11px;font-weight:850;white-space:nowrap;box-shadow:0 4px 10px rgb(25 25 22 / 12%);transition:background .18s ease,transform .18s ease}
         .add-button:hover:not(:disabled){transform:translateY(-1px);background:#3a3a34}.add-button:active:not(:disabled){transform:scale(.97)}.add-button:disabled{cursor:not-allowed;opacity:.45}.add-symbol{font-size:16px;line-height:1}
         .quantity-control{display:flex;min-height:36px;align-items:center;gap:7px;padding:3px 5px;border:1px solid #e5e3dc;border-radius:10px;background:#f8f8f5}

@@ -10,13 +10,13 @@ import { supabase } from "@/lib/supabase";
 import { ArrowRight, Check, ChevronRight, Clock3, MapPin, PackageCheck, RefreshCw, ShoppingBag, X, CreditCard, Utensils, Truck, CircleCheck } from "lucide-react";
 
 const TZ = "Asia/Kolkata";
-type OrderHistoryEntry = { order_id: string; new_status: string; created_at: string; note?: string | null };
+type OrderHistoryItem = { order_id: string; new_status: string; created_at: string; note: string | null };
 type Order = {
   id: string; order_number: number | null; status: string; total_amount: number | string;
   created_at: string; updated_at?: string; order_type: string; payment_status: string;
   delivery_address?: string | null;
   restaurant?: { name?: string; area?: string; city?: string } | null;
-  order_items?: Array<{ id: string; product_name: string; quantity: number; line_total: number | string }>;
+  order_items?: Array<{ id: string; product_name: string; variant_name?: string | null; quantity: number; line_total: number | string }>;
   history?: Array<{ new_status: string; created_at: string; note?: string | null }>;
 };
 const steps = [
@@ -63,7 +63,7 @@ export default function MyOrders() {
       if (authError) throw authError;
       if (!user) { router.replace("/auth?next=/my-orders"); return; }
       const { data, error } = await supabase.from("orders")
-        .select("id,order_number,status,total_amount,created_at,updated_at,order_type,payment_status,delivery_address,restaurant:restaurants(name,area,city),order_items(id,product_name,quantity,line_total)")
+        .select("id,order_number,status,total_amount,created_at,updated_at,order_type,payment_status,delivery_address,restaurant:restaurants(name,area,city),order_items(id,product_name,variant_name,quantity,line_total)")
         .eq("customer_id", user.id).order("created_at", { ascending: false });
       if (error) throw error;
       const rows = (data || []) as unknown as Order[];
@@ -72,7 +72,7 @@ export default function MyOrders() {
       if (ids.length) {
         const { data: history } = await supabase.from("order_status_history")
           .select("order_id,new_status,created_at,note").in("order_id", ids).order("created_at", { ascending: true });
-        historyByOrder = ((history || []) as OrderHistoryEntry[]).reduce((acc: Record<string, OrderHistoryEntry[]>, item) => {
+        historyByOrder = (history || []).reduce((acc: Record<string, OrderHistoryItem[]>, item: OrderHistoryItem) => {
           (acc[item.order_id] ||= []).push(item); return acc;
         }, {});
       }
@@ -164,7 +164,7 @@ export default function MyOrders() {
             {selected.order_type === "delivery" && selected.delivery_address && <div className="mo-detail-row"><span><MapPin size={14} /> {t("Delivery address")}</span><strong>{selected.delivery_address}</strong></div>}
             <div className="mo-detail-total"><span>{t("Total amount")}</span><strong>{money(selected.total_amount)}</strong></div>
           </div>
-          {!!selected.order_items?.length && <div className="mo-detail-card"><h3>{t("Items in this order")}</h3>{selected.order_items.map((item) => <div className="mo-item-row" key={item.id}><span>{item.quantity} × {item.product_name}</span><strong>{money(item.line_total)}</strong></div>)}</div>}
+          {!!selected.order_items?.length && <div className="mo-detail-card"><h3>{t("Items in this order")}</h3>{selected.order_items.map((item) => <div className="mo-item-row" key={item.id}><span>{item.quantity} × {item.product_name}{item.variant_name ? ` · ${item.variant_name}` : ""}</span><strong>{money(item.line_total)}</strong></div>)}</div>}
           <p className="mo-update-note"><RefreshCw size={12} /> {t("Order status refreshes automatically.")}</p>
         </div>
         <footer className="mo-drawer-footer"><button onClick={() => void load(true)} disabled={refreshing}><RefreshCw size={14} className={refreshing ? "mo-spin" : ""} /> {t("Refresh tracking")}</button><button onClick={() => setSelected(null)}>{t("Done")}</button></footer>
