@@ -640,6 +640,7 @@ const todayRevenue = revenueOrders
 
             <div className="ta-bill-totals">
               <div><span>Subtotal</span><strong>{money(Number(selectedOrder.subtotal ?? selectedOrder.total_amount ?? 0))}</strong></div>
+              {Number(selectedOrder.discount_amount || 0) > 0 && <div><span>Offer discount</span><strong>−{money(Number(selectedOrder.discount_amount))}</strong></div>}
               {Number(selectedOrder.delivery_fee || 0) > 0 && <div><span>Delivery fee</span><strong>{money(Number(selectedOrder.delivery_fee))}</strong></div>}
               {Number(selectedOrder.platform_fee || 0) > 0 && <div><span>Platform fee</span><strong>{money(Number(selectedOrder.platform_fee))}</strong></div>}
               <div className="ta-bill-grand-total"><span>Total</span><strong>{money(Number(selectedOrder.total_amount || 0))}</strong></div>
