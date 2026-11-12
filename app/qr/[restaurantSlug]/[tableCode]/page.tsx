@@ -1,6 +1,7 @@
 
 "use client";
 
+import Link from "next/link";
 import { useLanguage } from "@/components/LanguageProvider";
 
 import { useEffect, useState } from "react";
@@ -320,7 +321,7 @@ export default function QRMenu() {
     <main className="premium-menu">
       {/* HEADER */}
       <header className="premium-menu-header">
-        <a
+        <Link
           className="premium-brand"
           href="/"
           aria-label="Tho'am home"
@@ -334,7 +335,7 @@ export default function QRMenu() {
             {r?.name || "Tho’am"}
             <small>{t("GOOD FOOD. GOOD MOMENTS.")}</small>
           </span>
-        </a>
+        </Link>
 
         <div className="premium-table-badge">
           <span className="live-dot" />
@@ -521,7 +522,7 @@ export default function QRMenu() {
                   <h3>{t("Need anything?")}</h3>
 
                   <p>
-                    We're here to help. Request directly from
+                    We&apos;re here to help. Request directly from
                     your table.
                   </p>
                 </div>
@@ -993,7 +994,7 @@ export default function QRMenu() {
 
       {/* FOOTER */}
       <footer className="premium-menu-footer">
-        <a className="premium-footer-brand" href="/">
+        <Link className="premium-footer-brand" href="/">
           THO’AM<span>.</span>
         </a>
 
