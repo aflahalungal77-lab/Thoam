@@ -3,8 +3,40 @@
 -- Existing products remain single-price products because variants defaults to an empty array.
 alter table public.products add column if not exists variants jsonb not null default '[]'::jsonb;
 alter table public.order_items add column if not exists variant_name text;
+create or replace function public.valid_product_variants(p_variants jsonb)
+returns boolean
+language plpgsql
+immutable
+as $
+declare
+  v jsonb;
+  v_name text;
+  v_price numeric;
+  seen_names text[] := array[]::text[];
+begin
+  if jsonb_typeof(p_variants) is distinct from 'array' then return false; end if;
+  for v in select value from jsonb_array_elements(p_variants)
+  loop
+    if jsonb_typeof(v) is distinct from 'object' then return false; end if;
+    v_name := lower(trim(coalesce(v->>'name','')));
+    if v_name = '' or length(v_name) > 40 or v_name = any(seen_names) then return false; end if;
+    begin
+      v_price := (v->>'price')::numeric;
+    exception when others then
+      return false;
+    end;
+    if v_price <= 0 then return false; end if;
+    if v ? 'is_available' and jsonb_typeof(v->'is_available') <> 'boolean' then return false; end if;
+    seen_names := array_append(seen_names, v_name);
+  end loop;
+  return true;
+end;
+$;
+
 alter table public.products drop constraint if exists products_variants_array_check;
-alter table public.products add constraint products_variants_array_check check (jsonb_typeof(variants) = 'array');
+alter table public.products drop constraint if exists products_variants_valid_check;
+alter table public.products add constraint products_variants_valid_check
+  check (public.valid_product_variants(variants));
 
 -- Apply AFTER sql/schema.sql in Supabase SQL Editor.
 -- Atomic, server-only COD delivery order creation. The app API validates the signed-in user;
@@ -82,6 +114,7 @@ begin
       limit 1;
       if v_variant is null then raise exception 'Selected size is no longer available. Refresh the menu.'; end if;
       v_unit_price := (v_variant->>'price')::numeric;
+      if v_unit_price <= 0 then raise exception 'Invalid price for selected size.'; end if;
     else
       if v_variant_name is not null then raise exception 'This product does not have size options.'; end if;
       v_unit_price := v_product.price;
@@ -113,6 +146,7 @@ begin
         and coalesce((value->>'is_available')::boolean, true) = true limit 1;
       if v_variant is null then raise exception 'Selected size is no longer available.'; end if;
       v_unit_price := (v_variant->>'price')::numeric;
+      if v_unit_price <= 0 then raise exception 'Invalid price for selected size.'; end if;
     else v_unit_price := v_product.price; v_variant_name := null; end if;
     insert into public.order_items(order_id, product_id, product_name, variant_name, quantity, unit_price, line_total)
     values (v_order_id, v_product.id, v_product.name, v_variant_name, v_qty, v_unit_price, v_unit_price * v_qty);
