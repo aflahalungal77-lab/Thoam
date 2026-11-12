@@ -10,8 +10,6 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import type { FoodProduct, Restaurant } from "@/lib/types";
 import {
-  Leaf,
-  Drumstick,
   ShoppingBag,
   CheckCircle2,
   Minus,
@@ -26,6 +24,8 @@ import {
   HandHelping,
   Send,
   X,
+  Tag,
+  CalendarDays,
 } from "lucide-react";
 
 type PlacedOrder = {
@@ -33,6 +33,21 @@ type PlacedOrder = {
   order_number?: number | string;
   total_amount?: number | string;
   status?: string;
+};
+
+type QROffer = {
+  id: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  scope: "order" | "products";
+  discount_type: "percentage" | "fixed";
+  discount_value: number | string;
+  product_ids: string[] | null;
+  min_order_amount: number | string;
+  max_discount: number | string | null;
+  starts_at: string | null;
+  ends_at: string | null;
 };
 
 type NeedType =
@@ -55,6 +70,7 @@ export default function QRMenu() {
   const [tableId, setTableId] = useState("");
 
   const [items, setItems] = useState<FoodProduct[]>([]);
+  const [offers, setOffers] = useState<QROffer[]>([]);
   const [qty, setQty] = useState<Record<string, number>>({});
   const [selectedProduct, setSelectedProduct] = useState<FoodProduct | null>(null);
   const [selectedVariantName, setSelectedVariantName] = useState("");
@@ -71,6 +87,7 @@ export default function QRMenu() {
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
+  const [selectedImage, setSelectedImage] = useState<{ url: string; name: string } | null>(null);
 
   // Table assistance states
   const [needsOpen, setNeedsOpen] = useState(false);
@@ -133,22 +150,38 @@ export default function QRMenu() {
           return;
         }
 
-        const { data: products, error: productsError } =
-          await supabase
+        const [
+          { data: products, error: productsError },
+          { data: offerRows, error: offersError },
+        ] = await Promise.all([
+          supabase
             .from("products")
             .select(
               "id,restaurant_id,name,description,price,image_url,category,is_veg,is_available,variants"
             )
             .eq("restaurant_id", rest.id)
             .eq("is_available", true)
-            .order("name");
+            .order("name"),
+          supabase
+            .from("offers")
+            .select(
+              "id,title,description,image_url,scope,discount_type,discount_value,product_ids,min_order_amount,max_discount,starts_at,ends_at"
+            )
+            .eq("restaurant_id", rest.id)
+            .eq("is_active", true)
+            .order("created_at", { ascending: false }),
+        ]);
 
         if (productsError) throw productsError;
+        if (offersError) {
+          console.warn("QR offers could not be loaded:", offersError.message);
+        }
 
         if (!cancelled) {
           setR(rest as Restaurant);
           setTableId(table.id);
           setItems((products ?? []) as FoodProduct[]);
+          setOffers((offerRows ?? []) as QROffer[]);
         }
       } catch (error) {
         console.error("QR menu load failed:", error);
@@ -171,6 +204,15 @@ export default function QRMenu() {
       cancelled = true;
     };
   }, [restaurantSlug, tableCode]);
+
+  useEffect(() => {
+    if (!selectedImage) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setSelectedImage(null);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedImage]);
 
   // Menu categories
   const categories: string[] = [
@@ -507,6 +549,111 @@ export default function QRMenu() {
           </section>
 
           <section className="premium-menu-content">
+            {/* ACTIVE RESTAURANT OFFERS */}
+            {offers.length > 0 && (
+              <section className="qr-offers-section" aria-labelledby="qr-offers-title">
+                <div className="qr-offers-heading">
+                  <div>
+                    <span className="premium-kicker">
+                      <Tag size={13} /> LIMITED-TIME DEALS
+                    </span>
+                    <h2 id="qr-offers-title">Offers for you<span>.</span></h2>
+                    <p>Explore current deals from {r.name}.</p>
+                  </div>
+                  <span className="qr-offers-count">
+                    {offers.length.toString().padStart(2, "0")} ACTIVE
+                  </span>
+                </div>
+
+                <div className="qr-offers-grid">
+                  {offers.map((offer) => {
+                    const discountLabel =
+                      offer.discount_type === "percentage"
+                        ? `${Number(offer.discount_value)}% OFF`
+                        : `₹${Number(offer.discount_value).toFixed(0)} OFF`;
+                    const applicableProducts =
+                      offer.scope === "products"
+                        ? items
+                            .filter((product) => (offer.product_ids ?? []).includes(product.id))
+                            .map((product) => product.name)
+                        : [];
+                    const validityLabel = offer.ends_at
+                      ? `Valid until ${new Date(offer.ends_at).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}`
+                      : offer.starts_at
+                        ? `Starts ${new Date(offer.starts_at).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}`
+                        : "Limited-time offer";
+
+                    return (
+                      <article className="qr-offer-card" key={offer.id}>
+                        <div className="qr-offer-media">
+                          {offer.image_url ? (
+                            <Image
+                              src={offer.image_url}
+                              alt={offer.title}
+                              fill
+                              unoptimized
+                              sizes="(max-width: 640px) 100vw, (max-width: 1000px) 50vw, 560px"
+                              className="qr-offer-image"
+                            />
+                          ) : (
+                            <div className="qr-offer-image-placeholder">
+                              <Tag size={34} />
+                              <span>EXCLUSIVE DEAL</span>
+                            </div>
+                          )}
+                          <span className="qr-offer-discount">{discountLabel}</span>
+                        </div>
+
+                        <div className="qr-offer-content">
+                          <span className="qr-offer-scope">
+                            {offer.scope === "products" ? "SELECTED MENU ITEMS" : "ORDER OFFER"}
+                          </span>
+                          <h3>{offer.title}</h3>
+                          {offer.description && <p>{offer.description}</p>}
+
+                          {offer.scope === "products" && (
+                            <div className="qr-offer-products">
+                              <strong>Applies to</strong>
+                              <span>
+                                {applicableProducts.length
+                                  ? applicableProducts.join(" · ")
+                                  : "Selected menu items"}
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="qr-offer-conditions">
+                            {Number(offer.min_order_amount) > 0 && (
+                              <span>Min. order ₹{Number(offer.min_order_amount).toFixed(0)}</span>
+                            )}
+                            {offer.max_discount !== null && (
+                              <span>Max. discount ₹{Number(offer.max_discount).toFixed(0)}</span>
+                            )}
+                          </div>
+
+                          <div className="qr-offer-validity">
+                            <CalendarDays size={14} />
+                            {validityLabel}
+                          </div>
+                          <p className="qr-offer-note">
+                            Offer details are subject to the restaurant&apos;s terms.
+                          </p>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
             {/* TABLE ASSISTANCE */}
             <section className="table-assistance">
               <div className="assistance-copy">
@@ -750,14 +897,10 @@ export default function QRMenu() {
                     >
                       <div className="premium-food-image">
                         {p.image_url ? (
-                          <Image
-                            src={p.image_url}
-                            alt={p.name}
-                            fill
-                            unoptimized
-                            sizes="(max-width: 640px) 50vw, (max-width: 1000px) 33vw, 260px"
-                            className="premium-food-photo"
-                          />
+                          <button type="button" className="premium-image-trigger" onClick={() => setSelectedImage({ url: p.image_url || "", name: p.name })} aria-label="View food photo">
+                            <Image src={p.image_url} alt={p.name} fill unoptimized sizes="(max-width: 640px) 50vw, (max-width: 1000px) 33vw, 260px" className="premium-food-photo" />
+                            <span className="image-view-hint">VIEW PHOTO</span>
+                          </button>
                         ) : (
                           <div className="food-placeholder">
                             <UtensilsCrossed
@@ -772,24 +915,6 @@ export default function QRMenu() {
                           {String(index + 1).padStart(2, "0")}
                         </span>
 
-                        <span
-                          className={`food-type-badge ${
-                            p.is_veg ? "veg" : "nonveg"
-                          }`}
-                          title={
-                            p.is_veg
-                              ? "Vegetarian"
-                              : "Non-vegetarian"
-                          }
-                        >
-                          {p.is_veg ? (
-                            <Leaf size={13} />
-                          ) : (
-                            <Drumstick size={13} />
-                          )}
-
-                          {p.is_veg ? t("VEG") : t("NON-VEG")}
-                        </span>
                       </div>
 
                       <div className="premium-food-info">
@@ -992,6 +1117,18 @@ export default function QRMenu() {
         </>
       )}
 
+      {selectedImage && (
+        <div className="food-lightbox" role="dialog" aria-modal="true" aria-label={selectedImage.name + " photo"} onClick={() => setSelectedImage(null)}>
+          <button type="button" className="food-lightbox-close" onClick={() => setSelectedImage(null)} aria-label="Close photo preview">
+            <X size={22} />
+          </button>
+          <div className="food-lightbox-content" onClick={(event) => event.stopPropagation()}>
+            <Image src={selectedImage.url} alt={selectedImage.name} width={1200} height={900} unoptimized />
+            <p>{selectedImage.name}</p>
+          </div>
+        </div>
+      )}
+
       {/* FOOTER */}
       <footer className="premium-menu-footer">
         <Link className="premium-footer-brand" href="/">
@@ -1113,6 +1250,7 @@ export default function QRMenu() {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
   color: var(--black);
   text-decoration: none;
   font-family: 'Manrope', sans-serif;
@@ -1120,6 +1258,10 @@ export default function QRMenu() {
   font-weight: 800;
   letter-spacing: -1.2px;
 }
+
+.premium-brand img,.premium-brand .premium-restaurant-logo { display:block; width:48px !important; height:48px !important; max-width:48px; max-height:48px; flex:0 0 48px; object-fit:contain; border-radius:12px; overflow:hidden; }
+.premium-brand > span { min-width:0; }
+.premium-brand > span small { display:block; margin-top:2px; font-size:8px; letter-spacing:1.2px; }
 
 .premium-brand-mark {
   width: 43px;
@@ -1344,6 +1486,190 @@ export default function QRMenu() {
   width: 86%;
   max-width: 1180px;
   margin: auto;
+}
+
+/* QR RESTAURANT OFFERS */
+
+.premium-logo-frame {
+  position: relative;
+  display: block;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  flex: 0 0 48px;
+  overflow: hidden;
+  border-radius: 12px;
+  isolation: isolate;
+  background: #f1f5f2;
+}
+.premium-logo-frame .premium-logo-image {
+  display: block !important;
+  width: 48px !important;
+  height: 48px !important;
+  max-width: 48px !important;
+  max-height: 48px !important;
+  object-fit: contain !important;
+}
+.qr-offers-section {
+  margin: 0 0 42px;
+  padding: 30px;
+  border: 1px solid #e2eee6;
+  border-radius: 22px;
+  background: linear-gradient(145deg, #f8fcf9, #ffffff 68%, #f0f8f3);
+  box-shadow: 0 14px 38px #173e2b0b;
+}
+.qr-offers-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+.qr-offers-heading .premium-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #168052;
+}
+.qr-offers-heading h2 {
+  margin: 9px 0 5px;
+  color: #17251d;
+  font-size: clamp(26px, 3vw, 36px);
+  letter-spacing: -1.5px;
+  font-weight: 800;
+}
+.qr-offers-heading h2 span { color: #198454; }
+.qr-offers-heading p {
+  margin: 0;
+  color: #77847b;
+  font-size: 13px;
+}
+.qr-offers-count {
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: #e5f4eb;
+  color: #176b49;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.qr-offers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr));
+  gap: 18px;
+}
+.qr-offer-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e6eee8;
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 8px 24px #183b290b;
+}
+.qr-offer-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  min-height: 130px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0e3928, #1e8055);
+}
+.qr-offer-image {
+  object-fit: cover;
+  transition: transform .35s ease;
+}
+.qr-offer-card:hover .qr-offer-image { transform: scale(1.035); }
+.qr-offer-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  color: #c8f2d8;
+}
+.qr-offer-image-placeholder span {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+.qr-offer-discount {
+  position: absolute;
+  top: 13px;
+  left: 13px;
+  padding: 9px 12px;
+  border: 1px solid #ffffff55;
+  border-radius: 10px;
+  background: #0d392bef;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -.3px;
+  box-shadow: 0 5px 18px #0003;
+}
+.qr-offer-content { padding: 19px 20px 17px; }
+.qr-offer-scope {
+  color: #188052;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 1.5px;
+}
+.qr-offer-content h3 {
+  margin: 7px 0 6px;
+  color: #17251d;
+  font-size: 21px;
+  line-height: 1.2;
+  letter-spacing: -.6px;
+}
+.qr-offer-content > p {
+  margin: 0;
+  color: #6d7b72;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.qr-offer-products {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 13px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  background: #f4f8f5;
+  color: #64736a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.qr-offer-products strong { color: #244a35; font-size: 10px; }
+.qr-offer-conditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 13px;
+}
+.qr-offer-conditions span {
+  padding: 6px 9px;
+  border-radius: 7px;
+  background: #fff7e9;
+  color: #8a5b18;
+  font-size: 10px;
+  font-weight: 700;
+}
+.qr-offer-validity {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+  color: #64756a;
+  font-size: 11px;
+}
+.qr-offer-note {
+  margin-top: 9px !important;
+  padding-top: 9px;
+  border-top: 1px solid #edf1ee;
+  color: #929b94 !important;
+  font-size: 10px !important;
 }
 
 /* TABLE ASSISTANCE */
@@ -1717,6 +2043,14 @@ export default function QRMenu() {
   overflow: hidden;
   background: #edf3ee;
 }
+.premium-image-trigger { position:absolute; inset:0; display:block; width:100%; height:100%; padding:0; border:0; background:transparent; cursor:zoom-in; }
+.image-view-hint { position:absolute; right:12px; bottom:12px; z-index:2; padding:7px 10px; border:1px solid #ffffff70; border-radius:999px; background:#101713bd; color:#fff; font-size:8px; font-weight:800; letter-spacing:1px; opacity:0; transform:translateY(4px); transition:opacity .2s ease,transform .2s ease; }
+.premium-food-image:hover .image-view-hint,.premium-image-trigger:focus-visible .image-view-hint { opacity:1; transform:translateY(0); }
+.food-lightbox { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:24px; background:#050907ef; backdrop-filter:blur(12px); animation:fadeUp .18s ease; }
+.food-lightbox-close { position:absolute; top:max(18px,env(safe-area-inset-top)); right:max(18px,env(safe-area-inset-right)); z-index:2; display:grid; width:46px; height:46px; place-items:center; border:1px solid #ffffff35; border-radius:50%; background:#ffffff18; color:#fff; }
+.food-lightbox-content { display:grid; justify-items:center; gap:14px; width:min(900px,100%); max-height:90vh; }
+.food-lightbox-content img { display:block; max-width:100%; max-height:78vh; object-fit:contain; border-radius:14px; box-shadow:0 24px 80px #0008; }
+.food-lightbox-content p { margin:0; color:#fff; font-size:14px; font-weight:750; text-align:center; }
 
 .premium-food-photo {
   object-fit: cover;
@@ -2370,6 +2704,25 @@ export default function QRMenu() {
     width: calc(100% - 26px);
   }
 
+  .qr-offers-section {
+    margin-bottom: 30px;
+    padding: 19px 15px;
+    border-radius: 16px;
+  }
+
+  .qr-offers-heading {
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .qr-offers-heading h2 { font-size: 27px; }
+  .qr-offers-heading p { max-width: 220px; font-size: 11px; }
+  .qr-offers-count { padding: 7px 8px; font-size: 8px; }
+  .qr-offers-grid { grid-template-columns: minmax(0, 1fr); gap: 13px; }
+  .qr-offer-media { aspect-ratio: 16 / 8; min-height: 118px; }
+  .qr-offer-content { padding: 15px; }
+  .qr-offer-content h3 { font-size: 19px; }
+
   .table-assistance {
     padding: 18px;
     margin-bottom: 40px;
@@ -2440,11 +2793,7 @@ export default function QRMenu() {
     height: 27px;
   }
 
-  .food-type-badge {
-    padding: 5px 6px;
-    font-size: 7px;
-  }
-
+  
   .premium-checkout {
     margin-top: 40px;
     padding: 18px;
