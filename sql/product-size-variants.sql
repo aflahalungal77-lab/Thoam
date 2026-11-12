@@ -50,7 +50,7 @@ create or replace function public.create_cod_delivery_order(
   p_delivery_address text,
   p_notes text,
   p_items jsonb,
-  p_offer_id uuid default null
+  p_offer_id uuid
 ) returns jsonb
 language plpgsql
 security definer
@@ -201,7 +201,7 @@ begin
 end;
 $$;
 
-revoke all on function public.create_cod_delivery_order(uuid,uuid,text,text,text,text,jsonb) from public, anon, authenticated;
+revoke all on function public.create_cod_delivery_order(uuid,uuid,text,text,text,text,jsonb) from public, anon, authenticated, service_role;
 revoke all on function public.create_cod_delivery_order(uuid,uuid,text,text,text,text,jsonb,uuid) from public, anon, authenticated;
 grant execute on function public.create_cod_delivery_order(uuid,uuid,text,text,text,text,jsonb,uuid) to service_role;
 
