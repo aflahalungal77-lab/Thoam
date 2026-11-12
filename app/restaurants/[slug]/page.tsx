@@ -302,7 +302,7 @@ export default function RestaurantPage() {
 
     if (product.variants?.length) {
       setSelectedProduct(product);
-      setSelectedVariantName(product.variants[0].name);
+      setSelectedVariantName(product.variants.find((variant) => variant.is_available !== false)?.name || "");
       setVariantQuantity(1);
       return;
     }
@@ -813,7 +813,7 @@ export default function RestaurantPage() {
             <h2 id="thoam-variant-title">{selectedProduct.name}</h2>
             {selectedProduct.description && <p>{selectedProduct.description}</p>}
             <div className="thoam-variant-options">
-              {(selectedProduct.variants || []).map((variant) => (
+              {(selectedProduct.variants || []).filter((variant) => variant.is_available !== false).map((variant) => (
                 <button type="button" key={variant.name} className={selectedVariantName === variant.name ? "selected" : ""} onClick={() => setSelectedVariantName(variant.name)}>
                   <span><strong>{variant.name}</strong><small>Portion size</small></span><b>₹{Number(variant.price).toFixed(0)}</b>
                 </button>
