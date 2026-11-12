@@ -150,7 +150,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
     }
     if (product.variants?.length) {
       setSelectedProduct(product);
-      setSelectedVariantName(product.variants[0].name);
+      setSelectedVariantName(product.variants.find((variant) => variant.is_available !== false)?.name || "");
       setVariantQuantity(1);
       return;
     }
