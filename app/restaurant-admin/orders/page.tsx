@@ -124,7 +124,7 @@ export default function OrdersPage() {
       while (true) {
         const { data, error } = await client
           .from("orders")
-          .select("*,order_items(id,product_name,quantity,unit_price,line_total),restaurant:restaurants(name,area,city)")
+          .select("*,order_items(id,product_name,variant_name,quantity,unit_price,line_total),restaurant:restaurants(name,area,city)")
           .eq("restaurant_id", profile.restaurant_id)
           .order("created_at", { ascending: false })
           .range(from, from + PAGE_SIZE - 1);
@@ -249,8 +249,8 @@ const todayRevenue = revenueOrders
     ? items.filter((order) => isDelivered(getStatus(order)))
     : items.filter((order) => !isDelivered(getStatus(order)));
 
-  const activeCount = visibleItems.filter(
-    (order) => !isCancelled(getStatus(order))
+  const activeCount = items.filter(
+    (order) => !isDelivered(getStatus(order)) && !isCancelled(getStatus(order))
   ).length;
 
   const deliveredCount = items.filter(
@@ -626,7 +626,7 @@ const todayRevenue = revenueOrders
                   <div className="ta-bill-row ta-bill-table-head"><span>Item</span><span>Qty</span><span>Price</span><span>Amount</span></div>
                   {selectedOrder.order_items.map((item: any) => (
                     <div className="ta-bill-row" key={item.id}>
-                      <span>{item.product_name || "Item"}</span>
+                      <span>{item.product_name || "Item"}{item.variant_name ? ` · ${item.variant_name}` : ""}</span>
                       <span>{Number(item.quantity || 0)}</span>
                       <span>{money(Number(item.unit_price || 0))}</span>
                       <strong>{money(Number(item.line_total ?? Number(item.quantity || 0) * Number(item.unit_price || 0)))}</strong>
