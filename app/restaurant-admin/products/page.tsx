@@ -486,9 +486,9 @@ export default function ProductsPage() {
                     <h3>{product.name}</h3>
                     {product.description && <p>{product.description}</p>}
 
-                    {((product.variants?.length ?? 0) > 0 ?? 0) > 0 && <div className="ta-product-variant-tags">{(product.variants ?? []).map((v: ProductVariant) => <span key={v.name}>{v.name} · ₹{Number(v.price).toFixed(0)}</span>)}</div>}
+                    {(product.variants?.length ?? 0) > 0 && <div className="ta-product-variant-tags">{(product.variants ?? []).map((v: ProductVariant) => <span key={v.name}>{v.name} · ₹{Number(v.price).toFixed(0)}</span>)}</div>}
                     <div className="ta-product-card-bottom">
-                      <strong>{product.variants?.length ? `From ₹${Math.min(...(product.variants ?? []).map((v: ProductVariant) => Number(v.price))).toLocaleString("en-IN")}` : `₹${Number(product.price).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`}</strong>
+                      <strong>{(product.variants?.length ?? 0) > 0 ? `From ₹${Math.min(...(product.variants ?? []).map((v: ProductVariant) => Number(v.price))).toLocaleString("en-IN")}` : `₹${Number(product.price).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`}</strong>
                       <span>{product.is_available ? t("On menu") : t("Hidden")}</span>
                     </div>
 
