@@ -324,7 +324,10 @@ export default function ProductsPage() {
 
             {useVariants ? (
               <div className="ta-variant-editor">
-                <div className="ta-variant-heading"><strong>Size & price options</strong><button type="button" onClick={() => setVariants((current) => [...current, { name: "", price: "" }])}>+ Add size</button></div>
+                <div className="ta-variant-heading">
+                  <strong>Size & price options</strong>
+                  <button type="button" onClick={() => setVariants((current) => [...current, { name: "", price: "" }])}>+ Add size</button>
+                </div>
                 {variants.map((variant, index) => (
                   <div className="ta-variant-row" key={index}>
                     <input aria-label={`Size ${index + 1} name`} value={variant.name} maxLength={40} onChange={(e) => setVariants((current) => current.map((v, i) => i === index ? { ...v, name: e.target.value } : v))} placeholder="e.g. Half" />
@@ -334,12 +337,11 @@ export default function ProductsPage() {
                 ))}
               </div>
             ) : (
-              <div className="ta-form-row">
-                <label className="ta-field">
-                  Price (₹)
-                  <input required type="number" min="0.01" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="180" />
-                </label>
-                <label className="ta-field">
+              <label className="ta-field">
+                Price (₹)
+                <input required type="number" min="0.01" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="180" />
+              </label>
+            )}
 
             <label className="ta-field">
               Category
