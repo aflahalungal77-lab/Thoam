@@ -129,6 +129,27 @@ export default function KitchenPage() {
     setBusy("");
   }
 
+  async function closeBillingSession(id: string) {
+    if (!supabase || busy) return;
+    const confirmed = window.confirm("Close this table bill only after entering it in Petpooja? The next QR order will receive a new short code.");
+    if (!confirmed) return;
+    setBusy(id);
+    setMessage("");
+    try {
+      const { error } = await supabase.from("order_sessions")
+        .update({ status: "closed", closed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq("id", id).eq("restaurant_id", restaurantId).eq("status", "open");
+      if (error) throw error;
+      setSelectedSession(null);
+      await load(true);
+      setMessage("Billing session closed. Its short code can now be reused.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not close billing session.");
+    } finally {
+      setBusy("");
+    }
+  }
+
   const visible = tab === "active" ? orders : completed;
   const visibleBillingSessions = billingSessions.filter((session) =>
     session.billing_code.toLowerCase().includes(billingSearch.trim().toLowerCase())
@@ -237,8 +258,11 @@ export default function KitchenPage() {
               </div>)}
             </div>
             <div className="kot-modal-total"><span>Combined total</span><strong>{money((selectedSession.orders || []).reduce((sum, order) => sum + Number(order.total_amount || 0), 0))}</strong></div>
-            <p className="kot-modal-note">Enter this combined bill in Petpooja. Close the billing session from the billing workflow after the bill is entered.</p>
-            <button className="kot-modal-close" type="button" onClick={() => setSelectedSession(null)}>Done</button>
+            <p className="kot-modal-note">Enter this combined bill in Petpooja. After entering it, close this session so the table can start a fresh bill.</p>
+            <div className="kot-modal-actions">
+              <button className="kot-modal-secondary" type="button" onClick={() => setSelectedSession(null)}>Back to KOT</button>
+              <button className="kot-modal-close" type="button" disabled={Boolean(busy)} onClick={() => void closeBillingSession(selectedSession.id)}>{busy === selectedSession.id ? "Closing…" : "Bill entered · Close session"}</button>
+            </div>
           </section>
         </div>
       )}
@@ -283,7 +307,7 @@ export default function KitchenPage() {
         .kot-modal-total{display:flex;justify-content:space-between;align-items:center;padding:15px 0;font-size:13px;color:#647267}
         .kot-modal-total strong{font-size:24px;color:#183e29}
         .kot-modal-note{padding:12px;border-radius:11px;background:#f5f8f4;color:#69776b;font-size:11px;line-height:1.5}
-        .kot-modal-close{width:100%;border:0;border-radius:12px;background:#173d29;color:#fff;padding:13px;font-weight:800}
+        .kot-modal-actions{display:grid;grid-template-columns:1fr 1.6fr;gap:9px}.kot-modal-secondary{border:1px solid #e2e8e1;border-radius:12px;background:#fff;color:#354438;padding:13px;font-weight:750}.kot-modal-close{width:100%;border:0;border-radius:12px;background:#173d29;color:#fff;padding:13px;font-weight:800}
         @media(max-width:600px){.kot-billing-panel{padding:17px;border-radius:17px}.kot-code-mark{display:none}.kot-panel-heading h2{font-size:20px}.kot-bill-modal{padding:18px}}
       `}</style>
     </main>
