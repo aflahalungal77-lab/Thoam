@@ -305,6 +305,8 @@ export async function POST(request: Request) {
         notes: [notes, appliedOffer ? `Offer applied: ${appliedOffer.title} (Discount: ₹${discountAmount.toFixed(2)})` : ""].filter(Boolean).join("\n") || null,
         subtotal,
         discount_amount: discountAmount,
+        offer_id: appliedOffer?.id ?? null,
+        offer_title: appliedOffer?.title ?? null,
         delivery_fee: deliveryFee,
         platform_fee: platformFee,
         total_amount: total,
