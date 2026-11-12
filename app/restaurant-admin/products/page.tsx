@@ -340,13 +340,13 @@ export default function ProductsPage() {
                   <input required type="number" min="0.01" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="180" />
                 </label>
                 <label className="ta-field">
-                Category
-                <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                  {categories.map((c) => <option key={c}>{c}</option>)}
-                </select>
-              </label>
-              </div>
-            )}
+
+            <label className="ta-field">
+              Category
+              <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                {categories.map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </label>
 
             <label className="ta-field">
               Description
