@@ -24,6 +24,8 @@ export default function ProductsPage() {
   const [items, setItems] = useState<any[]>([]);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [useVariants, setUseVariants] = useState(false);
+  const [variants, setVariants] = useState([{ name: "Half", price: "" }, { name: "Full", price: "" }]);
   const [category, setCategory] = useState("Biriyani");
   const [veg, setVeg] = useState(false);
   const [desc, setDesc] = useState("");
@@ -144,7 +146,15 @@ export default function ProductsPage() {
     e.preventDefault();
     if (!supabase || !rid || saving || uploading) return;
 
-    if (!Number.isFinite(Number(price)) || Number(price) <= 0) {
+    const cleanVariants = useVariants
+      ? variants.map((v) => ({ name: v.name.trim(), price: Number(v.price) }))
+          .filter((v) => v.name && Number.isFinite(v.price) && v.price > 0)
+      : [];
+    if (useVariants && (cleanVariants.length < 1 || cleanVariants.length !== variants.filter((v) => v.name.trim() || v.price.trim()).length)) {
+      setMsg("Enter a valid name and price for every size.");
+      return;
+    }
+    if (!useVariants && (!Number.isFinite(Number(price)) || Number(price) <= 0)) {
       setMsg("Enter a valid price greater than zero.");
       return;
     }
@@ -155,7 +165,8 @@ export default function ProductsPage() {
     const { error } = await supabase.from("products").insert({
       restaurant_id: rid,
       name: name.trim(),
-      price: Number(price),
+      price: useVariants ? Math.min(...cleanVariants.map((v) => v.price)) : Number(price),
+      variants: cleanVariants,
       category,
       is_veg: veg,
       description: desc.trim(),
@@ -168,6 +179,8 @@ export default function ProductsPage() {
     } else {
       setName("");
       setPrice("");
+      setUseVariants(false);
+      setVariants([{ name: "Half", price: "" }, { name: "Full", price: "" }]);
       setCategory("Biriyani");
       setVeg(false);
       setDesc("");
@@ -303,27 +316,37 @@ export default function ProductsPage() {
               />
             </label>
 
-            <div className="ta-form-row">
-              <label className="ta-field">
-                Price (₹)
-                <input
-                  required
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="180"
-                />
-              </label>
+            <label className="ta-veg-toggle ta-size-toggle">
+              <input type="checkbox" checked={useVariants} onChange={(e) => setUseVariants(e.target.checked)} />
+              <span className="ta-veg-indicator" />
+              <span><strong>Offer multiple sizes</strong><small>Example: Quarter, Half and Full with separate prices.</small></span>
+            </label>
 
-              <label className="ta-field">
+            {useVariants ? (
+              <div className="ta-variant-editor">
+                <div className="ta-variant-heading"><strong>Size & price options</strong><button type="button" onClick={() => setVariants((current) => [...current, { name: "", price: "" }])}>+ Add size</button></div>
+                {variants.map((variant, index) => (
+                  <div className="ta-variant-row" key={index}>
+                    <input aria-label={`Size ${index + 1} name`} value={variant.name} maxLength={40} onChange={(e) => setVariants((current) => current.map((v, i) => i === index ? { ...v, name: e.target.value } : v))} placeholder="e.g. Half" />
+                    <input aria-label={`Size ${index + 1} price`} type="number" min="0.01" step="0.01" value={variant.price} onChange={(e) => setVariants((current) => current.map((v, i) => i === index ? { ...v, price: e.target.value } : v))} placeholder="Price ₹" />
+                    <button type="button" disabled={variants.length === 1} onClick={() => setVariants((current) => current.filter((_, i) => i !== index))} aria-label="Remove size">×</button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="ta-form-row">
+                <label className="ta-field">
+                  Price (₹)
+                  <input required type="number" min="0.01" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="180" />
+                </label>
+                <label className="ta-field">
                 Category
                 <select value={category} onChange={(e) => setCategory(e.target.value)}>
                   {categories.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </label>
-            </div>
+              </div>
+            )}
 
             <label className="ta-field">
               Description
@@ -457,8 +480,9 @@ export default function ProductsPage() {
                     <h3>{product.name}</h3>
                     {product.description && <p>{product.description}</p>}
 
+                    {product.variants?.length > 0 && <div className="ta-product-variant-tags">{product.variants.map((v: any) => <span key={v.name}>{v.name} · ₹{Number(v.price).toFixed(0)}</span>)}</div>}
                     <div className="ta-product-card-bottom">
-                      <strong>₹{Number(product.price).toLocaleString("en-IN", { maximumFractionDigits: 2 })}</strong>
+                      <strong>{product.variants?.length ? `From ₹${Math.min(...product.variants.map((v: any) => Number(v.price))).toLocaleString("en-IN")}` : `₹${Number(product.price).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`}</strong>
                       <span>{product.is_available ? t("On menu") : t("Hidden")}</span>
                     </div>
 
