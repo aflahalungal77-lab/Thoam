@@ -30,7 +30,18 @@ const statuses = [
 const PAGE_SIZE = 1000;
 const TIME_ZONE = "Asia/Kolkata";
 
-function getStatus(order: any) {
+type OrderItemRow = { id: string; product_name: string | null; quantity: number | string; unit_price: number | string; line_total: number | string | null };
+type RestaurantOrder = {
+  id: string; order_number?: number | string | null; restaurant_id?: string; status?: string | null;
+  total_amount?: number | string | null; created_at?: string | null; order_type?: string | null;
+  payment_status?: string | null; payment_method?: string | null; customer_name?: string | null;
+  customer_phone?: string | null; delivery_address?: string | null; notes?: string | null;
+  subtotal?: number | string | null; delivery_fee?: number | string | null; platform_fee?: number | string | null;
+  restaurant?: { name?: string | null; area?: string | null; city?: string | null } | null;
+  order_items?: OrderItemRow[] | null;
+};
+
+function getStatus(order: RestaurantOrder) {
   return String(order.status || "pending").toLowerCase();
 }
 
@@ -66,14 +77,14 @@ export default function OrdersPage() {
   const { t } = useLanguage();
   const router = useRouter();
 
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<RestaurantOrder[]>([]);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [updatingId, setUpdatingId] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<RestaurantOrder | null>(null);
 
   const load = useCallback(async (manual = false) => {
     const client = supabase;
@@ -118,7 +129,7 @@ export default function OrdersPage() {
       }
 
       // Fetch all orders in pages for accurate revenue totals.
-      const allOrders: any[] = [];
+      const allOrders: RestaurantOrder[] = [];
       let from = 0;
 
       while (true) {
@@ -131,7 +142,7 @@ export default function OrdersPage() {
 
         if (error) throw error;
 
-        const page = data || [];
+        const page = (data || []) as RestaurantOrder[];
         allOrders.push(...page);
 
         if (page.length < PAGE_SIZE) break;
@@ -332,11 +343,11 @@ const todayRevenue = revenueOrders
 
         <article className="ta-revenue-card ta-revenue-today">
           <div className="ta-revenue-card-top">
-            <span>Today's revenue</span>
+            <span>Today&apos;s revenue</span>
             <TrendingUp size={19} />
           </div>
           <strong>{money(todayRevenue)}</strong>
-          <small>Today's delivered orders only</small>
+          <small>Today&apos;s delivered orders only</small>
         </article>
       </section>
 
@@ -612,7 +623,7 @@ const todayRevenue = revenueOrders
               {(selectedOrder.order_items || []).length > 0 ? (
                 <div className="ta-bill-table">
                   <div className="ta-bill-row ta-bill-table-head"><span>Item</span><span>Qty</span><span>Price</span><span>Amount</span></div>
-                  {selectedOrder.order_items.map((item: any) => (
+                  {selectedOrder.order_items.map((item) => (
                     <div className="ta-bill-row" key={item.id}>
                       <span>{item.product_name || "Item"}</span>
                       <span>{Number(item.quantity || 0)}</span>
