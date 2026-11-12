@@ -401,7 +401,14 @@ export default function QRMenu() {
           aria-label="Tho'am home"
         >
           {r?.logo_url ? (
-            <img src={r.logo_url} alt={`${r.name} logo`} className="premium-restaurant-logo" />
+            <img
+              src={r.logo_url}
+              alt={`${r.name} logo`}
+              className="premium-restaurant-logo"
+              width={32}
+              height={32}
+              style={{ width: 32, height: 32, minWidth: 32, minHeight: 32, maxWidth: 32, maxHeight: 32, flex: "0 0 32px", objectFit: "contain", padding: 3, borderRadius: 9, background: "#f3f6f3", border: "1px solid #e6ece7" }}
+            />
           ) : (
             <span className="premium-brand-mark">T.</span>
           )}
