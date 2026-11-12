@@ -32,6 +32,8 @@ type PlacedOrder = {
   id?: string;
   order_number?: number | string;
   total_amount?: number | string;
+  discount_amount?: number | string;
+  offer_title?: string | null;
   status?: string;
 };
 
@@ -491,6 +493,13 @@ export default function QRMenu() {
               <strong>{t("Cash at restaurant")}</strong>
             </div>
 
+            {Number(placedOrder.discount_amount || 0) > 0 && (
+              <div className="receipt-row">
+                <span>{placedOrder.offer_title || "Offer discount"}</span>
+                <strong>−₹{Number(placedOrder.discount_amount).toFixed(2)}</strong>
+              </div>
+            )}
+
             <div className="receipt-total">
               <span>{t("Total amount")}</span>
               <strong>
@@ -580,7 +589,7 @@ export default function QRMenu() {
 
           <section className="premium-menu-content">
             {/* ACTIVE RESTAURANT OFFERS */}
-            {offers.length > 0 && (
+            {activeOffers.length > 0 && (
               <section className="qr-offers-section" aria-labelledby="qr-offers-title">
                 <div className="qr-offers-heading">
                   <div>
@@ -591,12 +600,12 @@ export default function QRMenu() {
                     <p>Explore current deals from {r.name}.</p>
                   </div>
                   <span className="qr-offers-count">
-                    {offers.length.toString().padStart(2, "0")} ACTIVE
+                    {activeOffers.length.toString().padStart(2, "0")} ACTIVE
                   </span>
                 </div>
 
                 <div className="qr-offers-grid">
-                  {offers.map((offer) => {
+                  {activeOffers.map((offer) => {
                     const discountLabel =
                       offer.discount_type === "percentage"
                         ? `${Number(offer.discount_value)}% OFF`
