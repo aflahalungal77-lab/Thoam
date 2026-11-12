@@ -55,6 +55,9 @@ export default function QRMenu() {
 
   const [items, setItems] = useState<FoodProduct[]>([]);
   const [qty, setQty] = useState<Record<string, number>>({});
+  const [selectedProduct, setSelectedProduct] = useState<FoodProduct | null>(null);
+  const [selectedVariantName, setSelectedVariantName] = useState("");
+  const [variantQuantity, setVariantQuantity] = useState(1);
 
   const [notes, setNotes] = useState("");
   const [itemNotes, setItemNotes] = useState<Record<string, string>>({});
@@ -133,7 +136,7 @@ export default function QRMenu() {
           await supabase
             .from("products")
             .select(
-              "id,restaurant_id,name,description,price,image_url,category,is_veg,is_available"
+              "id,restaurant_id,name,description,price,image_url,category,is_veg,is_available,variants"
             )
             .eq("restaurant_id", rest.id)
             .eq("is_available", true)
@@ -194,20 +197,15 @@ export default function QRMenu() {
     return matchesSearch && matchesCategory;
   });
 
-  const selectedItems = items.filter(
-    (p) => (qty[p.id] || 0) > 0
-  );
-
-  const total = selectedItems.reduce(
-    (sum, p) =>
-      sum + Number(p.price) * (qty[p.id] || 0),
-    0
-  );
-
-  const cartCount = selectedItems.reduce(
-    (sum, item) => sum + (qty[item.id] || 0),
-    0
-  );
+  const selectedItems = items.flatMap((product) => {
+    if (product.variants?.length) return product.variants.map((variant) => {
+      const key = `${product.id}::${variant.name}`;
+      return { ...product, cartKey: key, variantName: variant.name, price: Number(variant.price), quantity: qty[key] || 0 };
+    }).filter((item) => item.quantity > 0);
+    return qty[product.id] > 0 ? [{ ...product, cartKey: product.id, variantName: "", quantity: qty[product.id] }] : [];
+  });
+  const total = selectedItems.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
+  const cartCount = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
 
   function changeQty(id: string, amount: number) {
     setQty((current) => ({
@@ -282,8 +280,9 @@ export default function QRMenu() {
           notes: notes.trim(),
           items: selectedItems.map((p) => ({
             productId: p.id,
-            quantity: qty[p.id],
-            specialInstructions: (itemNotes[p.id] || "").trim(),
+            variantName: p.variantName || null,
+            quantity: p.quantity,
+            specialInstructions: (itemNotes[p.cartKey] || "").trim(),
           })),
         }),
       });
@@ -739,7 +738,7 @@ export default function QRMenu() {
             ) : (
               <div className="premium-food-grid">
                 {filteredItems.map((p, index) => {
-                  const count = qty[p.id] || 0;
+                  const count = (qty[p.id] || 0) + Object.entries(qty).filter(([key]) => key.startsWith(`${p.id}::`)).reduce((sum, [, value]) => sum + Number(value || 0), 0);
 
                   return (
                     <article
@@ -806,17 +805,15 @@ export default function QRMenu() {
 
                         <div className="premium-food-bottom">
                           <strong className="premium-food-price">
-                            ₹{Number(p.price).toFixed(0)}
+                            {p.variants?.length ? "From " : ""}₹{Number(p.variants?.length ? Math.min(...p.variants.map((v) => Number(v.price))) : p.price).toFixed(0)}
                           </strong>
 
-                          {count === 0 ? (
-                            <button
-                              className="premium-add-button"
-                              onClick={() =>
-                                changeQty(p.id, 1)
-                              }
-                              aria-label={`Add ${p.name} to your order`}
-                            >
+                          {p.variants?.length ? (
+                            <button className="premium-add-button" onClick={() => { setSelectedProduct(p); setSelectedVariantName(p.variants?.[0]?.name || ""); setVariantQuantity(1); }}>
+                              {count ? "ADD MORE" : "CHOOSE SIZE"} <Plus size={15} />
+                            </button>
+                          ) : count === 0 ? (
+                            <button className="premium-add-button" onClick={() => changeQty(p.id, 1)} aria-label={`Add ${p.name} to your order`}>
                               ADD <Plus size={15} />
                             </button>
                           ) : (
@@ -848,6 +845,18 @@ export default function QRMenu() {
                     </article>
                   );
                 })}
+              </div>
+            )}
+
+            {selectedProduct && (
+              <div className="thoam-variant-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedProduct(null); }}>
+                <section className="thoam-variant-modal" role="dialog" aria-modal="true" aria-labelledby="qr-variant-title">
+                  <button type="button" className="thoam-variant-close" onClick={() => setSelectedProduct(null)} aria-label="Close"><X size={19} /></button>
+                  {selectedProduct.image_url ? <img src={selectedProduct.image_url} alt={selectedProduct.name} /> : <div className="thoam-variant-image-placeholder"><UtensilsCrossed size={30} /></div>}
+                  <span className="premium-kicker">CHOOSE YOUR PORTION</span><h2 id="qr-variant-title">{selectedProduct.name}</h2>
+                  <div className="thoam-variant-options">{(selectedProduct.variants || []).map((variant) => <button type="button" key={variant.name} className={selectedVariantName === variant.name ? "selected" : ""} onClick={() => setSelectedVariantName(variant.name)}><strong>{variant.name}</strong><b>₹{Number(variant.price).toFixed(0)}</b></button>)}</div>
+                  <div className="thoam-variant-bottom"><div className="premium-quantity"><button type="button" onClick={() => setVariantQuantity((n) => Math.max(1,n-1))}><Minus size={14}/></button><strong>{variantQuantity}</strong><button type="button" onClick={() => setVariantQuantity((n) => Math.min(50,n+1))}><Plus size={14}/></button></div><button type="button" className="premium-button premium-button-black" onClick={() => { if (selectedProduct && selectedVariantName) { changeQty(`${selectedProduct.id}::${selectedVariantName}`, variantQuantity); setSelectedProduct(null); } }}>Done · Add <ArrowRight size={16}/></button></div>
+                </section>
               </div>
             )}
 
@@ -885,23 +894,13 @@ export default function QRMenu() {
                   {selectedItems.map((p) => (
                     <div
                       className="checkout-item"
-                      key={p.id}
+                      key={p.cartKey}
                     >
                       <div>
-                        <strong>{p.name}</strong>
-
-                        <span>
-                          ₹{Number(p.price).toFixed(2)} ×{" "}
-                          {qty[p.id]}
-                        </span>
+                        <strong>{p.name}{p.variantName ? ` · ${p.variantName}` : ""}</strong>
+                        <span>₹{Number(p.price).toFixed(2)} × {p.quantity}</span>
                       </div>
-
-                      <strong>
-                        ₹
-                        {(
-                          Number(p.price) * qty[p.id]
-                        ).toFixed(2)}
-                      </strong>
+                      <strong>₹{(Number(p.price) * p.quantity).toFixed(2)}</strong>
                     </div>
                   ))}
                 </div>
@@ -913,12 +912,12 @@ export default function QRMenu() {
                   </div>
 
                   {selectedItems.map((p) => (
-                    <label className="premium-field notes-field" key={p.id}>
-                      <span>{p.name} · Special instruction</span>
+                    <label className="premium-field notes-field" key={p.cartKey}>
+                      <span>{p.name}{p.variantName ? ` · ${p.variantName}` : ""} · Special instruction</span>
                       <textarea
                         maxLength={300}
-                        value={itemNotes[p.id] || ""}
-                        onChange={(e) => setItemNotes((current) => ({ ...current, [p.id]: e.target.value }))}
+                        value={itemNotes[p.cartKey] || ""}
+                        onChange={(e) => setItemNotes((current) => ({ ...current, [p.cartKey]: e.target.value }))}
                         placeholder={t("Less spicy, no onions, etc. (optional)")}
                         rows={2}
                       />
@@ -1040,6 +1039,17 @@ export default function QRMenu() {
 
       {/* INTERNAL CSS */}
       <style jsx>{`
+.thoam-variant-backdrop{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:18px;background:#0009;backdrop-filter:blur(5px)}
+.thoam-variant-modal{position:relative;width:min(100%,430px);padding:22px;border-radius:20px;background:#fff;color:#111;box-shadow:0 25px 80px #0004}
+.thoam-variant-modal>img,.thoam-variant-image-placeholder{width:100%;height:180px;object-fit:cover;border-radius:13px;margin-bottom:16px;background:#f4f4f4}
+.thoam-variant-image-placeholder{display:grid;place-items:center;color:#999}
+.thoam-variant-close{position:absolute;right:12px;top:12px;z-index:2;width:35px;height:35px;border:0;border-radius:50%;background:white;display:grid;place-items:center}
+.thoam-variant-modal h2{margin:7px 0 14px;font-size:23px}
+.thoam-variant-options{display:grid;gap:8px}
+.thoam-variant-options button{display:flex;justify-content:space-between;padding:13px;border:1px solid #e8e8e8;border-radius:10px;background:white}
+.thoam-variant-options button.selected{border-color:#176b49;background:#f1f8f4}
+.thoam-variant-bottom{display:flex;gap:10px;margin-top:16px}.thoam-variant-bottom .premium-button{flex:1}
+
 
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
 
