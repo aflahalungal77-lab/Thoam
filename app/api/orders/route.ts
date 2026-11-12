@@ -58,7 +58,11 @@ export async function POST(req: NextRequest) {
   let body: Record<string, unknown>;
 
   try {
-    body = await req.json();
+    const parsed: unknown = await req.json();
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    }
+    body = parsed as Record<string, unknown>;
   } catch {
     return NextResponse.json(
       { error: "Invalid request body." },
@@ -86,7 +90,7 @@ export async function POST(req: NextRequest) {
       : String(body.offerId);
 
   const inputItems: InputItem[] = Array.isArray(body.items)
-    ? body.items
+    ? (body.items as InputItem[])
     : [];
 
   if (
