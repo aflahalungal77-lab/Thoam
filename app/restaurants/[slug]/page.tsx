@@ -755,7 +755,7 @@ export default function RestaurantPage() {
                               <div className="premium-card-quantity">
                                 <button
                                   onClick={() =>
-                                    changeQuantity(product, -1, product.variantName)
+                                    changeQuantity(product, -1)
                                   }
                                   aria-label={`Remove one ${product.name}`}
                                 >
@@ -766,7 +766,7 @@ export default function RestaurantPage() {
 
                                 <button
                                   onClick={() =>
-                                    changeQuantity(product, 1, product.variantName)
+                                    changeQuantity(product, 1)
                                   }
                                   disabled={!restaurant.is_open}
                                   aria-label={`Add one ${product.name}`}
