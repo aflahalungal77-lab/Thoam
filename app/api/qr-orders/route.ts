@@ -9,6 +9,7 @@ type InputItem = {
   productId: string;
   quantity: number;
   specialInstructions?: string;
+  variantName?: string;
 };
 
 type OrderResult = {
@@ -117,7 +118,8 @@ export async function POST(req: NextRequest) {
       return errorResponse("Invalid product or quantity.", 400);
     }
 
-    if (seen.has(productId)) {
+    const itemKey = `${productId}::${variantName.toLowerCase()}`;
+    if (seen.has(itemKey)) {
       return errorResponse(
         "Duplicate products in cart. Please refresh the menu.",
         400
@@ -125,12 +127,14 @@ export async function POST(req: NextRequest) {
     }
 
     const specialInstructions = String(item.specialInstructions ?? "").trim();
+    const variantName = item.variantName == null ? "" : String(item.variantName).trim();
+    if (variantName.length > 40) return errorResponse("Invalid product size.", 400);
     if (specialInstructions.length > 300) {
       return errorResponse("Item instructions must be under 300 characters.", 400);
     }
 
-    seen.add(productId);
-    items.push({ productId, quantity, specialInstructions });
+    seen.add(itemKey);
+    items.push({ productId, quantity, specialInstructions, variantName: variantName || undefined });
   }
 
   // 8. Create server-side Supabase client
@@ -154,6 +158,7 @@ export async function POST(req: NextRequest) {
           productId: item.productId,
           quantity: item.quantity,
           specialInstructions: item.specialInstructions || "",
+          variantName: item.variantName || null,
         })),
       }
     );
