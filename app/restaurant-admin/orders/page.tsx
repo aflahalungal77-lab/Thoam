@@ -256,9 +256,6 @@ const todayRevenue = revenueOrders
     (order) => !isDelivered(getStatus(order)) && !isCancelled(getStatus(order))
   ).length;
 
-  const deliveredCount = items.filter(
-    (order) => isDelivered(getStatus(order))
-  ).length;
 
   const filtered = visibleItems.filter((order) => {
     const status = getStatus(order);
@@ -283,8 +280,7 @@ const todayRevenue = revenueOrders
       (filter === "Active" &&
         !isCancelled(status) &&
         status !== "placed") ||
-      (filter === "Cancelled" && isCancelled(status)) ||
-
+      (filter === "Cancelled" && isCancelled(status));
 
     return matchesSearch && matchesFilter;
   });
@@ -350,15 +346,11 @@ const todayRevenue = revenueOrders
       <section className="ta-product-summary">
         <div>
           <span>{t("Total orders")}</span>
-          <strong>{items.length}</strong>
+          <strong>{visibleItems.length}</strong>
         </div>
         <div>
           <span>{t("Active orders")}</span>
           <strong>{activeCount}</strong>
-        </div>
-        <div>
-          <span>{t("Delivered orders")}</span>
-          <strong>{deliveredCount}</strong>
         </div>
       </section>
 
