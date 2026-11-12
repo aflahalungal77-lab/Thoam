@@ -409,7 +409,6 @@ const todayRevenue = revenueOrders
             <option>{t("New")}</option>
             <option>{t("Active")}</option>
             <option>{t("Cancelled")}</option>
-            <option>{t("Delivered")}</option>
           </select>
         </div>
 
