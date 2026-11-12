@@ -22,6 +22,8 @@ import {
   CheckCircle2,
   X,
   Sparkles,
+  Minus,
+  Plus,
 } from "lucide-react";
 
 export interface MenuOffer {
@@ -63,6 +65,9 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<MenuProduct | null>(null);
+  const [selectedVariantName, setSelectedVariantName] = useState("");
+  const [variantQuantity, setVariantQuantity] = useState(1);
 
   useEffect(() => {
     if (showCheckout) {
@@ -136,17 +141,36 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
     : 0;
 
   function addProduct(product: MenuProduct) {
+    if (product.cartKey) {
+      setCart((previous) => {
+        const existing = previous[product.cartKey!];
+        return { ...previous, [product.cartKey!]: { product, quantity: (existing?.quantity ?? 0) + 1 } };
+      });
+      return;
+    }
+    if (product.variants?.length) {
+      setSelectedProduct(product);
+      setSelectedVariantName(product.variants[0].name);
+      setVariantQuantity(1);
+      return;
+    }
     setCart((previous) => {
       const existing = previous[product.id];
-
-      return {
-        ...previous,
-        [product.id]: {
-          product,
-          quantity: (existing?.quantity ?? 0) + 1,
-        },
-      };
+      return { ...previous, [product.id]: { product, quantity: (existing?.quantity ?? 0) + 1 } };
     });
+  }
+
+  function confirmVariant() {
+    if (!selectedProduct || !selectedVariantName) return;
+    const variant = selectedProduct.variants?.find((item) => item.name === selectedVariantName && item.is_available !== false);
+    if (!variant) return;
+    const cartKey = `${selectedProduct.id}::${variant.name}`;
+    const cartProduct: MenuProduct = { ...selectedProduct, price: Number(variant.price), variants: [], variantName: variant.name, cartKey };
+    setCart((previous) => {
+      const existing = previous[cartKey];
+      return { ...previous, [cartKey]: { product: cartProduct, quantity: (existing?.quantity ?? 0) + variantQuantity } };
+    });
+    setSelectedProduct(null);
   }
 
   function removeProduct(productId: string) {
@@ -201,6 +225,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
           offerId: selectedOfferId,
           items: cartItems.map((item) => ({
             productId: item.product.id,
+            variantName: item.product.variantName || null,
             quantity: item.quantity,
           })),
         }),
@@ -288,9 +313,9 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
 
             <div className="summary-items">
               {cartItems.map(({ product, quantity }) => (
-                <div className="summary-row" key={product.id}>
+                <div className="summary-row" key={product.cartKey || product.id}>
                   <div>
-                    <strong>{product.name}</strong>
+                    <strong>{product.name}{product.variantName ? ` · ${product.variantName}` : ""}</strong>
                     <span>Quantity × {quantity}</span>
                   </div>
 
@@ -397,7 +422,15 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
           </p>
         </div>
 
-        <style jsx>{`
+        <style jsx>{` 
+        .thoam-public-variant-backdrop{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:18px;background:#0009;backdrop-filter:blur(5px)}
+        .thoam-public-variant{position:relative;width:min(100%,420px);max-height:90vh;overflow:auto;padding:20px;border-radius:19px;background:#fff;color:#191916;box-shadow:0 25px 80px #0004}
+        .thoam-public-variant>img,.thoam-public-variant-placeholder{display:grid;width:100%;height:180px;object-fit:cover;place-items:center;margin-bottom:16px;border-radius:13px;background:#f4f4f0;color:#999}
+        .thoam-public-variant-close{position:absolute;top:12px;right:12px;z-index:2;display:grid;width:35px;height:35px;place-items:center;border:0;border-radius:50%;background:#fff}
+        .thoam-public-variant h2{margin:8px 0;font-size:23px}.thoam-public-variant>p{margin:0 0 14px;color:#888;font-size:12px}
+        .thoam-public-variant-options{display:grid;gap:8px}.thoam-public-variant-options button{display:flex;justify-content:space-between;padding:13px;border:1px solid #e8e8e2;border-radius:10px;background:#fff}.thoam-public-variant-options button.selected{border-color:#191916;background:#f7f7f3}
+        .thoam-public-variant-footer{display:flex;gap:10px;margin-top:16px}.thoam-public-variant-footer .add-button{flex:1}
+
           .thoam-checkout {
             min-height: 100vh;
             padding: 0 20px 60px;
@@ -701,6 +734,26 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
   }
 
   return (
+    <>
+      {selectedProduct && (
+        <div className="thoam-public-variant-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedProduct(null); }}>
+          <section className="thoam-public-variant" role="dialog" aria-modal="true" aria-labelledby="public-variant-title">
+            <button type="button" className="thoam-public-variant-close" onClick={() => setSelectedProduct(null)} aria-label="Close"><X size={18}/></button>
+            {selectedProduct.image_url ? <img src={selectedProduct.image_url} alt={selectedProduct.name}/> : <div className="thoam-public-variant-placeholder"><Utensils size={30}/></div>}
+            <span className="checkout-kicker">CHOOSE YOUR PORTION</span>
+            <h2 id="public-variant-title">{selectedProduct.name}</h2>
+            {selectedProduct.description && <p>{selectedProduct.description}</p>}
+            <div className="thoam-public-variant-options">
+              {(selectedProduct.variants || []).filter((v) => v.is_available !== false).map((variant) => <button type="button" key={variant.name} className={selectedVariantName === variant.name ? "selected" : ""} onClick={() => setSelectedVariantName(variant.name)}><strong>{variant.name}</strong><b>₹{Number(variant.price).toFixed(0)}</b></button>)}
+            </div>
+            <div className="thoam-public-variant-footer">
+              <div className="quantity-control"><button type="button" onClick={() => setVariantQuantity((n) => Math.max(1,n-1))}>−</button><span>{variantQuantity}</span><button type="button" onClick={() => setVariantQuantity((n) => Math.min(50,n+1))}>+</button></div>
+              <button type="button" className="add-button" onClick={confirmVariant}>Done · Add</button>
+            </div>
+          </section>
+        </div>
+      )}
+
     <main className="thoam-menu">
       {/* HEADER */}
       <header className="restaurant-header">
@@ -905,7 +958,9 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
                 <MenuProductCard
                   key={product.id}
                   product={product}
-                  quantity={cart[product.id]?.quantity ?? 0}
+                  quantity={product.variants?.length
+                    ? cartItems.filter((item) => item.product.id === product.id).reduce((sum, item) => sum + item.quantity, 0)
+                    : cart[product.id]?.quantity ?? 0}
                   onAdd={addProduct}
                   onRemove={removeProduct}
                 />
@@ -1949,5 +2004,6 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
 
       `}</style>
     </main>
+    </>
   );
 }
