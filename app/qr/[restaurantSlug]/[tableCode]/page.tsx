@@ -494,9 +494,10 @@ export default function QRMenu() {
             </div>
 
             {placedOrder.billing_code && (
-              <div className="receipt-row">
-                <span>Table billing code</span>
-                <strong style={{ color: "#176b49", letterSpacing: 2, fontSize: 18 }}>{placedOrder.billing_code}</strong>
+              <div className="success-billing-code">
+                <span className="success-billing-label">YOUR TABLE BILLING CODE</span>
+                <strong>{placedOrder.billing_code}</strong>
+                <small>Use this same code when placing another order from this phone at Table {tableCode}.</small>
               </div>
             )}
 
@@ -2589,6 +2590,40 @@ export default function QRMenu() {
   border-radius: 12px;
   background: var(--surface);
   text-align: left;
+}
+
+.success-billing-code {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 18px 14px;
+  border: 1px solid #b9ddc7;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #f2faf4, #e7f4eb);
+  text-align: center;
+}
+
+.success-billing-label {
+  color: #527260;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+}
+
+.success-billing-code strong {
+  color: #176b49;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  line-height: 1.2;
+}
+
+.success-billing-code small {
+  max-width: 300px;
+  color: #587163;
+  font-size: 10px;
+  line-height: 1.6;
 }
 
 .receipt-row,
