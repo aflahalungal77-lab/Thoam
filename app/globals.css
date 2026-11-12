@@ -4070,3 +4070,22 @@ to{transform:rotate(360deg);}
 .ta-size-preview strong{color:#44433b;font-size:10px;font-weight:750;line-height:1.6;overflow-wrap:anywhere}
 @media(max-width:520px){.ta-size-builder-toggle{gap:9px;padding:12px}.ta-size-builder-icon{width:35px;height:35px}.ta-size-builder-copy strong{font-size:11px}.ta-size-builder-copy small{font-size:9px}.ta-size-builder-content{padding:0 10px 10px}.ta-size-row{grid-template-columns:20px minmax(0,1fr) minmax(82px,.72fr) 28px;gap:6px;padding:8px}.ta-size-row input{height:35px;padding-inline:7px;font-size:10px}.ta-size-remove{width:28px;height:35px}}
 @media(prefers-reduced-motion:reduce){.ta-size-builder,.ta-size-switch,.ta-size-switch:after{transition:none}}
+
+
+/* QR customer header logo: hard size boundary independent of uploaded image dimensions */
+body .premium-menu .premium-menu-header .premium-brand > img.premium-restaurant-logo {
+  display: block !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  max-width: 32px !important;
+  max-height: 32px !important;
+  flex: 0 0 32px !important;
+  object-fit: contain !important;
+  padding: 3px !important;
+  border: 1px solid #e6ece7 !important;
+  border-radius: 9px !important;
+  background: #f3f6f3 !important;
+  overflow: hidden !important;
+}
