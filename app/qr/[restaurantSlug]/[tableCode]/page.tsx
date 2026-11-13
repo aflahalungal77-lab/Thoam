@@ -1420,9 +1420,9 @@ export default function QRMenu() {
   position: relative;
   overflow: hidden;
   width: 86%;
-  min-height: 320px;
-  margin: 22px auto 38px;
-  padding: 42px 7%;
+  min-height: 285px;
+  margin: 18px auto 30px;
+  padding: 34px 6%;
   display: flex;
   align-items: center;
   background:
@@ -1469,9 +1469,9 @@ export default function QRMenu() {
 }
 
 .hero-copy h1 {
-  margin: 16px 0 14px;
+  margin: 12px 0 11px;
   font-family: 'Manrope', sans-serif;
-  font-size: clamp(45px, 6vw, 78px);
+  font-size: clamp(40px, 5.2vw, 66px);
   line-height: .99;
   letter-spacing: -4.5px;
   font-weight: 800;
@@ -1488,14 +1488,14 @@ export default function QRMenu() {
   max-width: 420px;
   color: #c1d0c6;
   font-size: 14px;
-  line-height: 1.9;
+  line-height: 1.65;
 }
 
 .hero-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 23px;
-  margin-top: 18px;
+  margin-top: 14px;
   color: #d8e5dc;
   font-size: 11px;
 }
@@ -2961,14 +2961,14 @@ export default function QRMenu() {
 
   .premium-hero {
     width: calc(100% - 26px);
-    min-height: 285px;
-    margin: 12px auto 28px;
-    padding: 24px 20px 68px;
+    min-height: 245px;
+    margin: 10px auto 22px;
+    padding: 20px 18px 58px;
     border-radius: 16px;
   }
 
   .hero-copy h1 {
-    font-size: clamp(35px, 10vw, 46px);
+    font-size: clamp(31px, 9vw, 40px);
     letter-spacing: -3px;
   }
 
@@ -2979,8 +2979,8 @@ export default function QRMenu() {
 
   .hero-meta {
     gap: 10px;
-    margin-top: 14px;
-    font-size: 9px;
+    margin-top: 10px;
+    font-size: 8px;
   }
 
   .hero-visual {
