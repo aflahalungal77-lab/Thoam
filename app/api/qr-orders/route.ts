@@ -19,6 +19,9 @@ type OrderResult = {
   status?: string;
 };
 
+// Reuse the Supabase client across warm serverless invocations.
+let cachedDb: ReturnType<typeof createClient> | null = null;
+
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -142,14 +145,14 @@ export async function POST(req: NextRequest) {
     items.push({ productId, quantity, specialInstructions, variantName: variantName || undefined });
   }
 
-  // 8. Create server-side Supabase client
+  // 8. Reuse the server-side client to avoid rebuilding it on every warm request.
   // Never expose the service-role key to the browser.
-  const db = createClient(url, serviceKey, {
+  const db = cachedDb ?? (cachedDb = createClient(url, serviceKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
     },
-  });
+  }));
 
   // 9. Create the dine-in order
   try {
