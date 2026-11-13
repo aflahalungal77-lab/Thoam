@@ -156,7 +156,7 @@ export async function POST(req: NextRequest) {
 
   // 9. Create the dine-in order
   try {
-    const { data, error } = await db.rpc(
+    const { data, error } = await (db as any).rpc(
       "create_qr_dine_in_order_v3",
       {
         p_restaurant_id: restaurantId,
