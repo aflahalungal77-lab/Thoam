@@ -4314,3 +4314,178 @@ body .thoam-variant-modal .thoam-variant-bottom .premium-checkout-button {
     transition: none !important;
   }
 }
+
+
+/* Compact QR branding and offer cards — hard bounds against oversized uploaded assets */
+body .premium-menu-header .premium-brand > img.premium-restaurant-logo,
+body .premium-menu-header .premium-brand > img {
+  display: block !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+  flex: 0 0 36px !important;
+  object-fit: contain !important;
+  overflow: hidden !important;
+}
+
+body .premium-menu-content .qr-offers-section {
+  max-width: 1040px !important;
+  margin: 0 auto 28px !important;
+  padding: 22px !important;
+}
+
+body .premium-menu-content .qr-offers-heading {
+  margin-bottom: 14px !important;
+}
+
+body .premium-menu-content .qr-offers-heading h2 {
+  font-size: clamp(22px, 2.4vw, 29px) !important;
+}
+
+body .premium-menu-content .qr-offers-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 340px)) !important;
+  gap: 12px !important;
+}
+
+body .premium-menu-content .qr-offer-card {
+  width: 100% !important;
+  max-width: 340px !important;
+  border-radius: 13px !important;
+}
+
+body .premium-menu-content .qr-offer-media {
+  width: 100% !important;
+  height: 108px !important;
+  min-height: 108px !important;
+  max-height: 108px !important;
+  aspect-ratio: auto !important;
+}
+
+body .premium-menu-content .qr-offer-content {
+  padding: 11px 13px 12px !important;
+}
+
+body .premium-menu-content .qr-offer-content h3 {
+  font-size: 15px !important;
+}
+
+@media (max-width: 600px) {
+  body .premium-menu-content .qr-offers-section {
+    width: 100% !important;
+    padding: 15px 12px !important;
+  }
+  body .premium-menu-content .qr-offers-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  body .premium-menu-content .qr-offer-card {
+    max-width: 100% !important;
+  }
+  body .premium-menu-content .qr-offer-media {
+    height: 96px !important;
+    min-height: 96px !important;
+    max-height: 96px !important;
+  }
+}
+
+/* Public menu product-size dialog: global rules also apply when portalled to body */
+body .thoam-public-variant-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  background: rgba(15, 15, 13, .68) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+body .thoam-public-variant {
+  position: relative !important;
+  width: min(100%, 410px) !important;
+  max-width: 410px !important;
+  max-height: min(86dvh, 650px) !important;
+  overflow-y: auto !important;
+  margin: auto !important;
+  padding: 20px !important;
+  border: 1px solid #e8e6de !important;
+  border-radius: 22px !important;
+  background: #fff !important;
+  color: #191916 !important;
+  box-shadow: 0 24px 75px rgba(0,0,0,.3) !important;
+}
+body .thoam-public-variant > img,
+body .thoam-public-variant > .thoam-public-variant-placeholder {
+  display: grid !important;
+  width: 100% !important;
+  height: 128px !important;
+  max-height: 128px !important;
+  object-fit: cover !important;
+  place-items: center !important;
+  margin: 0 0 14px !important;
+  border-radius: 14px !important;
+}
+body .thoam-public-variant h2 {
+  margin: 10px 42px 5px 0 !important;
+  font-size: 23px !important;
+  line-height: 1.2 !important;
+}
+body .thoam-public-variant > p {
+  margin: 0 0 10px !important;
+  font-size: 11px !important;
+  line-height: 1.55 !important;
+}
+body .thoam-public-variant-options {
+  display: grid !important;
+  gap: 8px !important;
+  margin-top: 13px !important;
+}
+body .thoam-public-variant-options > button {
+  display: flex !important;
+  width: 100% !important;
+  min-height: 52px !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 12px !important;
+  border: 1px solid #e7e5dc !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  color: #24241f !important;
+  text-align: left !important;
+}
+body .thoam-public-variant-options > button.selected,
+body .thoam-public-variant-options > button[aria-pressed="true"] {
+  border-color: #24241f !important;
+  background: #f5f4ef !important;
+}
+body .thoam-public-variant-footer {
+  display: flex !important;
+  gap: 9px !important;
+  margin-top: 14px !important;
+  padding-top: 12px !important;
+}
+body .thoam-public-variant-footer .add-button {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+@media (max-width: 520px) {
+  body .thoam-public-variant-backdrop {
+    align-items: flex-end !important;
+    padding: 9px !important;
+  }
+  body .thoam-public-variant {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: 84dvh !important;
+    padding: 16px !important;
+    border-radius: 20px 20px 15px 15px !important;
+  }
+  body .thoam-public-variant > img,
+  body .thoam-public-variant > .thoam-public-variant-placeholder {
+    height: 108px !important;
+    max-height: 108px !important;
+  }
+}
