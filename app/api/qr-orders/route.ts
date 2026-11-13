@@ -156,7 +156,24 @@ export async function POST(req: NextRequest) {
 
   // 9. Create the dine-in order
   try {
-    const { data, error } = await (db as any).rpc(
+    // This v3 RPC is present in the database but not yet in the generated Supabase types.
+    const createQrOrder = db.rpc as unknown as (
+      functionName: string,
+      args: {
+        p_restaurant_id: string;
+        p_table_code: string;
+        p_notes: string;
+        p_offer_id: string | null;
+        p_items: {
+          productId: string;
+          quantity: number;
+          specialInstructions: string;
+          variantName: string | null;
+        }[];
+      }
+    ) => ReturnType<typeof db.rpc>;
+
+    const { data, error } = await createQrOrder(
       "create_qr_dine_in_order_v3",
       {
         p_restaurant_id: restaurantId,
