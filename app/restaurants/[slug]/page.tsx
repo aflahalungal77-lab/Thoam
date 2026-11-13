@@ -756,7 +756,7 @@ export default function RestaurantPage() {
 
                             {product.variants?.length ? (
                               <button className="premium-add-button" onClick={() => addToCart(product)} disabled={!restaurant.is_open}>
-                                {quantity > 0 ? "Add" : "Add"} <Plus size={15} />
+                                Add <Plus size={15} />
                               </button>
                             ) : quantity === 0 ? (
                               <button
