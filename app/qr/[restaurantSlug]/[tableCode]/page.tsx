@@ -388,6 +388,7 @@ export default function QRMenu() {
       const created = result.order as PlacedOrder;
 
       setPlacedOrder(created);
+      setCheckoutOpen(false);
       setQty({});
       setNotes("");
       setItemNotes({});
@@ -1118,7 +1119,7 @@ export default function QRMenu() {
                               {!eligible && <small>{total < Number(offer.min_order_amount || 0) ? `Add ₹${Math.max(0, Number(offer.min_order_amount || 0) - total).toFixed(0)} more to unlock` : "Add eligible items to use this offer"}</small>}
                               {isApplied && eligible && <small className="qr-modal-offer-success">Applied to this order</small>}
                             </div>
-                            <button type="button" disabled={!eligible} onClick={() => setSelectedOfferId(isApplied ? null : offer.id)}>
+                            <button type="button" disabled={!eligible && !isApplied} onClick={() => setSelectedOfferId(isApplied ? null : offer.id)}>
                               {isApplied ? "Applied ✓" : "Apply"}
                             </button>
                           </div>
@@ -1229,7 +1230,7 @@ export default function QRMenu() {
                     ) : (
                       <>
                         Place dine-in order
-                        <span>₹{total.toFixed(2)}</span>
+                        <span>₹{payableTotal.toFixed(2)}</span>
                         <ArrowRight size={18} />
                       </>
                     )}
@@ -1291,7 +1292,7 @@ export default function QRMenu() {
           </span>
 
           <strong className="sticky-cart-total">
-            ₹{total.toFixed(2)}
+            ₹{payableTotal.toFixed(2)}
           </strong>
 
           <ArrowRight size={19} />
