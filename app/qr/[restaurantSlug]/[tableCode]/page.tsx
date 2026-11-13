@@ -575,68 +575,179 @@ export default function QRMenu() {
         </section>
       ) : (
         <>
-          {/* HERO */}
-          <section className="premium-hero">
-            <div className="hero-copy">
-              <span className="premium-kicker">
-                <Sparkles size={13} /> YOUR TABLE, YOUR MENU
-              </span>
-
-              <h1>
-                Good food.
-                <br />
-                <span>{t("Made for you.")}</span>
-              </h1>
-
-              <p>
-                Explore the menu, pick your favourites, and
-                order directly from your table.
-              </p>
-
-              <div className="hero-meta">
-                <span>
-                  <UtensilsCrossed size={15} />
-                  Freshly prepared
-                </span>
-
-                <span>
-                  <Clock3 size={15} />
-                  Easy ordering
-                </span>
-              </div>
-            </div>
-
-            <div className="hero-visual">
-              <div className="hero-visual-ring" />
-
-              <div className="hero-plate">
-                <UtensilsCrossed
-                  size={70}
-                  strokeWidth={1}
-                />
-              </div>
-
-              <span className="hero-sticker">
-                MADE WITH CARE
-              </span>
-            </div>
-
-            <div className="hero-bottom">
-              <span className="hero-bottom-label">
-                NOW SERVING
-              </span>
-
-              <strong>{r.name}</strong>
-
-              <span className="hero-table">
-                <span className="live-dot" />
-                Table {tableCode}
-              </span>
-            </div>
-          </section>
-
           <section className="premium-menu-content">
-            {/* ACTIVE RESTAURANT OFFERS */}
+            {/* MENU HEADING */}
+            <div className="menu-heading">
+              <div>
+                <span className="premium-kicker">
+                  THE GOOD STUFF
+                </span>
+
+                <h2>
+                  {t("Explore the menu")}<span>.</span>
+                </h2>
+
+                <p>{t("Find something you’ll love.")}</p>
+              </div>
+
+              <div className="menu-count">
+                <strong>
+                  {items.length.toString().padStart(2, "0")}
+                </strong>
+                <span>{t("ITEMS")}</span>
+              </div>
+            </div>
+
+            {/* SEARCH */}
+            <label className="premium-search">
+              <Search size={19} />
+
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("Search dishes...")}
+                aria-label={t("Search dishes...")}
+              />
+
+              <span className="search-shortcut">MENU</span>
+            </label>
+
+            {/* CATEGORIES */}
+            <div
+              className="premium-categories"
+              aria-label="Menu categories"
+            >
+              {categories.map((item) => (
+                <button
+                  key={item}
+                  className={`premium-category ${
+                    category === item ? "active" : ""
+                  }`}
+                  onClick={() => setCategory(item)}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+
+            {/* PRODUCTS */}
+            {items.length === 0 ? (
+              <div className="premium-empty">
+                <UtensilsCrossed size={30} />
+                <h3>{t("The menu is being prepared.")}</h3>
+                <p>{t("Please check back in a little while.")}</p>
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="premium-empty">
+                <Search size={30} />
+                <h3>{t("No dishes found")}</h3>
+                <p>
+                  Try a different search or category.
+                </p>
+
+                <button
+                  className="premium-button premium-button-outline"
+                  onClick={() => {
+                    setSearch("");
+                    setCategory("All");
+                  }}
+                >
+                  Clear filters
+                </button>
+              </div>
+            ) : (
+              <div className="premium-food-grid">
+                {filteredItems.map((p, index) => {
+                  const count = (qty[p.id] || 0) + Object.entries(qty).filter(([key]) => key.startsWith(`${p.id}::`)).reduce((sum, [, value]) => sum + Number(value || 0), 0);
+
+                  return (
+                    <article
+                      className={`premium-food-card ${
+                        count > 0 ? "is-selected" : ""
+                      }`}
+                      key={p.id}
+                    >
+                      <div className="premium-food-image">
+                        {p.image_url ? (
+                          <button type="button" className="premium-image-trigger" onClick={() => setSelectedImage({ url: p.image_url || "", name: p.name })} aria-label="View food photo">
+                            <Image src={p.image_url} alt={p.name} fill unoptimized sizes="(max-width: 640px) 50vw, (max-width: 1000px) 33vw, 260px" className="premium-food-photo" />
+                            <span className="image-view-hint">VIEW PHOTO</span>
+                          </button>
+                        ) : (
+                          <div className="food-placeholder">
+                            <UtensilsCrossed
+                              size={35}
+                              strokeWidth={1.2}
+                            />
+                            <span>{t("FRESH & DELICIOUS")}</span>
+                          </div>
+                        )}
+
+                        <span className="food-index">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+
+                      </div>
+
+                      <div className="premium-food-info">
+                        <span className="premium-food-category">
+                          {p.category || "FROM OUR KITCHEN"}
+                        </span>
+
+                        <h3>{p.name}</h3>
+
+                        <p className="premium-food-description">
+                          {p.description ||
+                            "Prepared fresh, just for you."}
+                        </p>
+
+                        <div className="premium-food-bottom">
+                          <strong className="premium-food-price">
+                            {p.variants?.length ? "From " : ""}₹{Number(p.variants?.length ? Math.min(...p.variants.map((v) => Number(v.price))) : p.price).toFixed(0)}
+                          </strong>
+
+                          {p.variants?.length ? (
+                            <button className="premium-add-button" onClick={() => { setSelectedProduct(p); setSelectedVariantName(p.variants?.find((variant) => variant.is_available !== false)?.name || ""); setVariantQuantity(1); }}>
+                              {count ? "ADD MORE" : "CHOOSE SIZE"} <Plus size={15} />
+                            </button>
+                          ) : count === 0 ? (
+                            <button className="premium-add-button" onClick={() => changeQty(p.id, 1)} aria-label={`Add ${p.name} to your order`}>
+                              ADD <Plus size={15} />
+                            </button>
+                          ) : (
+                            <div className="premium-quantity">
+                              <button
+                                onClick={() =>
+                                  changeQty(p.id, -1)
+                                }
+                                aria-label={`Remove one ${p.name}`}
+                              >
+                                <Minus size={14} />
+                              </button>
+
+                              <strong>{count}</strong>
+
+                              <button
+                                onClick={() =>
+                                  changeQty(p.id, 1)
+                                }
+                                disabled={count >= 50}
+                                aria-label={`Add one ${p.name}`}
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+
+            {            {/* ACTIVE RESTAURANT OFFERS */}
             {activeOffers.length > 0 && (
               <section className="qr-offers-section" aria-labelledby="qr-offers-title">
                 <div className="qr-offers-heading">
@@ -891,178 +1002,9 @@ export default function QRMenu() {
               )}
             </section>
 
-            {/* MENU HEADING */}
-            <div className="menu-heading">
-              <div>
-                <span className="premium-kicker">
-                  THE GOOD STUFF
-                </span>
 
-                <h2>
-                  {t("Explore the menu")}<span>.</span>
-                </h2>
 
-                <p>{t("Find something you’ll love.")}</p>
-              </div>
-
-              <div className="menu-count">
-                <strong>
-                  {items.length.toString().padStart(2, "0")}
-                </strong>
-                <span>{t("ITEMS")}</span>
-              </div>
-            </div>
-
-            {/* SEARCH */}
-            <label className="premium-search">
-              <Search size={19} />
-
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t("Search dishes...")}
-                aria-label={t("Search dishes...")}
-              />
-
-              <span className="search-shortcut">MENU</span>
-            </label>
-
-            {/* CATEGORIES */}
-            <div
-              className="premium-categories"
-              aria-label="Menu categories"
-            >
-              {categories.map((item) => (
-                <button
-                  key={item}
-                  className={`premium-category ${
-                    category === item ? "active" : ""
-                  }`}
-                  onClick={() => setCategory(item)}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-
-            {/* PRODUCTS */}
-            {items.length === 0 ? (
-              <div className="premium-empty">
-                <UtensilsCrossed size={30} />
-                <h3>{t("The menu is being prepared.")}</h3>
-                <p>{t("Please check back in a little while.")}</p>
-              </div>
-            ) : filteredItems.length === 0 ? (
-              <div className="premium-empty">
-                <Search size={30} />
-                <h3>{t("No dishes found")}</h3>
-                <p>
-                  Try a different search or category.
-                </p>
-
-                <button
-                  className="premium-button premium-button-outline"
-                  onClick={() => {
-                    setSearch("");
-                    setCategory("All");
-                  }}
-                >
-                  Clear filters
-                </button>
-              </div>
-            ) : (
-              <div className="premium-food-grid">
-                {filteredItems.map((p, index) => {
-                  const count = (qty[p.id] || 0) + Object.entries(qty).filter(([key]) => key.startsWith(`${p.id}::`)).reduce((sum, [, value]) => sum + Number(value || 0), 0);
-
-                  return (
-                    <article
-                      className={`premium-food-card ${
-                        count > 0 ? "is-selected" : ""
-                      }`}
-                      key={p.id}
-                    >
-                      <div className="premium-food-image">
-                        {p.image_url ? (
-                          <button type="button" className="premium-image-trigger" onClick={() => setSelectedImage({ url: p.image_url || "", name: p.name })} aria-label="View food photo">
-                            <Image src={p.image_url} alt={p.name} fill unoptimized sizes="(max-width: 640px) 50vw, (max-width: 1000px) 33vw, 260px" className="premium-food-photo" />
-                            <span className="image-view-hint">VIEW PHOTO</span>
-                          </button>
-                        ) : (
-                          <div className="food-placeholder">
-                            <UtensilsCrossed
-                              size={35}
-                              strokeWidth={1.2}
-                            />
-                            <span>{t("FRESH & DELICIOUS")}</span>
-                          </div>
-                        )}
-
-                        <span className="food-index">
-                          {String(index + 1).padStart(2, "0")}
-                        </span>
-
-                      </div>
-
-                      <div className="premium-food-info">
-                        <span className="premium-food-category">
-                          {p.category || "FROM OUR KITCHEN"}
-                        </span>
-
-                        <h3>{p.name}</h3>
-
-                        <p className="premium-food-description">
-                          {p.description ||
-                            "Prepared fresh, just for you."}
-                        </p>
-
-                        <div className="premium-food-bottom">
-                          <strong className="premium-food-price">
-                            {p.variants?.length ? "From " : ""}₹{Number(p.variants?.length ? Math.min(...p.variants.map((v) => Number(v.price))) : p.price).toFixed(0)}
-                          </strong>
-
-                          {p.variants?.length ? (
-                            <button className="premium-add-button" onClick={() => { setSelectedProduct(p); setSelectedVariantName(p.variants?.find((variant) => variant.is_available !== false)?.name || ""); setVariantQuantity(1); }}>
-                              {count ? "ADD MORE" : "CHOOSE SIZE"} <Plus size={15} />
-                            </button>
-                          ) : count === 0 ? (
-                            <button className="premium-add-button" onClick={() => changeQty(p.id, 1)} aria-label={`Add ${p.name} to your order`}>
-                              ADD <Plus size={15} />
-                            </button>
-                          ) : (
-                            <div className="premium-quantity">
-                              <button
-                                onClick={() =>
-                                  changeQty(p.id, -1)
-                                }
-                                aria-label={`Remove one ${p.name}`}
-                              >
-                                <Minus size={14} />
-                              </button>
-
-                              <strong>{count}</strong>
-
-                              <button
-                                onClick={() =>
-                                  changeQty(p.id, 1)
-                                }
-                                disabled={count >= 50}
-                                aria-label={`Add one ${p.name}`}
-                              >
-                                <Plus size={14} />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            )}
-
-            {selectedProduct && (
+            selectedProduct && (
               <div className="thoam-variant-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedProduct(null); }}>
                 <section className="thoam-variant-modal" role="dialog" aria-modal="true" aria-labelledby="qr-variant-title">
                   <button type="button" className="thoam-variant-close" onClick={() => setSelectedProduct(null)} aria-label="Close"><X size={19} /></button>
@@ -3000,6 +2942,25 @@ export default function QRMenu() {
   .premium-food-image {
     height: 165px;
   }
+}
+
+/* QR MENU FIRST — compact scan-to-order layout */
+.premium-menu-header { height: 68px; }
+.premium-menu-content { margin-top: 18px; }
+.menu-heading { margin-top: 4px; }
+.premium-food-grid { align-items: start; }
+.premium-food-card { overflow: hidden; }
+.premium-food-image { height: 190px; }
+.premium-sticky-cart { bottom: max(14px, env(safe-area-inset-bottom)); }
+@media (max-width: 600px) {
+  .premium-menu-header { height: 60px; }
+  .premium-menu-content { margin-top: 12px; padding-bottom: 100px; }
+  .premium-food-image { height: 132px; }
+  .premium-food-info { padding: 11px; }
+  .premium-food-bottom { margin-top: 13px; }
+  .premium-food-description { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .premium-categories { position: sticky; top: 0; z-index: 15; padding: 8px 0; background: var(--surface, #fff); }
+  .premium-sticky-cart { bottom: max(10px, env(safe-area-inset-bottom)); }
 }
 
 /* MOBILE */
