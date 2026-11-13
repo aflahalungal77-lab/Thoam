@@ -3,6 +3,7 @@
 import { useLanguage } from "@/components/LanguageProvider";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -243,6 +244,20 @@ export default function RestaurantPage() {
       cancelled = true;
     };
   }, [slug]);
+
+  useEffect(() => {
+    if (!selectedProduct) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelectedProduct(null);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedProduct]);
 
   useEffect(() => {
     if (!cartOpen) return;
@@ -741,7 +756,7 @@ export default function RestaurantPage() {
 
                             {product.variants?.length ? (
                               <button className="premium-add-button" onClick={() => addToCart(product)} disabled={!restaurant.is_open}>
-                                {quantity > 0 ? "Add another" : "Choose size"} <Plus size={15} />
+                                Add <Plus size={15} />
                               </button>
                             ) : quantity === 0 ? (
                               <button
@@ -804,31 +819,120 @@ export default function RestaurantPage() {
         </div>
       </main>
 
-      {selectedProduct && (
-        <div className="thoam-variant-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedProduct(null); }}>
-          <section className="thoam-variant-modal" role="dialog" aria-modal="true" aria-labelledby="thoam-variant-title">
-            <button className="thoam-variant-close" onClick={() => setSelectedProduct(null)} aria-label="Close size selector"><X size={19} /></button>
-            {selectedProduct.image_url ? <img className="thoam-variant-image" src={selectedProduct.image_url} alt={selectedProduct.name} /> : <div className="thoam-variant-image thoam-variant-placeholder"><Utensils size={32} /></div>}
-            <span className="premium-label">CHOOSE YOUR PORTION</span>
-            <h2 id="thoam-variant-title">{selectedProduct.name}</h2>
-            {selectedProduct.description && <p>{selectedProduct.description}</p>}
-            <div className="thoam-variant-options">
-              {(selectedProduct.variants || []).filter((variant) => variant.is_available !== false).map((variant) => (
-                <button type="button" key={variant.name} className={selectedVariantName === variant.name ? "selected" : ""} onClick={() => setSelectedVariantName(variant.name)}>
-                  <span><strong>{variant.name}</strong><small>Portion size</small></span><b>₹{Number(variant.price).toFixed(0)}</b>
-                </button>
-              ))}
+      {selectedProduct && typeof document !== "undefined" && createPortal(
+        <div
+          className="thoam-size-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSelectedProduct(null);
+          }}
+        >
+          <section
+            className="thoam-size-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="thoam-variant-title"
+          >
+            <button
+              type="button"
+              className="thoam-size-close"
+              onClick={() => setSelectedProduct(null)}
+              aria-label="Close size selector"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="thoam-size-kicker">
+              <Utensils size={13} />
+              CUSTOMISE YOUR ORDER
             </div>
-            <div className="thoam-variant-bottom">
-              <div className="premium-quantity-control">
-                <button type="button" onClick={() => setVariantQuantity((n) => Math.max(1, n - 1))}><Minus size={14} /></button>
-                <strong>{variantQuantity}</strong>
-                <button type="button" onClick={() => setVariantQuantity((n) => Math.min(50, n + 1))}><Plus size={14} /></button>
+
+            {selectedProduct.image_url ? (
+              <img
+                className="thoam-size-image"
+                src={selectedProduct.image_url}
+                alt={selectedProduct.name}
+              />
+            ) : (
+              <div className="thoam-size-placeholder">
+                <Utensils size={30} />
               </div>
-              <button className="premium-checkout-button" type="button" onClick={confirmVariantAdd}>Done · Add to cart <ArrowRight size={17} /></button>
+            )}
+
+            <div className="thoam-size-heading">
+              <div>
+                <span className="thoam-size-eyebrow">SELECT YOUR PORTION</span>
+                <h2 id="thoam-variant-title">{selectedProduct.name}</h2>
+              </div>
+              <span className="thoam-size-count">
+                {(selectedProduct.variants || []).filter((variant) => variant.is_available !== false).length} OPTIONS
+              </span>
+            </div>
+
+            {selectedProduct.description && (
+              <p className="thoam-size-description">{selectedProduct.description}</p>
+            )}
+
+            <div className="thoam-size-options">
+              {(selectedProduct.variants || []).filter((variant) => variant.is_available !== false).map((variant) => {
+                const active = selectedVariantName === variant.name;
+                return (
+                  <button
+                    type="button"
+                    key={variant.name}
+                    className={active ? "thoam-size-option is-selected" : "thoam-size-option"}
+                    aria-pressed={active}
+                    onClick={() => setSelectedVariantName(variant.name)}
+                  >
+                    <span className="thoam-size-option-main">
+                      <span className="thoam-size-radio" aria-hidden="true">
+                        {active ? <span /> : null}
+                      </span>
+                      <span className="thoam-size-option-name">{variant.name}</span>
+                    </span>
+                    <strong>₹{Number(variant.price).toFixed(0)}</strong>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="thoam-size-footer">
+              <div className="thoam-size-quantity" aria-label="Quantity">
+                <button
+                  type="button"
+                  aria-label="Decrease quantity"
+                  onClick={() => setVariantQuantity((n) => Math.max(1, n - 1))}
+                  disabled={variantQuantity <= 1}
+                >
+                  <Minus size={15} />
+                </button>
+                <strong>{variantQuantity}</strong>
+                <button
+                  type="button"
+                  aria-label="Increase quantity"
+                  onClick={() => setVariantQuantity((n) => Math.min(50, n + 1))}
+                  disabled={variantQuantity >= 50}
+                >
+                  <Plus size={15} />
+                </button>
+              </div>
+              <button
+                type="button"
+                className="thoam-size-add"
+                onClick={confirmVariantAdd}
+                disabled={!selectedVariantName}
+              >
+                <span>Add to cart</span>
+                <strong>₹{(
+                  Number((selectedProduct.variants || []).find((variant) => variant.name === selectedVariantName)?.price || 0) *
+                  variantQuantity
+                ).toFixed(0)}</strong>
+                <ArrowRight size={16} />
+              </button>
             </div>
           </section>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Floating cart */}
@@ -1041,20 +1145,34 @@ export default function RestaurantPage() {
 
       {/* Internal CSS */}
       <style jsx global>{`
-        .thoam-variant-backdrop{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:18px;background:#0009;backdrop-filter:blur(5px)}
-        .thoam-variant-modal{position:relative;width:min(100%,430px);max-height:90vh;overflow:auto;padding:22px;border-radius:20px;background:#fff;color:#111;box-shadow:0 25px 80px #0004}
-        .thoam-variant-close{position:absolute;top:12px;right:12px;width:36px;height:36px;border:0;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;z-index:2;cursor:pointer}
-        .thoam-variant-image{display:block;width:100%;height:190px;object-fit:cover;border-radius:13px;margin-bottom:18px;background:#f3f3f3}
-        .thoam-variant-placeholder{display:grid;place-items:center;color:#999}
-        .thoam-variant-modal h2{margin:7px 0;font-size:24px;letter-spacing:-.8px}
-        .thoam-variant-modal>p{margin:0 0 14px;color:#777;font-size:12px;line-height:1.6}
-        .thoam-variant-options{display:grid;gap:9px;margin-top:16px}
-        .thoam-variant-options button{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;border:1px solid #e8e8e8;border-radius:11px;background:#fff;text-align:left;cursor:pointer}
-        .thoam-variant-options button.selected{border-color:#176b49;background:#f2f8f4;box-shadow:0 0 0 2px #176b4918}
-        .thoam-variant-options button span{display:grid;gap:4px}.thoam-variant-options button strong{font-size:13px}.thoam-variant-options button small{font-size:10px;color:#999}.thoam-variant-options button b{font-size:14px}
-        .thoam-variant-bottom{display:flex;align-items:center;gap:10px;margin-top:18px}
-        .thoam-variant-bottom .premium-checkout-button{flex:1;justify-content:center}
-        @media(max-width:480px){.thoam-variant-modal{padding:16px}.thoam-variant-image{height:165px}}
+        .thoam-variant-backdrop{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(8,16,11,.68);backdrop-filter:blur(8px);animation:thoam-variant-fade .2s ease}
+        .thoam-variant-modal{position:relative;width:min(100%,440px);max-height:min(90vh,760px);overflow:auto;padding:24px;border:1px solid #e9eee9;border-radius:24px;background:linear-gradient(155deg,#fff 0%,#fbfcfa 100%);color:#17231b;box-shadow:0 28px 90px #0005;animation:thoam-variant-rise .24s ease}
+        .thoam-variant-close{position:absolute;top:14px;right:14px;width:38px;height:38px;border:1px solid #e7ebe6;border-radius:12px;background:#ffffffed;color:#26372c;display:grid;place-items:center;z-index:2;cursor:pointer;box-shadow:0 4px 14px #14251a12;transition:background .2s,border-color .2s}
+        .thoam-variant-close:hover{border-color:#cbd8ce;background:#f2f7f2}
+        .thoam-variant-image{display:block;width:100%;height:178px;object-fit:cover;border-radius:17px;margin-bottom:19px;background:linear-gradient(135deg,#edf3ee,#f8f8f4);box-shadow:0 8px 24px #17251b12}
+        .thoam-variant-placeholder{display:grid;place-items:center;color:#789080}
+        .thoam-variant-modal>.premium-label{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid #dce9df;border-radius:999px;background:#f2f8f3;color:#26734a;font-size:9px;font-weight:900;letter-spacing:1.25px}
+        .thoam-variant-modal h2{margin:11px 42px 6px 0;color:#152219;font-size:26px;line-height:1.12;letter-spacing:-1.1px;font-weight:900}
+        .thoam-variant-modal>p{margin:0 0 15px;color:#758078;font-size:12px;line-height:1.65}
+        .thoam-variant-options{display:grid;gap:9px;margin-top:17px}
+        .thoam-variant-options button{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:66px;padding:13px 14px;border:1px solid #e6ebe6;border-radius:14px;background:#fff;text-align:left;cursor:pointer;transition:border-color .18s,background .18s,box-shadow .18s,transform .18s}
+        .thoam-variant-options button:hover{transform:translateY(-1px);border-color:#b8cdbd;box-shadow:0 7px 18px #183b290d}
+        .thoam-variant-options button:focus-visible{outline:3px solid #176b4933;outline-offset:2px}
+        .thoam-variant-options button.selected{border-color:#28794d;background:linear-gradient(110deg,#f0f8f1,#fff);box-shadow:0 0 0 2px #28794d18,0 8px 20px #1d6b3b12}
+        .thoam-variant-options button span{display:grid;gap:5px;min-width:0}
+        .thoam-variant-options button strong{color:#1b2a20;font-size:13px;font-weight:850}
+        .thoam-variant-options button small{color:#929b93;font-size:10px}
+        .thoam-variant-options button.selected small{color:#28794d;font-weight:800}
+        .thoam-variant-options button.selected small:after{content:" · SELECTED";font-size:8px;letter-spacing:.6px}
+        .thoam-variant-options button b{flex-shrink:0;padding:8px 10px;border:1px solid #e9eee9;border-radius:10px;background:#f8faf8;color:#1a2d20;font-size:13px;font-weight:900}
+        .thoam-variant-options button.selected b{border-color:#cfe2d3;background:#e8f4ea;color:#176b49}
+        .thoam-variant-bottom{display:flex;align-items:center;gap:11px;margin-top:19px;padding-top:16px;border-top:1px solid #edf0ec}
+        .thoam-variant-bottom .premium-quantity-control{flex-shrink:0;min-height:48px;padding:6px 9px;border:1px solid #e4eae4;border-radius:13px;background:#fff}
+        .thoam-variant-bottom .premium-checkout-button{flex:1;justify-content:center;min-height:48px;margin:0;border-radius:13px}
+        @keyframes thoam-variant-fade{from{opacity:0}to{opacity:1}}
+        @keyframes thoam-variant-rise{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+        @media(max-width:480px){.thoam-variant-backdrop{align-items:flex-end;padding:10px}.thoam-variant-modal{width:100%;max-height:88vh;padding:18px;border-radius:22px 22px 18px 18px}.thoam-variant-image{height:150px;border-radius:14px}.thoam-variant-modal h2{font-size:23px}.thoam-variant-bottom{gap:8px}.thoam-variant-bottom .premium-checkout-button{font-size:11px;padding-inline:10px}}
+        @media(prefers-reduced-motion:reduce){.thoam-variant-backdrop,.thoam-variant-modal{animation:none}.thoam-variant-options button{transition:none}}
         /* --------------------------------
            THO'AM - PREMIUM OFFER SLIDER
         --------------------------------- */

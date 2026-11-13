@@ -401,7 +401,14 @@ export default function QRMenu() {
           aria-label="Tho'am home"
         >
           {r?.logo_url ? (
-            <img src={r.logo_url} alt={`${r.name} logo`} className="premium-restaurant-logo" />
+            <img
+              src={r.logo_url}
+              alt={`${r.name} logo`}
+              className="premium-restaurant-logo"
+              width={32}
+              height={32}
+              style={{ width: 32, height: 32, minWidth: 32, minHeight: 32, maxWidth: 32, maxHeight: 32, flex: "0 0 32px", objectFit: "contain", padding: 3, borderRadius: 9, background: "#f3f6f3", border: "1px solid #e6ece7" }}
+            />
           ) : (
             <span className="premium-brand-mark">T.</span>
           )}
@@ -1324,7 +1331,7 @@ export default function QRMenu() {
   letter-spacing: -1.2px;
 }
 
-.premium-brand img,.premium-brand .premium-restaurant-logo { display:block; width:48px !important; height:48px !important; max-width:48px; max-height:48px; flex:0 0 48px; object-fit:contain; border-radius:12px; overflow:hidden; }
+.premium-brand img,.premium-brand .premium-restaurant-logo { display:block; width:38px !important; height:38px !important; min-width:38px; min-height:38px; max-width:38px !important; max-height:38px !important; flex:0 0 38px; object-fit:contain !important; border-radius:10px; overflow:hidden; background:#f4f6f4; }
 .premium-brand > span { min-width:0; }
 .premium-brand > span small { display:block; margin-top:2px; font-size:8px; letter-spacing:1.2px; }
 
@@ -1621,22 +1628,30 @@ export default function QRMenu() {
 }
 .qr-offers-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 300px));
+  justify-content: start;
+  gap: 14px;
 }
 .qr-offer-card {
   min-width: 0;
+  max-width: 300px;
   overflow: hidden;
   border: 1px solid #e6eee8;
-  border-radius: 17px;
+  border-radius: 15px;
   background: #fff;
   box-shadow: 0 8px 24px #183b290b;
+  transition: transform .22s ease, box-shadow .22s ease;
+}
+.qr-offer-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 13px 28px #183b2915;
 }
 .qr-offer-media {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 7;
-  min-height: 130px;
+  aspect-ratio: 16 / 6.5;
+  min-height: 92px;
+  max-height: 122px;
   overflow: hidden;
   background: linear-gradient(135deg, #0e3928, #1e8055);
 }
@@ -1662,19 +1677,19 @@ export default function QRMenu() {
 }
 .qr-offer-discount {
   position: absolute;
-  top: 13px;
-  left: 13px;
-  padding: 9px 12px;
+  top: 9px;
+  left: 9px;
+  padding: 7px 9px;
   border: 1px solid #ffffff55;
-  border-radius: 10px;
+  border-radius: 8px;
   background: #0d392bef;
   color: #fff;
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 900;
-  letter-spacing: -.3px;
+  letter-spacing: -.2px;
   box-shadow: 0 5px 18px #0003;
 }
-.qr-offer-content { padding: 19px 20px 17px; }
+.qr-offer-content { padding: 14px 15px 13px; }
 .qr-offer-scope {
   color: #188052;
   font-size: 9px;
@@ -1682,11 +1697,11 @@ export default function QRMenu() {
   letter-spacing: 1.5px;
 }
 .qr-offer-content h3 {
-  margin: 7px 0 6px;
+  margin: 6px 0 5px;
   color: #17251d;
-  font-size: 21px;
-  line-height: 1.2;
-  letter-spacing: -.6px;
+  font-size: 17px;
+  line-height: 1.25;
+  letter-spacing: -.45px;
 }
 .qr-offer-content > p {
   margin: 0;
@@ -2796,10 +2811,11 @@ export default function QRMenu() {
   .qr-offers-heading h2 { font-size: 27px; }
   .qr-offers-heading p { max-width: 220px; font-size: 11px; }
   .qr-offers-count { padding: 7px 8px; font-size: 8px; }
-  .qr-offers-grid { grid-template-columns: minmax(0, 1fr); gap: 13px; }
-  .qr-offer-media { aspect-ratio: 16 / 8; min-height: 118px; }
-  .qr-offer-content { padding: 15px; }
-  .qr-offer-content h3 { font-size: 19px; }
+  .qr-offers-grid { grid-template-columns: minmax(0, 1fr); gap: 11px; }
+  .qr-offer-card { width: 100%; max-width: 100%; }
+  .qr-offer-media { aspect-ratio: 16 / 6.5; min-height: 88px; max-height: 112px; }
+  .qr-offer-content { padding: 13px 14px; }
+  .qr-offer-content h3 { font-size: 16px; }
 
   .table-assistance {
     padding: 18px;
