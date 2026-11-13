@@ -34,6 +34,44 @@ type KitchenOrder = {
   order_items: KitchenItem[];
 };
 
+type KitchenTicket = KitchenOrder & { groupedOrderIds: string[]; groupedCount: number };
+
+function groupKitchenOrders(rows: KitchenOrder[]): KitchenTicket[] {
+  const groups = new Map<string, KitchenOrder[]>();
+  for (const order of rows) {
+    const key = order.session_id || order.id;
+    const current = groups.get(key) || [];
+    current.push(order);
+    groups.set(key, current);
+  }
+
+  return Array.from(groups.values()).map((group) => {
+    const first = group[0];
+    const mergedItems = new Map<string, KitchenItem>();
+    for (const order of group) {
+      for (const item of order.order_items || []) {
+        const key = [item.product_name, item.variant_name || "", item.special_instructions || "", item.unit_price].join("::");
+        const existing = mergedItems.get(key);
+        if (existing) {
+          existing.quantity += Number(item.quantity || 0);
+          existing.line_total += Number(item.line_total || 0);
+        } else {
+          mergedItems.set(key, { ...item, quantity: Number(item.quantity || 0), line_total: Number(item.line_total || 0) });
+        }
+      }
+    }
+    return {
+      ...first,
+      order_number: group.length > 1 ? first.order_number : first.order_number,
+      total_amount: group.reduce((sum, order) => sum + Number(order.total_amount || 0), 0),
+      created_at: group.reduce((latest, order) => order.created_at > latest ? order.created_at : latest, first.created_at),
+      order_items: Array.from(mergedItems.values()),
+      groupedOrderIds: group.map((order) => order.id),
+      groupedCount: group.length,
+    };
+  });
+}
+
 const zone = "Asia/Kolkata";
 const money = (n: number) => new Intl.NumberFormat("en-IN", {
   style: "currency", currency: "INR", maximumFractionDigits: 0
@@ -116,13 +154,13 @@ export default function KitchenPage() {
     return () => { void supabase?.removeChannel(channel); };
   }, [restaurantId, load]);
 
-  async function complete(order: KitchenOrder) {
+  async function complete(order: KitchenTicket) {
     if (!supabase || busy) return;
     setBusy(order.id);
     setMessage("");
     const { error } = await supabase.from("orders")
       .update({ status: "delivered" })
-      .eq("id", order.id)
+      .in("id", order.groupedOrderIds)
       .eq("restaurant_id", restaurantId)
       .eq("order_type", "dine_in");
     if (error) setMessage("Could not mark order as served: " + error.message);
@@ -151,7 +189,7 @@ export default function KitchenPage() {
     }
   }
 
-  const visible = tab === "active" ? orders : completed;
+  const visible = groupKitchenOrders(tab === "active" ? orders : completed);
   const visibleBillingSessions = billingSessions.filter((session) =>
     session.billing_code.toLowerCase().includes(billingSearch.trim().toLowerCase())
   );
@@ -216,7 +254,8 @@ export default function KitchenPage() {
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", borderBottom: "1px solid #eee", paddingBottom: 13 }}>
                 <div>
                   <span style={{ fontSize: 11, letterSpacing: 1.5, color: "#777", fontWeight: 700 }}>{t("KITCHEN ORDER TICKET")}</span>
-                  <h2 style={{ fontSize: 27, margin: "4px 0", fontWeight: 800 }}>#{order.order_number}</h2>
+                  <h2 style={{ fontSize: 27, margin: "4px 0", fontWeight: 800 }}>{order.order_sessions?.billing_code || `#${order.order_number}`}</h2>
+                  {order.groupedCount > 1 && <span style={{ display: "block", marginTop: 4, color: "#718075", fontSize: 11, fontWeight: 700 }}>{order.groupedCount} QR orders combined</span>}
                   <strong style={{ fontSize: 15 }}>TABLE {order.restaurant_tables?.table_code || "—"}</strong>
                   {order.order_sessions?.billing_code && <div style={{ marginTop: 5, color: "#26724a", fontSize: 11, fontWeight: 800, letterSpacing: 1 }}>BILL · {order.order_sessions.billing_code}</div>}
                 </div>
