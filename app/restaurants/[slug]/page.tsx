@@ -756,7 +756,7 @@ export default function RestaurantPage() {
 
                             {product.variants?.length ? (
                               <button className="premium-add-button" onClick={() => addToCart(product)} disabled={!restaurant.is_open}>
-                                {quantity > 0 ? "Add another" : "Choose size"} <Plus size={15} />
+                                {quantity > 0 ? "Add" : "Add"} <Plus size={15} />
                               </button>
                             ) : quantity === 0 ? (
                               <button
@@ -821,124 +821,113 @@ export default function RestaurantPage() {
 
       {selectedProduct && typeof document !== "undefined" && createPortal(
         <div
+          className="thoam-size-backdrop"
           role="presentation"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) setSelectedProduct(null);
           }}
-          style={{
-            position: "fixed", inset: 0, zIndex: 2147483000, display: "flex",
-            alignItems: "center", justifyContent: "center", padding: 16,
-            background: "rgba(10, 16, 12, .72)", backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-          }}
         >
           <section
+            className="thoam-size-dialog"
             role="dialog"
             aria-modal="true"
             aria-labelledby="thoam-variant-title"
-            style={{
-              position: "relative", width: "min(100%, 430px)", maxHeight: "min(88dvh, 720px)",
-              overflowY: "auto", padding: 24, border: "1px solid #e5ebe5",
-              borderRadius: 24, background: "#fff", color: "#17231b",
-              boxShadow: "0 28px 90px rgba(0,0,0,.35)",
-            }}
           >
             <button
               type="button"
+              className="thoam-size-close"
               onClick={() => setSelectedProduct(null)}
               aria-label="Close size selector"
-              style={{
-                position: "absolute", top: 13, right: 13, zIndex: 2,
-                display: "grid", placeItems: "center", width: 36, height: 36,
-                border: "1px solid #e8ece8", borderRadius: 12,
-                background: "#fff", color: "#26352a",
-              }}
-            ><X size={18} /></button>
+            >
+              <X size={18} />
+            </button>
+
+            <div className="thoam-size-kicker">
+              <Utensils size={13} />
+              CUSTOMISE YOUR ORDER
+            </div>
+
             {selectedProduct.image_url ? (
               <img
+                className="thoam-size-image"
                 src={selectedProduct.image_url}
                 alt={selectedProduct.name}
-                style={{
-                  display: "block", width: "100%", height: 145, marginBottom: 17,
-                  borderRadius: 16, objectFit: "cover", background: "#f0f4f0",
-                }}
               />
             ) : (
-              <div style={{
-                display: "grid", placeItems: "center", width: "100%", height: 110,
-                marginBottom: 17, borderRadius: 16, background: "#f0f5f0", color: "#718675",
-              }}><Utensils size={30} /></div>
+              <div className="thoam-size-placeholder">
+                <Utensils size={30} />
+              </div>
             )}
-            <span style={{
-              display: "inline-flex", padding: "7px 10px", border: "1px solid #dce9df",
-              borderRadius: 99, background: "#f0f7f1", color: "#26734a",
-              fontSize: 9, fontWeight: 900, letterSpacing: 1.2,
-            }}>CHOOSE YOUR PORTION</span>
-            <h2 id="thoam-variant-title" style={{
-              margin: "13px 42px 6px 0", color: "#17251b", fontSize: 25,
-              lineHeight: 1.2, letterSpacing: "-.7px",
-            }}>{selectedProduct.name}</h2>
+
+            <div className="thoam-size-heading">
+              <div>
+                <span className="thoam-size-eyebrow">SELECT YOUR PORTION</span>
+                <h2 id="thoam-variant-title">{selectedProduct.name}</h2>
+              </div>
+              <span className="thoam-size-count">
+                {(selectedProduct.variants || []).filter((variant) => variant.is_available !== false).length} OPTIONS
+              </span>
+            </div>
+
             {selectedProduct.description && (
-              <p style={{ margin: "0 0 17px", color: "#778078", fontSize: 12, lineHeight: 1.6 }}>
-                {selectedProduct.description}
-              </p>
+              <p className="thoam-size-description">{selectedProduct.description}</p>
             )}
-            <div style={{ display: "grid", gap: 9, marginTop: 18 }}>
+
+            <div className="thoam-size-options">
               {(selectedProduct.variants || []).filter((variant) => variant.is_available !== false).map((variant) => {
                 const active = selectedVariantName === variant.name;
                 return (
                   <button
                     type="button"
                     key={variant.name}
+                    className={active ? "thoam-size-option is-selected" : "thoam-size-option"}
                     aria-pressed={active}
                     onClick={() => setSelectedVariantName(variant.name)}
-                    style={{
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      gap: 12, width: "100%", minHeight: 64, padding: "12px 14px",
-                      border: active ? "1.5px solid #276b43" : "1px solid #e5eae5",
-                      borderRadius: 14, background: active ? "#f0f7f1" : "#fff",
-                      color: "#203027", textAlign: "left", cursor: "pointer",
-                      boxShadow: active ? "0 0 0 3px rgba(39,107,67,.08)" : "none",
-                    }}
                   >
-                    <span style={{ display: "grid", gap: 4 }}>
-                      <strong style={{ fontSize: 13, fontWeight: 800 }}>{variant.name}</strong>
-                      <small style={{ color: "#8a948c", fontSize: 10 }}>Portion size</small>
+                    <span className="thoam-size-option-main">
+                      <span className="thoam-size-radio" aria-hidden="true">
+                        {active ? <span /> : null}
+                      </span>
+                      <span className="thoam-size-option-name">{variant.name}</span>
                     </span>
-                    <strong style={{ color: "#1d5835", fontSize: 15, whiteSpace: "nowrap" }}>
-                      ₹{Number(variant.price).toFixed(0)}
-                    </strong>
+                    <strong>₹{Number(variant.price).toFixed(0)}</strong>
                   </button>
                 );
               })}
             </div>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 10, marginTop: 19,
-              paddingTop: 16, borderTop: "1px solid #edf0ed",
-            }}>
-              <div style={{
-                display: "flex", alignItems: "center", gap: 12, minHeight: 48,
-                padding: "5px 9px", border: "1px solid #e4eae4",
-                borderRadius: 12, background: "#fff",
-              }}>
-                <button type="button" aria-label="Decrease quantity" onClick={() => setVariantQuantity((n) => Math.max(1, n - 1))}
-                  style={{ display: "grid", placeItems: "center", width: 28, height: 30, border: 0, background: "transparent", color: "#26352a" }}>
-                  <Minus size={14} />
+
+            <div className="thoam-size-footer">
+              <div className="thoam-size-quantity" aria-label="Quantity">
+                <button
+                  type="button"
+                  aria-label="Decrease quantity"
+                  onClick={() => setVariantQuantity((n) => Math.max(1, n - 1))}
+                  disabled={variantQuantity <= 1}
+                >
+                  <Minus size={15} />
                 </button>
-                <strong style={{ minWidth: 14, textAlign: "center", fontSize: 13 }}>{variantQuantity}</strong>
-                <button type="button" aria-label="Increase quantity" onClick={() => setVariantQuantity((n) => Math.min(50, n + 1))}
-                  style={{ display: "grid", placeItems: "center", width: 28, height: 30, border: 0, background: "transparent", color: "#26352a" }}>
-                  <Plus size={14} />
+                <strong>{variantQuantity}</strong>
+                <button
+                  type="button"
+                  aria-label="Increase quantity"
+                  onClick={() => setVariantQuantity((n) => Math.min(50, n + 1))}
+                  disabled={variantQuantity >= 50}
+                >
+                  <Plus size={15} />
                 </button>
               </div>
-              <button type="button" onClick={confirmVariantAdd} disabled={!selectedVariantName}
-                style={{
-                  display: "flex", flex: 1, alignItems: "center", justifyContent: "center",
-                  gap: 8, minWidth: 0, minHeight: 48, padding: "0 13px",
-                  border: 0, borderRadius: 12, background: "#17251b", color: "#fff",
-                  fontSize: 12, fontWeight: 850, cursor: "pointer",
-                }}>
-                Add to cart <ArrowRight size={16} />
+              <button
+                type="button"
+                className="thoam-size-add"
+                onClick={confirmVariantAdd}
+                disabled={!selectedVariantName}
+              >
+                <span>Add to cart</span>
+                <strong>₹{(
+                  Number((selectedProduct.variants || []).find((variant) => variant.name === selectedVariantName)?.price || 0) *
+                  variantQuantity
+                ).toFixed(0)}</strong>
+                <ArrowRight size={16} />
               </button>
             </div>
           </section>
