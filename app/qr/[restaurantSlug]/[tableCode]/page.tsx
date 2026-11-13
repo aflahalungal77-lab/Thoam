@@ -707,14 +707,7 @@ export default function QRMenu() {
                           <p className="qr-offer-note">
                             Offer details are subject to the restaurant&apos;s terms.
                           </p>
-                          <button
-                            type="button"
-                            className={selectedOfferId === offer.id ? "qr-offer-apply is-selected" : "qr-offer-apply"}
-                            disabled={total < Number(offer.min_order_amount || 0) || (offer.scope === "products" && !selectedItems.some((item) => (offer.product_ids ?? []).includes(item.id)))}
-                            onClick={() => setSelectedOfferId((current) => current === offer.id ? null : offer.id)}
-                          >
-                            {selectedOfferId === offer.id ? "Remove offer" : "Apply offer"}
-                          </button>
+                          <p className="qr-offer-checkout-hint">Select this offer in checkout to apply.</p>
                         </div>
                       </article>
                     );
@@ -1427,9 +1420,9 @@ export default function QRMenu() {
   position: relative;
   overflow: hidden;
   width: 86%;
-  min-height: 410px;
-  margin: 26px auto 55px;
-  padding: 65px 7%;
+  min-height: 320px;
+  margin: 22px auto 38px;
+  padding: 42px 7%;
   display: flex;
   align-items: center;
   background:
@@ -1476,7 +1469,7 @@ export default function QRMenu() {
 }
 
 .hero-copy h1 {
-  margin: 26px 0 22px;
+  margin: 16px 0 14px;
   font-family: 'Manrope', sans-serif;
   font-size: clamp(45px, 6vw, 78px);
   line-height: .99;
@@ -1502,7 +1495,7 @@ export default function QRMenu() {
   display: flex;
   flex-wrap: wrap;
   gap: 23px;
-  margin-top: 28px;
+  margin-top: 18px;
   color: #d8e5dc;
   font-size: 11px;
 }
@@ -1785,6 +1778,16 @@ export default function QRMenu() {
   color: #929b94 !important;
   font-size: 10px !important;
 }
+
+.qr-offer-checkout-hint {
+  margin: 12px 0 0 !important;
+  padding-top: 10px;
+  border-top: 1px solid #edf1ee;
+  color: #176b49 !important;
+  font-size: 10px !important;
+  font-weight: 750;
+}
+
 
 /* TABLE ASSISTANCE */
 
@@ -2958,14 +2961,14 @@ export default function QRMenu() {
 
   .premium-hero {
     width: calc(100% - 26px);
-    min-height: 390px;
-    margin: 14px auto 38px;
-    padding: 35px 22px 85px;
+    min-height: 285px;
+    margin: 12px auto 28px;
+    padding: 24px 20px 68px;
     border-radius: 16px;
   }
 
   .hero-copy h1 {
-    font-size: clamp(43px, 12vw, 55px);
+    font-size: clamp(35px, 10vw, 46px);
     letter-spacing: -3px;
   }
 
@@ -2975,8 +2978,9 @@ export default function QRMenu() {
   }
 
   .hero-meta {
-    gap: 12px;
-    font-size: 10px;
+    gap: 10px;
+    margin-top: 14px;
+    font-size: 9px;
   }
 
   .hero-visual {
