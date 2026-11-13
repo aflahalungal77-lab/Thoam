@@ -4489,3 +4489,237 @@ body .thoam-public-variant-footer .add-button {
     max-height: 108px !important;
   }
 }
+
+
+/* Refined, mobile-first product portion picker */
+body .thoam-size-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(12, 20, 15, .72);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+body .thoam-size-dialog {
+  position: relative;
+  width: min(100%, 420px);
+  max-height: min(88dvh, 700px);
+  overflow-y: auto;
+  padding: 22px;
+  border: 1px solid rgba(255,255,255,.8);
+  border-radius: 25px;
+  background: linear-gradient(155deg, #fff 0%, #fbfcf9 100%);
+  color: #18251d;
+  box-shadow: 0 30px 90px rgba(0,0,0,.32), 0 2px 8px rgba(0,0,0,.05);
+  animation: thoam-size-enter .22s ease-out;
+}
+@keyframes thoam-size-enter {
+  from { opacity: 0; transform: translateY(10px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+body .thoam-size-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 42px 14px 0;
+  padding: 7px 10px;
+  border: 1px solid #dce9df;
+  border-radius: 999px;
+  background: #f0f7f1;
+  color: #26734a;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1.05px;
+}
+body .thoam-size-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 2;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid #e8ece7;
+  border-radius: 12px;
+  background: #fff;
+  color: #26352a;
+  cursor: pointer;
+  transition: background .18s, transform .18s;
+}
+body .thoam-size-close:hover { background: #f1f5f1; transform: rotate(4deg); }
+body .thoam-size-image,
+body .thoam-size-placeholder {
+  display: grid;
+  width: 100%;
+  height: 142px;
+  max-height: 142px;
+  place-items: center;
+  margin: 0 0 17px;
+  border-radius: 17px;
+  background: #edf3ed;
+  color: #718675;
+  object-fit: cover;
+}
+body .thoam-size-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+}
+body .thoam-size-eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: #89948b;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 1.25px;
+}
+body .thoam-size-heading h2 {
+  margin: 0;
+  color: #18251d;
+  font-size: 24px;
+  font-weight: 850;
+  line-height: 1.16;
+  letter-spacing: -.7px;
+  overflow-wrap: anywhere;
+}
+body .thoam-size-count {
+  flex: 0 0 auto;
+  margin-bottom: 2px;
+  padding: 6px 8px;
+  border: 1px solid #e7ebe4;
+  border-radius: 999px;
+  background: #fff;
+  color: #7c887e;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .7px;
+}
+body .thoam-size-description {
+  margin: 8px 0 0;
+  color: #78847b;
+  font-size: 11px;
+  line-height: 1.55;
+}
+body .thoam-size-options {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+body .thoam-size-option {
+  display: flex;
+  width: 100%;
+  min-height: 55px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 13px;
+  border: 1px solid #e7ebe5;
+  border-radius: 13px;
+  background: #fff;
+  color: #1c2a20;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .18s, background .18s, box-shadow .18s, transform .18s;
+}
+body .thoam-size-option:hover { border-color: #b9cdbd; transform: translateY(-1px); }
+body .thoam-size-option.is-selected {
+  border-color: #28794d;
+  background: linear-gradient(105deg, #eff8f1, #fff);
+  box-shadow: 0 0 0 2px rgba(40,121,77,.1);
+}
+body .thoam-size-option-main { display: flex; min-width: 0; align-items: center; gap: 10px; }
+body .thoam-size-radio {
+  display: grid;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  place-items: center;
+  border: 1.5px solid #cbd4cb;
+  border-radius: 50%;
+  background: #fff;
+}
+body .thoam-size-option.is-selected .thoam-size-radio { border-color: #28794d; }
+body .thoam-size-radio > span { width: 8px; height: 8px; border-radius: 50%; background: #28794d; }
+body .thoam-size-option-name { color: #26352a; font-size: 13px; font-weight: 800; overflow-wrap: anywhere; }
+body .thoam-size-option > strong { flex: 0 0 auto; color: #1d5835; font-size: 14px; font-weight: 900; white-space: nowrap; }
+body .thoam-size-footer {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #e9eee8;
+}
+body .thoam-size-quantity {
+  display: flex;
+  flex: 0 0 auto;
+  min-height: 46px;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 7px;
+  border: 1px solid #e3eae2;
+  border-radius: 12px;
+  background: #fff;
+}
+body .thoam-size-quantity button {
+  display: grid;
+  width: 29px;
+  height: 30px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: #f3f6f2;
+  color: #26352a;
+  cursor: pointer;
+}
+body .thoam-size-quantity button:disabled { opacity: .35; cursor: not-allowed; }
+body .thoam-size-quantity strong { min-width: 15px; color: #202820; font-size: 12px; text-align: center; }
+body .thoam-size-add {
+  display: flex;
+  min-width: 0;
+  min-height: 46px;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(105deg, #173d29, #225c3b);
+  color: #fff;
+  box-shadow: 0 6px 15px rgba(23,61,41,.16);
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+}
+body .thoam-size-add strong { color: #e7f3e9; font-size: 12px; white-space: nowrap; }
+body .thoam-size-add:disabled { opacity: .45; cursor: not-allowed; }
+@media (max-width: 520px) {
+  body .thoam-size-backdrop { align-items: flex-end; padding: 8px; }
+  body .thoam-size-dialog {
+    width: 100%;
+    max-width: none;
+    max-height: 84dvh;
+    padding: 16px;
+    border-radius: 22px 22px 15px 15px;
+  }
+  body .thoam-size-kicker { margin-bottom: 11px; font-size: 8px; }
+  body .thoam-size-image, body .thoam-size-placeholder { height: 105px; max-height: 105px; margin-bottom: 12px; border-radius: 13px; }
+  body .thoam-size-heading h2 { font-size: 21px; }
+  body .thoam-size-count { font-size: 7px; padding: 5px 7px; }
+  body .thoam-size-options { gap: 7px; margin-top: 12px; }
+  body .thoam-size-option { min-height: 49px; padding: 8px 10px; }
+  body .thoam-size-footer { gap: 7px; margin-top: 12px; padding-top: 11px; }
+  body .thoam-size-quantity { gap: 3px; min-height: 43px; padding: 3px 5px; }
+  body .thoam-size-quantity button { width: 26px; height: 29px; }
+  body .thoam-size-add { min-height: 43px; gap: 6px; padding: 0 9px; font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body .thoam-size-dialog, body .thoam-size-close, body .thoam-size-option { animation: none; transition: none; }
+}
