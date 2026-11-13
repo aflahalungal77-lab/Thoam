@@ -3,6 +3,7 @@
 import { useLanguage } from "@/components/LanguageProvider";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import MenuProductCard, { type MenuProduct } from "./MenuProductCard";
 import MenuCart, { type CartItem } from "./MenuCart";
 import WhatsAppOrderForm, {
@@ -727,7 +728,7 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
 
   return (
     <>
-      {selectedProduct && (
+      {selectedProduct && typeof document !== "undefined" && createPortal(
         <div className="thoam-public-variant-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedProduct(null); }}>
           <section className="thoam-public-variant" role="dialog" aria-modal="true" aria-labelledby="public-variant-title">
             <button type="button" className="thoam-public-variant-close" onClick={() => setSelectedProduct(null)} aria-label="Close"><X size={18}/></button>
@@ -744,7 +745,8 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
               <button type="button" className="add-button" disabled={!selectedVariantName} onClick={confirmVariant}>Add · ₹{(Number(selectedProduct.variants?.find((v) => v.name === selectedVariantName)?.price || 0) * variantQuantity).toFixed(0)}</button>
             </div>
           </section>
-        </div>
+        </div>,
+        document.body
       )}
 
     <main className="thoam-menu">
