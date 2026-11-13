@@ -1091,13 +1091,16 @@ export default function QRMenu() {
                 </div>
 
 
+
                 {activeOffers.length > 0 && (
-                  <div className="qr-modal-offers">
-                    <div className="qr-modal-offers-heading">
-                      <span><Tag size={15} /> AVAILABLE OFFERS</span>
-                      <small>Choose one offer</small>
-                    </div>
-                    <div className="qr-modal-offers-list">
+                  <div className="qr-inline-offer">
+                    <Tag size={16} />
+                    <select
+                      aria-label="Select an offer"
+                      value={selectedOfferId || ""}
+                      onChange={(event) => setSelectedOfferId(event.target.value || null)}
+                    >
+                      <option value="">Apply an offer</option>
                       {activeOffers.map((offer) => {
                         const eligibleSubtotal = offer.scope === "order"
                           ? total
@@ -1106,40 +1109,24 @@ export default function QRMenu() {
                                 ? sum + Number(item.price) * item.quantity
                                 : sum, 0);
                         const eligible = total >= Number(offer.min_order_amount || 0) && eligibleSubtotal > 0;
-                        const isApplied = selectedOfferId === offer.id;
-                        const offerAmount = offer.discount_type === "percentage"
-                          ? `${Number(offer.discount_value)}% OFF`
-                          : `₹${Number(offer.discount_value).toFixed(0)} OFF`;
+                        const amount = offer.discount_type === "percentage"
+                          ? `${Number(offer.discount_value)}% off`
+                          : `₹${Number(offer.discount_value).toFixed(0)} off`;
                         return (
-                          <div className={`qr-modal-offer ${isApplied ? "is-applied" : ""}`} key={offer.id}>
-                            <div className="qr-modal-offer-icon"><Tag size={16} /></div>
-                            <div className="qr-modal-offer-copy">
-                              <strong>{offer.title}</strong>
-                              <span>{offerAmount}{Number(offer.min_order_amount) > 0 ? ` · Min. ₹${Number(offer.min_order_amount).toFixed(0)}` : ""}</span>
-                              {!eligible && <small>{total < Number(offer.min_order_amount || 0) ? `Add ₹${Math.max(0, Number(offer.min_order_amount || 0) - total).toFixed(0)} more to unlock` : "Add eligible items to use this offer"}</small>}
-                              {isApplied && eligible && <small className="qr-modal-offer-success">Applied to this order</small>}
-                            </div>
-                            <button type="button" disabled={!eligible && !isApplied} onClick={() => setSelectedOfferId(isApplied ? null : offer.id)}>
-                              {isApplied ? "Applied ✓" : "Apply"}
-                            </button>
-                          </div>
+                          <option key={offer.id} value={offer.id} disabled={!eligible}>
+                            {offer.title} · {amount}{!eligible ? " · Not eligible" : ""}
+                          </option>
                         );
                       })}
-                    </div>
+                    </select>
+                    {selectedOfferId && (
+                      <button type="button" onClick={() => setSelectedOfferId(null)}>Remove</button>
+                    )}
+                    {selectedOffer && offerMinimumMet && offerHasEligibleItems && (
+                      <span className="qr-inline-offer-applied">Applied</span>
+                    )}
                   </div>
                 )}
-                <div className="qr-checkout-offer">
-                  {selectedOfferId && !selectedOffer ? (
-                    <p className="qr-offer-feedback">This offer is no longer active. Choose another offer.</p>
-                  ) : selectedOffer ? (
-                    <>
-                      <div><Tag size={15}/><span><strong>{selectedOffer.title}</strong><small>{offerMinimumMet && offerHasEligibleItems ? "Offer applied to this order" : "Add eligible items or meet the minimum order"}</small></span></div>
-                      <button type="button" onClick={() => setSelectedOfferId(null)}>Remove</button>
-                    </>
-                  ) : (
-                    <span><Tag size={15}/> Have an offer? Select one above.</span>
-                  )}
-                </div>
                 <div className="checkout-items">
                   {selectedItems.map((p) => (
                     <div
@@ -1156,35 +1143,30 @@ export default function QRMenu() {
                 </div>
 
                 <div className="checkout-form">
-                  <div className="checkout-form-heading">
-                    <span className="premium-kicker">{t("KITCHEN NOTES")}</span>
-                    <p>{t("Add an instruction to any dish if needed. No personal details required.")}</p>
-                  </div>
 
-                  {selectedItems.map((p) => (
-                    <label className="premium-field notes-field" key={p.cartKey}>
-                      <span>{p.name}{p.variantName ? ` · ${p.variantName}` : ""} · Special instruction</span>
-                      <textarea
-                        maxLength={300}
-                        value={itemNotes[p.cartKey] || ""}
-                        onChange={(e) => setItemNotes((current) => ({ ...current, [p.cartKey]: e.target.value }))}
-                        placeholder={t("Less spicy, no onions, etc. (optional)")}
-                        rows={2}
-                      />
-                    </label>
-                  ))}
-
-                  <label className="premium-field notes-field">
+                  <details className="qr-kitchen-details">
+                    <summary>Kitchen notes <span>(optional)</span></summary>
+                    {selectedItems.map((p) => (
+                      <label className="premium-field notes-field" key={p.cartKey}>
+                        <span>{p.name}{p.variantName ? ` · ${p.variantName}` : ""}</span>
+                        <textarea
+                          maxLength={300}
+                          value={itemNotes[p.cartKey] || ""}
+                          onChange={(e) => setItemNotes((current) => ({ ...current, [p.cartKey]: e.target.value }))}
+                          placeholder={t("Less spicy, no onions, etc. (optional)")}
+                          rows={2}
+                        />
+                      </label>
+                    ))}
+                  </details>
+                  <label className="premium-field notes-field qr-order-note">
                     <span>{t("Order note (optional)")}</span>
-
                     <textarea
                       maxLength={500}
                       value={notes}
-                      onChange={(e) =>
-                        setNotes(e.target.value)
-                      }
+                      onChange={(e) => setNotes(e.target.value)}
                       placeholder={t("Any note for the whole order (optional)")}
-                      rows={3}
+                      rows={2}
                     />
                   </label>
 
@@ -2343,6 +2325,49 @@ export default function QRMenu() {
   cursor: not-allowed;
 }
 
+
+
+/* Compact QR checkout controls */
+.qr-inline-offer {
+  display:flex; align-items:center; gap:10px;
+  margin:12px 0; padding:10px 12px;
+  border:1px solid #dce9df; border-radius:12px;
+  background:#f5faf6; color:#176b49;
+}
+.qr-inline-offer select {
+  flex:1; min-width:0; border:0; outline:0;
+  background:transparent; color:#213b2b;
+  font:600 12px inherit; cursor:pointer;
+}
+.qr-inline-offer button {
+  border:0; background:transparent; color:#a04d3c;
+  font-size:11px; font-weight:750; cursor:pointer;
+}
+.qr-inline-offer-applied { font-size:10px; font-weight:800; color:#16834d; white-space:nowrap; }
+.qr-kitchen-details {
+  margin:10px 0; border:1px solid #e3ebe5;
+  border-radius:11px; background:#fff;
+}
+.qr-kitchen-details summary {
+  padding:11px 13px; color:#344b3a;
+  font-size:12px; font-weight:750; cursor:pointer;
+}
+.qr-kitchen-details summary span { color:#89958c; font-weight:500; }
+.qr-kitchen-details[open] { padding-bottom:10px; }
+.qr-kitchen-details .premium-field { margin:8px 12px 0; }
+.qr-order-note { margin-top:10px; }
+.qr-checkout-modal .checkout-items { padding:10px 0; }
+.qr-checkout-modal .checkout-item { padding:7px 0; }
+.qr-checkout-modal .checkout-form { padding-top:10px; }
+.qr-checkout-modal .checkout-form-heading { display:none; }
+.qr-checkout-modal .notes-field textarea { min-height:58px; }
+.qr-checkout-modal .checkout-payment { margin-top:12px; padding:12px; }
+.qr-checkout-modal .checkout-terms { margin-top:8px; font-size:10px; }
+@media(max-width:600px) {
+ .qr-inline-offer { padding:9px 10px; }
+ .qr-checkout-modal .checkout-item { font-size:11px; }
+ .qr-checkout-modal .checkout-payment { padding:10px; }
+}
 
 /* QR CHECKOUT MODAL */
 .qr-checkout-backdrop {
