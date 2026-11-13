@@ -51,6 +51,7 @@ type OrderData = {
   id: string;
   order_number?: number | string;
   order_type?: string;
+  session_id?: string | null;
   status?: string;
   total_amount?: number | string;
   created_at?: string;
@@ -242,7 +243,7 @@ export default function RestaurantAdmin() {
           supabase
             .from("orders")
             .select(
-              "id,order_number,order_type,status,total_amount,created_at,payment_status"
+              "id,order_number,order_type,session_id,status,total_amount,created_at,payment_status"
             )
             .eq("restaurant_id", profile.restaurant_id)
             .order("created_at", { ascending: false })
@@ -364,6 +365,15 @@ export default function RestaurantAdmin() {
     timeZone: "Asia/Kolkata",
   });
 
+  // QR orders sharing one billing session count as one customer bill.
+  const countByBill = (rows: OrderData[]) => new Set(
+    rows.map((order) =>
+      (order.order_type || "").toLowerCase() === "dine_in" && order.session_id
+        ? `qr-session:${order.session_id}`
+        : `order:${order.id}`
+    )
+  ).size;
+
   const todayOrders = orders.filter((order) => {
     if (!order.created_at) return false;
 
@@ -382,6 +392,9 @@ export default function RestaurantAdmin() {
     )
   );
 
+  const todayOrderCount = countByBill(todayOrders);
+  const completedCount = countByBill(completed);
+
   const sales = completed.reduce(
     (sum, order) => sum + Number(order.total_amount || 0),
     0
@@ -398,12 +411,17 @@ export default function RestaurantAdmin() {
       ].includes((order.status || "pending").toLowerCase())
   );
 
+  const pendingOrderCount = countByBill(pendingOrders);
+
   const newOrders = orders.filter(
     (order) => (order.status || "").toLowerCase() === "placed"
   );
 
+  const newOrderCount = countByBill(newOrders);
+
   const visibleRecentOrders = orders.filter(
     (order) =>
+      (order.order_type || "").toLowerCase() !== "dine_in" &&
       !["delivered", "completed"].includes(
         (order.status || "").toLowerCase()
       )
@@ -784,7 +802,7 @@ export default function RestaurantAdmin() {
 
                 <span className="ta-new-orders-copy">
                   <strong>
-                    {newOrders.length > 0
+                    {newOrderCount > 0
                       ? "Orders need attention"
                       : "You’re all caught up"}
                   </strong>
@@ -797,7 +815,7 @@ export default function RestaurantAdmin() {
                 </span>
 
                 <span className="ta-new-orders-count">
-                  {newOrders.length}
+                  {newOrderCount}
                 </span>
 
                 <ArrowUpRight
@@ -838,7 +856,7 @@ export default function RestaurantAdmin() {
                     </div>
 
                     <strong className="ta-stat-value">
-                      {todayOrders.length}
+                      {todayOrderCount}
                     </strong>
 
                     <span className="ta-stat-foot">
@@ -856,7 +874,7 @@ export default function RestaurantAdmin() {
                     </div>
 
                     <strong className="ta-stat-value">
-                      {pendingOrders.length}
+                      {pendingOrderCount}
                     </strong>
 
                     <span className="ta-stat-foot">
@@ -874,7 +892,7 @@ export default function RestaurantAdmin() {
                     </div>
 
                     <strong className="ta-stat-value">
-                      {completed.length}
+                      {completedCount}
                     </strong>
 
                     <span className="ta-stat-foot">
@@ -1058,8 +1076,7 @@ export default function RestaurantAdmin() {
                     <h3>Your next order starts here.</h3>
 
                     <p>
-                      New customer and QR orders will appear here
-                      when they are saved in your orders table.
+                      New customer orders will appear here. QR dine-in orders are managed in Kitchen KOT.
                     </p>
 
                     <Link
