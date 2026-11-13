@@ -129,6 +129,7 @@ export default function OrdersPage() {
           .from("orders")
           .select("*,order_items(id,product_name,variant_name,quantity,unit_price,line_total),restaurant:restaurants(name,area,city)")
           .eq("restaurant_id", profile.restaurant_id)
+          .or("order_type.is.null,order_type.neq.dine_in")
           .order("created_at", { ascending: false })
           .range(from, from + PAGE_SIZE - 1);
 
