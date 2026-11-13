@@ -689,6 +689,38 @@ export default function PublicMenu({ restaurant, products, offers }: Props) {
 .checkout-form-card{padding:18px}
 .checkout-heading h1{letter-spacing:-2.2px}
 .checkout-secure-note{line-height:1.6}
+
+/* WhatsApp checkout: compact, polished layout */
+.checkout-topbar{max-width:900px;margin:0 auto;padding:14px 0}
+.checkout-back{min-height:38px;padding:8px 12px;border:1px solid #e7eae5;border-radius:10px;background:#fff;transition:background .18s,border-color .18s}
+.checkout-back:hover{border-color:#cbd9ce;background:#f6faf6}
+.checkout-brand{color:#18251d;font-size:14px;letter-spacing:.16em}
+.checkout-container{max-width:510px;margin:28px auto 42px}
+.checkout-heading{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;column-gap:16px;row-gap:0;margin-bottom:16px;padding:18px 20px;border:1px solid #e8eae5;border-radius:16px;background:linear-gradient(135deg,#fff 0%,#f8faf7 100%)}
+.checkout-heading .checkout-kicker{grid-row:1 / span 2;align-self:center;font-size:8px}
+.checkout-heading h1{margin:0;font-size:clamp(25px,4vw,32px);letter-spacing:-1.5px;line-height:1.08}
+.checkout-heading p{margin-top:6px;font-size:11px;line-height:1.5}
+.checkout-summary,.checkout-form-card{margin-top:14px;padding:18px;border-radius:17px}
+.summary-heading{margin-bottom:14px}
+.summary-items{gap:10px}
+.checkout-offers{margin:14px 0 2px;padding:12px;border-radius:12px}
+.checkout-offers-heading{margin-bottom:9px}
+.checkout-offer-list{gap:6px}
+.checkout-offer-option{gap:9px;padding:9px 10px;border-radius:10px}
+.summary-total{margin-top:14px;padding-top:12px}
+@media(max-width:760px){
+ .checkout-topbar{padding:11px 16px}
+ .checkout-container{max-width:510px;margin:16px auto 30px;padding:0 12px}
+ .checkout-heading{grid-template-columns:auto minmax(0,1fr);gap:8px 12px;padding:15px;margin-bottom:12px}
+ .checkout-heading h1{font-size:clamp(23px,6vw,29px)}
+ .checkout-summary,.checkout-form-card{padding:15px;margin-top:11px;border-radius:15px}
+}
+@media(max-width:390px){
+ .checkout-heading{padding:13px 12px}
+ .checkout-heading p{font-size:10px}
+ .checkout-container{padding:0 10px}
+}
+
 @media(min-width:1200px){.menu-layout{gap:42px}.product-grid{gap:18px}}
 @media(max-width:1023px){.menu-layout{grid-template-columns:minmax(0,1fr) 310px}.cart-sidebar{padding:17px}}
 @media(max-width:760px){
