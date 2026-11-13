@@ -747,7 +747,7 @@ export default function QRMenu() {
               </div>
             )}
 
-            {            {/* ACTIVE RESTAURANT OFFERS */}
+            {/* ACTIVE RESTAURANT OFFERS */}
             {activeOffers.length > 0 && (
               <section className="qr-offers-section" aria-labelledby="qr-offers-title">
                 <div className="qr-offers-heading">
@@ -1004,7 +1004,7 @@ export default function QRMenu() {
 
 
 
-            selectedProduct && (
+            {selectedProduct && (
               <div className="thoam-variant-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedProduct(null); }}>
                 <section className="thoam-variant-modal" role="dialog" aria-modal="true" aria-labelledby="qr-variant-title">
                   <button type="button" className="thoam-variant-close" onClick={() => setSelectedProduct(null)} aria-label="Close"><X size={19} /></button>
