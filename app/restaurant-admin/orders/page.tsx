@@ -245,10 +245,6 @@ const todayRevenue = revenueOrders
     0
   );
 
-  const newOrders = items.filter(
-    (order) => getStatus(order) === "placed"
-  );
-
   // Orders workspace: non-QR customer orders that are not delivered yet.
   // QR dine-in orders are handled exclusively in Kitchen (KOT).
   const visibleItems = items.filter((order) => {
@@ -256,6 +252,10 @@ const todayRevenue = revenueOrders
     const isQrDineIn = ["dine_in", "qr", "qr_dine_in"].includes(orderType);
     return !isQrDineIn && !isDelivered(getStatus(order));
   });
+
+  const newOrders = visibleItems.filter(
+    (order) => getStatus(order) === "placed"
+  );
 
   const activeCount = visibleItems.filter(
     (order) => !isCancelled(getStatus(order))
@@ -355,10 +355,6 @@ const todayRevenue = revenueOrders
         <div>
           <span>{t("Active orders")}</span>
           <strong>{activeCount}</strong>
-        </div>
-        <div>
-          <span>{t("Delivered orders")}</span>
-          <strong>{deliveredCount}</strong>
         </div>
       </section>
 
