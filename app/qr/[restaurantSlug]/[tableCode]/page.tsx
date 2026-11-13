@@ -35,6 +35,7 @@ type PlacedOrder = {
   discount_amount?: number | string;
   offer_title?: string | null;
   status?: string;
+  billing_code?: string;
 };
 
 type QROffer = {
@@ -57,6 +58,22 @@ type NeedType =
   | "Additional food"
   | "Message to kitchen"
   | "Other";
+
+function getOrCreateQRDeviceToken(restaurantId: string, tableCode: string): string {
+  const key = `thoam:qr-device:${restaurantId}:${tableCode.toUpperCase()}:v1`;
+  const existing = window.localStorage.getItem(key);
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (existing && uuidPattern.test(existing)) return existing;
+
+  const bytes = new Uint8Array(16);
+  window.crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (value) => value.toString(16).padStart(2, "0")).join("");
+  const token = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  window.localStorage.setItem(key, token);
+  return token;
+}
 
 export default function QRMenu() {
   const { t } = useLanguage();
@@ -365,6 +382,7 @@ export default function QRMenu() {
         body: JSON.stringify({
           restaurantId: r.id,
           tableCode,
+          deviceToken: getOrCreateQRDeviceToken(r.id, tableCode),
           notes: notes.trim(),
           offerId: discountAmount > 0 ? selectedOfferId : null,
           items: selectedItems.map((p) => ({
@@ -495,6 +513,14 @@ export default function QRMenu() {
               <span>{t("Restaurant")}</span>
               <strong>{r.name}</strong>
             </div>
+
+            {placedOrder.billing_code && (
+              <div className="success-billing-code">
+                <span className="success-billing-label">YOUR TABLE BILLING CODE</span>
+                <strong>{placedOrder.billing_code}</strong>
+                <small>Use this same code when placing another order from this phone at Table {tableCode}.</small>
+              </div>
+            )}
 
             {placedOrder.order_number != null && (
               <div className="receipt-row">
@@ -2793,6 +2819,40 @@ export default function QRMenu() {
   border-radius: 12px;
   background: var(--surface);
   text-align: left;
+}
+
+.success-billing-code {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 18px 14px;
+  border: 1px solid #b9ddc7;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #f2faf4, #e7f4eb);
+  text-align: center;
+}
+
+.success-billing-label {
+  color: #527260;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+}
+
+.success-billing-code strong {
+  color: #176b49;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  line-height: 1.2;
+}
+
+.success-billing-code small {
+  max-width: 300px;
+  color: #587163;
+  font-size: 10px;
+  line-height: 1.6;
 }
 
 .receipt-row,
