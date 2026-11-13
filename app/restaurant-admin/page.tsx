@@ -413,11 +413,22 @@ export default function RestaurantAdmin() {
 
   const pendingOrderCount = countByBill(pendingOrders);
 
-  const newOrders = orders.filter(
-    (order) => (order.status || "").toLowerCase() === "placed"
+  // Match the active-order rules used by Orders and Kitchen.
+  const activeOrders = orders.filter((order) =>
+    !["delivered", "completed", "cancelled", "rejected"].includes(
+      (order.status || "pending").toLowerCase()
+    )
   );
 
-  const newOrderCount = countByBill(newOrders);
+  const isQrOrder = (order: OrderData) =>
+    ["dine_in", "qr", "qr_dine_in"].includes(
+      (order.order_type || "").toLowerCase()
+    );
+
+  const onlineActiveOrders = activeOrders.filter((order) => !isQrOrder(order));
+  const qrActiveOrders = activeOrders.filter(isQrOrder);
+  const onlineActiveCount = onlineActiveOrders.length;
+  const qrActiveCount = countByBill(qrActiveOrders);
 
   const visibleRecentOrders = orders.filter(
     (order) =>
@@ -787,42 +798,35 @@ export default function RestaurantAdmin() {
                 </div>
               </section>
 
-              <Link
-                href="/restaurant-admin/orders"
-                className={`ta-new-orders-alert ${
-                  newOrders.length > 0
-                    ? "has-new-orders"
-                    : "is-clear"
-                }`}
-                aria-live="polite"
-              >
-                <span className="ta-new-orders-icon">
-                  <Bell size={21} />
-                </span>
+              <section className="ta-order-channel-grid" aria-label="Live order channels">
+                <Link
+                  href="/restaurant-admin/orders"
+                  className={`ta-order-channel-card ${onlineActiveCount > 0 ? "has-active-orders" : ""}`}
+                  aria-live="polite"
+                >
+                  <span className="ta-order-channel-icon"><ShoppingBag size={21} /></span>
+                  <span className="ta-order-channel-copy">
+                    <strong>Online Ordering</strong>
+                    <small>{onlineActiveCount > 0 ? "Orders need attention" : "No active online orders"}</small>
+                  </span>
+                  <span className="ta-order-channel-count">{onlineActiveCount}</span>
+                  <ArrowUpRight size={18} className="ta-order-channel-arrow" />
+                </Link>
 
-                <span className="ta-new-orders-copy">
-                  <strong>
-                    {newOrderCount > 0
-                      ? "Orders need attention"
-                      : "You’re all caught up"}
-                  </strong>
-
-                  <small>
-                    {newOrders.length > 0
-                      ? "Orders waiting to be marked Ready"
-                      : "No orders waiting for preparation"}
-                  </small>
-                </span>
-
-                <span className="ta-new-orders-count">
-                  {newOrderCount}
-                </span>
-
-                <ArrowUpRight
-                  size={18}
-                  className="ta-new-orders-arrow"
-                />
-              </Link>
+                <Link
+                  href="/restaurant-admin/kitchen"
+                  className={`ta-order-channel-card ${qrActiveCount > 0 ? "has-active-orders" : ""}`}
+                  aria-live="polite"
+                >
+                  <span className="ta-order-channel-icon"><QrCode size={21} /></span>
+                  <span className="ta-order-channel-copy">
+                    <strong>QR Ordering</strong>
+                    <small>{qrActiveCount > 0 ? "QR bills need attention" : "No active QR bills"}</small>
+                  </span>
+                  <span className="ta-order-channel-count">{qrActiveCount}</span>
+                  <ArrowUpRight size={18} className="ta-order-channel-arrow" />
+                </Link>
+              </section>
 
               <section className="ta-stats-section">
                 <div className="ta-section-header">
@@ -1176,6 +1180,19 @@ export default function RestaurantAdmin() {
       </section>
 
       <style jsx global>{`
+        .ta-order-channel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:22px 0 28px}
+        .ta-order-channel-card{display:flex;align-items:center;gap:14px;min-width:0;padding:19px 20px;border:1px solid #e7e7e2;border-radius:17px;background:#fff;color:#171717;text-decoration:none;transition:border-color .18s,background .18s,box-shadow .18s}
+        .ta-order-channel-card:hover{border-color:#c9c9c1;box-shadow:0 8px 24px rgba(0,0,0,.045)}
+        .ta-order-channel-icon{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;border-radius:13px;background:#f2f3ef;color:#30352f}
+        .ta-order-channel-copy{display:grid;gap:5px;flex:1;min-width:0}
+        .ta-order-channel-copy strong{font-size:15px;font-weight:800}
+        .ta-order-channel-copy small{font-size:12px;color:#777}
+        .ta-order-channel-count{font-size:25px;font-weight:850;font-variant-numeric:tabular-nums}
+        .ta-order-channel-arrow{color:#888;flex:0 0 auto}
+        .ta-order-channel-card.has-active-orders{border-color:#efb0b0;background:#fff5f5;color:#a51e27;box-shadow:0 5px 18px rgba(190,35,45,.07)}
+        .ta-order-channel-card.has-active-orders .ta-order-channel-icon{background:#ffe2e2;color:#b4232d}
+        .ta-order-channel-card.has-active-orders .ta-order-channel-copy small,.ta-order-channel-card.has-active-orders .ta-order-channel-arrow{color:#bd343c}
+        @media(max-width:640px){.ta-order-channel-grid{grid-template-columns:1fr;gap:10px}.ta-order-channel-card{padding:15px 16px}}
         .ta-nav-link-schedule {
           border: 1px solid #e8e7e2;
           background: linear-gradient(135deg, #fff 0%, #f7f7f4 100%);
