@@ -17,6 +17,8 @@ type OrderResult = {
   order_number?: number | string;
   total_amount?: number | string;
   status?: string;
+  session_id?: string;
+  billing_code?: string;
 };
 
 // Reuse the Supabase client across warm serverless invocations.
@@ -161,7 +163,7 @@ export async function POST(req: NextRequest) {
 
   // 9. Create the dine-in order
   try {
-    // This v3 RPC is present in the database but not yet in the generated Supabase types.
+    // This v5 RPC is present in the database but not yet in the generated Supabase types.
     const createQrOrder = db.rpc as unknown as (
       functionName: string,
       args: {
