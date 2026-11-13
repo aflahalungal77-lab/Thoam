@@ -4723,3 +4723,135 @@ body .thoam-size-add:disabled { opacity: .45; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) {
   body .thoam-size-dialog, body .thoam-size-close, body .thoam-size-option { animation: none; transition: none; }
 }
+
+
+/* Tho'am restaurant owner workspace: tablet + mobile responsive pass */
+.ta-dashboard{min-width:0;width:100%;overflow-x:clip}
+.ta-dashboard>section{min-width:0;flex:1}
+.ta-content,.ta-topbar,.ta-manage-page{min-width:0}
+.ta-manage-page{width:min(1250px,calc(100% - 48px));}
+.ta-orders-table-wrap,.ta-bill-items-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ta-orders-table{min-width:650px}
+.ta-product-card,.ta-order-card,.ta-manage-panel,.ta-orders-workspace{min-width:0}
+.ta-product-info h3,.ta-product-info p,.ta-order-meta strong{overflow-wrap:anywhere}
+.ta-product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ta-product-layout{grid-template-columns:minmax(270px,.78fr) minmax(0,1.5fr)}
+.ta-add-product{position:static}
+.ta-order-meta{grid-template-columns:repeat(4,minmax(0,1fr))}
+.ta-qr-hero{min-width:0}
+.kot-billing-panel,.kot-bill-modal{min-width:0;max-width:100%}
+.kot-modal-row{min-width:0}
+.kot-modal-row span{min-width:0;overflow-wrap:anywhere}
+
+@media (min-width:801px) and (max-width:1100px){
+  .ta-sidebar{width:205px;padding:22px 12px 16px}
+  .ta-content{padding:24px 20px}
+  .ta-topbar{padding-right:20px;padding-left:20px}
+  .ta-manage-page{width:calc(100% - 40px);padding-top:24px}
+  .ta-product-layout{grid-template-columns:minmax(245px,.8fr) minmax(0,1.2fr);gap:17px}
+  .ta-manage-panel{padding:18px}
+  .ta-product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .ta-product-info{padding:11px}
+  .ta-order-meta{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:800px){
+  .ta-dashboard{display:flex;flex-direction:column}
+  .ta-sidebar{
+    position:sticky;top:0;z-index:80;display:flex;width:100%;height:auto;min-height:0;
+    flex-direction:column;gap:8px;padding:9px 12px 10px;border-right:0;border-bottom:1px solid var(--ta-line);
+    box-shadow:0 5px 18px rgba(20,20,20,.045)
+  }
+  .ta-brand{display:none}
+  .ta-nav-label{display:none}
+  .ta-nav{
+    display:flex;gap:7px;width:100%;overflow-x:auto;overscroll-behavior-x:contain;
+    padding:1px 0 3px;scrollbar-width:none
+  }
+  .ta-nav::-webkit-scrollbar{display:none}
+  .ta-nav-link{flex:0 0 auto;min-height:39px;padding:0 12px;border-color:#eeede9;background:#fff;font-size:11px;white-space:nowrap}
+  .ta-nav-arrow{display:none}
+  .ta-sidebar-bottom{display:none}
+  .ta-dashboard>section{width:100%;min-width:0}
+  .ta-content{padding:20px 18px}
+  .ta-topbar{padding:11px 18px}
+  .ta-manage-page{width:calc(100% - 36px);padding-top:22px;padding-bottom:45px}
+  .ta-product-layout{grid-template-columns:minmax(0,1fr);gap:18px}
+  .ta-add-product{position:static}
+  .ta-product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ta-product-summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+  .ta-product-summary>div{padding:14px}
+  .ta-product-summary strong{font-size:25px}
+  .ta-order-meta{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ta-orders-workspace{padding:17px}
+  .ta-qr-hero{grid-template-columns:1fr .55fr}
+  .ta-manage-heading{gap:14px}
+}
+@media (max-width:520px){
+  .ta-content{padding:15px 12px}
+  .ta-topbar{min-height:58px;padding:9px 12px}
+  .ta-manage-page{width:calc(100% - 24px);padding-top:17px;padding-bottom:35px}
+  .ta-back-link{margin-bottom:17px}
+  .ta-manage-heading{align-items:flex-start;margin-bottom:19px}
+  .ta-manage-heading h1{font-size:34px;letter-spacing:-1.7px}
+  .ta-manage-heading p{font-size:12px}
+  .ta-manage-heading-icon{width:45px;height:45px;border-radius:13px}
+  .ta-product-summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:18px}
+  .ta-product-summary>div{gap:6px;padding:11px 9px;border-radius:11px}
+  .ta-product-summary>div>span{font-size:9px;line-height:1.35}
+  .ta-product-summary strong{font-size:21px}
+  .ta-manage-panel{padding:15px;border-radius:14px}
+  .ta-panel-heading{margin-bottom:17px}
+  .ta-panel-heading h2{font-size:19px}
+  .ta-product-form{gap:15px}
+  .ta-form-row{grid-template-columns:minmax(0,1fr)}
+  .ta-upload-box>img{max-height:180px}
+  .ta-form-submit{width:100%;min-height:46px}
+  .ta-menu-toolbar{display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:8px}
+  .ta-menu-search{min-width:0;width:100%}
+  .ta-filter-select{width:100%;max-width:none;min-width:0}
+  .ta-product-grid{grid-template-columns:minmax(0,1fr);gap:11px}
+  .ta-product-card{display:grid;grid-template-columns:112px minmax(0,1fr);align-items:stretch}
+  .ta-product-image{height:100%;min-height:150px}
+  .ta-product-info{min-width:0;padding:11px}
+  .ta-product-info h3{font-size:13px}
+  .ta-product-info p{font-size:10px}
+  .ta-product-variant-tags{flex-wrap:wrap}
+  .ta-product-actions{gap:6px}
+  .ta-availability-button{min-width:0;padding:8px 7px;font-size:9px}
+  .ta-delete-button{flex:0 0 34px}
+  .ta-order-meta{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:13px 0}
+  .ta-order-card{padding:13px}
+  .ta-order-card-top{align-items:flex-start;gap:8px}
+  .ta-order-ident{min-width:0;gap:8px}
+  .ta-order-ident h3{font-size:13px;overflow-wrap:anywhere}
+  .ta-order-update{align-items:stretch;flex-direction:column;gap:8px}
+  .ta-order-update label{margin:0}
+  .ta-order-update select{width:100%;max-width:none;min-height:42px}
+  .ta-orders-workspace{padding:12px}
+  .ta-orders-table{min-width:620px}
+  .ta-qr-hero{display:block;min-height:0}
+  .ta-qr-hero-copy{padding:22px}
+  .ta-qr-hero-copy h2{font-size:28px}
+  .ta-qr-hero-art{display:none}
+  .ta-order-channel-grid{grid-template-columns:1fr}
+  .kot-billing-panel{padding:14px;margin:18px 0}
+  .kot-panel-heading{align-items:flex-start}
+  .kot-search{max-width:none;width:100%;height:48px}
+  .kot-billing-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .kot-bill-card{padding:11px}
+  .kot-bill-code{font-size:22px}
+  .kot-bill-card-bottom{align-items:flex-start;flex-direction:column}
+  .kot-bill-card-bottom button{width:100%;justify-content:center}
+  .kot-bill-modal{width:100%;max-height:90dvh;padding:15px;border-radius:17px}
+  .kot-modal-actions{grid-template-columns:1fr}
+  .ta-bill-backdrop{align-items:flex-end;padding:8px}
+  .ta-bill-modal{width:100%;max-height:90dvh;padding:16px;border-radius:17px 17px 12px 12px}
+}
+@media (max-width:360px){
+  .ta-product-card{grid-template-columns:94px minmax(0,1fr)}
+  .ta-product-image{min-height:140px}
+  .ta-product-info{padding:9px}
+  .ta-product-actions{flex-wrap:wrap}
+  .kot-billing-grid{grid-template-columns:1fr}
+  .ta-product-summary strong{font-size:18px}
+}
