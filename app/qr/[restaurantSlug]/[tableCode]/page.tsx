@@ -1054,121 +1054,7 @@ export default function QRMenu() {
               </div>
             )}
 
-            {
-/* QR CHECKOUT MODAL */
-.qr-checkout-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  overflow-y: auto;
-  background: rgba(8, 18, 13, .62);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  animation: fadeUp .18s ease;
-}
-.qr-checkout-modal {
-  position: relative;
-  width: min(760px, 100%);
-  max-height: min(88vh, 900px);
-  margin: auto;
-  padding: 28px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  border: 1px solid #dce8df;
-  border-radius: 22px;
-  background: linear-gradient(150deg, #fff 0%, #f8fbf8 100%);
-  box-shadow: 0 30px 100px rgba(0,0,0,.28);
-  animation: fadeUp .22s ease;
-}
-.qr-checkout-close {
-  width: 38px;
-  height: 38px;
-  flex: 0 0 38px;
-  display: grid;
-  place-items: center;
-  margin-left: 8px;
-  border: 1px solid #e1e9e3;
-  border-radius: 50%;
-  background: #fff;
-  color: #23372b;
-  cursor: pointer;
-}
-.qr-checkout-close:hover { background: #edf5ef; }
-.qr-checkout-close:disabled { opacity: .45; cursor: not-allowed; }
-.qr-modal-offers {
-  margin: 20px 0 4px;
-  padding: 16px;
-  border: 1px solid #dce9df;
-  border-radius: 15px;
-  background: #f7fbf8;
-}
-.qr-modal-offers-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-.qr-modal-offers-heading > span {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #176b49;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 1px;
-}
-.qr-modal-offers-heading small { color: #87958b; font-size: 10px; }
-.qr-modal-offers-list { display: grid; gap: 9px; }
-.qr-modal-offer {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  min-width: 0;
-  padding: 12px;
-  border: 1px solid #e2ebe4;
-  border-radius: 12px;
-  background: #fff;
-  transition: border-color .18s, background .18s;
-}
-.qr-modal-offer.is-applied {
-  border-color: #82b99a;
-  background: #eff8f1;
-}
-.qr-modal-offer-icon {
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
-  background: #eaf4ed;
-  color: #176b49;
-}
-.qr-modal-offer-copy { display: grid; gap: 3px; flex: 1; min-width: 0; }
-.qr-modal-offer-copy strong { color: #1b2c21; font-size: 12px; }
-.qr-modal-offer-copy span { color: #587362; font-size: 10px; font-weight: 750; }
-.qr-modal-offer-copy small { color: #a15b43; font-size: 9px; line-height: 1.4; }
-.qr-modal-offer-copy small.qr-modal-offer-success { color: #16834d; }
-.qr-modal-offer > button {
-  min-width: 72px;
-  min-height: 34px;
-  padding: 0 11px;
-  border: 1px solid #174b33;
-  border-radius: 9px;
-  background: #174b33;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 850;
-  cursor: pointer;
-}
-.qr-modal-offer.is-applied > button { border-color: #b8d8c1; background: #e5f3e9; color: #176b49; }
-.qr-modal-offer > button:disabled { border-color: #e2e8e3; background: #edf1ee; color: #98a49b; cursor: not-allowed; }
-
-/* CHECKOUT */}
+            {/* CHECKOUT */}
             {cartCount > 0 && checkoutOpen && (
               <div className="qr-checkout-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !submitting) setCheckoutOpen(false); }}>
               <section
@@ -2454,6 +2340,141 @@ export default function QRMenu() {
 .premium-quantity button:disabled {
   opacity: .4;
   cursor: not-allowed;
+}
+
+
+/* QR CHECKOUT MODAL */
+.qr-checkout-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow-y: auto;
+  background: rgba(8, 18, 13, .62);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: fadeUp .18s ease;
+}
+.qr-checkout-modal {
+  position: relative;
+  width: min(760px, 100%);
+  max-height: min(88vh, 900px);
+  margin: auto;
+  padding: 28px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #dce8df;
+  border-radius: 22px;
+  background: linear-gradient(150deg, #fff 0%, #f8fbf8 100%);
+  box-shadow: 0 30px 100px rgba(0,0,0,.28);
+  animation: fadeUp .22s ease;
+}
+.qr-checkout-close {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: grid;
+  place-items: center;
+  margin-left: 8px;
+  border: 1px solid #e1e9e3;
+  border-radius: 50%;
+  background: #fff;
+  color: #23372b;
+  cursor: pointer;
+}
+.qr-checkout-close:hover { background: #edf5ef; }
+.qr-checkout-close:disabled { opacity: .45; cursor: not-allowed; }
+.qr-modal-offers {
+  margin: 20px 0 4px;
+  padding: 16px;
+  border: 1px solid #dce9df;
+  border-radius: 15px;
+  background: #f7fbf8;
+}
+.qr-modal-offers-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.qr-modal-offers-heading > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #176b49;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+.qr-modal-offers-heading small { color: #87958b; font-size: 10px; }
+.qr-modal-offers-list { display: grid; gap: 9px; }
+.qr-modal-offer {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #e2ebe4;
+  border-radius: 12px;
+  background: #fff;
+  transition: border-color .18s, background .18s;
+}
+.qr-modal-offer.is-applied {
+  border-color: #82b99a;
+  background: #eff8f1;
+}
+.qr-modal-offer-icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #eaf4ed;
+  color: #176b49;
+}
+.qr-modal-offer-copy { display: grid; gap: 3px; flex: 1; min-width: 0; }
+.qr-modal-offer-copy strong { color: #1b2c21; font-size: 12px; }
+.qr-modal-offer-copy span { color: #587362; font-size: 10px; font-weight: 750; }
+.qr-modal-offer-copy small { color: #a15b43; font-size: 9px; line-height: 1.4; }
+.qr-modal-offer-copy small.qr-modal-offer-success { color: #16834d; }
+.qr-modal-offer > button {
+  min-width: 72px;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid #174b33;
+  border-radius: 9px;
+  background: #174b33;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 850;
+  cursor: pointer;
+}
+.qr-modal-offer.is-applied > button { border-color: #b8d8c1; background: #e5f3e9; color: #176b49; }
+.qr-modal-offer > button:disabled { border-color: #e2e8e3; background: #edf1ee; color: #98a49b; cursor: not-allowed; }
+@media (max-width: 600px) {
+  .qr-checkout-backdrop { place-items: end center; padding: 0; }
+  .qr-checkout-modal {
+    width: 100%;
+    max-height: 94dvh;
+    padding: 20px 16px calc(22px + env(safe-area-inset-bottom));
+    border-radius: 22px 22px 0 0;
+    border-bottom: 0;
+  }
+  .qr-checkout-modal .checkout-heading { gap: 10px; padding-bottom: 16px; }
+  .qr-checkout-modal .checkout-icon { width: 40px; height: 40px; }
+  .qr-checkout-modal .checkout-heading h2 { font-size: 19px; }
+  .qr-checkout-modal .checkout-total { font-size: 17px; }
+  .qr-checkout-close { width: 34px; height: 34px; flex-basis: 34px; }
+  .qr-modal-offers { margin-top: 15px; padding: 12px; }
+  .qr-modal-offer { gap: 8px; padding: 10px; }
+  .qr-modal-offer-icon { width: 32px; height: 32px; flex-basis: 32px; }
+  .qr-modal-offer > button { min-width: 62px; padding: 0 8px; }
+  .qr-checkout-modal .checkout-items { padding: 13px 0; }
+  .qr-checkout-modal .checkout-form { padding-top: 16px; }
 }
 
 /* CHECKOUT */
