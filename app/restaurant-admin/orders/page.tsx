@@ -249,14 +249,16 @@ const todayRevenue = revenueOrders
     (order) => getStatus(order) === "placed"
   );
 
-  const visibleItems = items;
+  // Orders workspace: non-QR customer orders that are not delivered yet.
+  // QR dine-in orders are handled exclusively in Kitchen (KOT).
+  const visibleItems = items.filter((order) => {
+    const orderType = String(order.order_type || "").toLowerCase();
+    const isQrDineIn = ["dine_in", "qr", "qr_dine_in"].includes(orderType);
+    return !isQrDineIn && !isDelivered(getStatus(order));
+  });
 
-  const activeCount = items.filter(
-    (order) => !isDelivered(getStatus(order)) && !isCancelled(getStatus(order))
-  ).length;
-
-  const deliveredCount = items.filter(
-    (order) => isDelivered(getStatus(order))
+  const activeCount = visibleItems.filter(
+    (order) => !isCancelled(getStatus(order))
   ).length;
 
   const filtered = visibleItems.filter((order) => {
@@ -282,8 +284,7 @@ const todayRevenue = revenueOrders
       (filter === "Active" &&
         !isCancelled(status) &&
         status !== "placed") ||
-      (filter === "Cancelled" && isCancelled(status)) ||
-      (filter === "Delivered" && isDelivered(status));
+      (filter === "Cancelled" && isCancelled(status));
 
     return matchesSearch && matchesFilter;
   });
@@ -349,7 +350,7 @@ const todayRevenue = revenueOrders
       <section className="ta-product-summary">
         <div>
           <span>{t("Total orders")}</span>
-          <strong>{items.length}</strong>
+          <strong>{visibleItems.length}</strong>
         </div>
         <div>
           <span>{t("Active orders")}</span>
@@ -408,7 +409,6 @@ const todayRevenue = revenueOrders
             <option>{t("New")}</option>
             <option>{t("Active")}</option>
             <option>{t("Cancelled")}</option>
-            <option>{t("Delivered")}</option>
           </select>
         </div>
 
@@ -428,7 +428,7 @@ const todayRevenue = revenueOrders
             <p>
               {visibleItems.length
                 ? "Try changing your search or filter."
-                : "Delivered orders are hidden. New orders will appear here."}
+                : "No undelivered customer orders. QR dine-in orders are managed in Kitchen (KOT)."}
             </p>
           </div>
         ) : (
