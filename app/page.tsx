@@ -149,6 +149,10 @@ export default function Home() {
                 <Link href="/owner" className="secondary-cta">
                   <Store size={17} /> {t("Become a partner")}
                 </Link>
+
+                <Link href="/find-your-cravings" className="secondary-cta">
+                  <Sparkles size={17} /> Find Your Cravings
+                </Link>
               </div>
 
               <div className="hero-trust">
