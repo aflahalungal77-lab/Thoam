@@ -1,12 +1,12 @@
 -- Permanently delete a restaurant and all dependent data in one transaction.
--- Run this migration in the Supabase SQL Editor before using the Admin Delete button.
--- Historical orders are intentionally deleted by this operation; this is irreversible.
+-- This RPC is restricted to authenticated Tho'am admins.
+-- Historical orders are intentionally deleted; this operation is irreversible.
 
 create or replace function public.admin_delete_restaurant(p_restaurant_id uuid)
 returns void
 language plpgsql
 security definer
-set search_path = public, pg_temp
+set search_path = pg_catalog, public, pg_temp
 as $$
 begin
   if auth.uid() is null
@@ -33,7 +33,7 @@ begin
     raise exception 'Restaurant not found';
   end if;
 
-  -- Remove rows with RESTRICT references before deleting their parent orders.
+  -- Remove restrictive references before deleting their parent records.
   delete from public.challenge_redemptions
   where restaurant_id = p_restaurant_id;
 
@@ -42,11 +42,20 @@ begin
   where cle.order_id = o.id
     and o.restaurant_id = p_restaurant_id;
 
-  -- Order items and status history cascade from orders.
+  -- Orders are removed first; order_items and order_status_history cascade.
   delete from public.orders
   where restaurant_id = p_restaurant_id;
 
-  -- Products, restaurant tables and challenges cascade from restaurants.
+  -- Sessions restrict deletion of restaurant tables and restaurants.
+  -- Orders referencing sessions are already gone (session_id is SET NULL).
+  delete from public.order_sessions
+  where restaurant_id = p_restaurant_id;
+
+  -- Remove table-linked records explicitly before restaurant tables are cascaded.
+  delete from public.table_needs
+  where restaurant_id = p_restaurant_id;
+
+  -- Products, schedules, offers, tables and challenges cascade from restaurants.
   -- Owner profiles are detached by profiles_restaurant_id_fkey ON DELETE SET NULL.
   delete from public.restaurants
   where id = p_restaurant_id;
