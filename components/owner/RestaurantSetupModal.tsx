@@ -32,6 +32,7 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
   const [logoUrl, setLogoUrl] = useState("");
   const [logoPreview, setLogoPreview] = useState("");
   const [restaurantLocation, setRestaurantLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [deliveryRadiusKm, setDeliveryRadiusKm] = useState("5");
   const [locationMessage, setLocationMessage] = useState("");
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
@@ -150,6 +151,11 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
       return;
     }
 
+    if (!restaurantLocation) {
+      setError("Please pin your restaurant location before continuing.");
+      return;
+    }
+
     if (!supabase) {
       setError("Supabase is not configured. Please contact support.");
       return;
@@ -188,7 +194,8 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
           whatsappNumber: cleanWhatsappNumber,
           logoUrl,
           latitude: restaurantLocation?.latitude ?? null,
-          longitude: restaurantLocation?.longitude ?? null,
+          longitude: restaurantLocation.longitude,
+          deliveryRadiusKm: Number(deliveryRadiusKm),
         }),
       });
 
@@ -219,9 +226,10 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
     slug.trim().length > 0,
     whatsappNumber.trim().length > 0,
     Boolean(logoUrl),
+    Boolean(restaurantLocation),
   ].filter(Boolean).length;
 
-  const progress = (completedFields / 5) * 100;
+  const progress = (completedFields / 6) * 100;
 
   return (
     <div className="setup-overlay">
@@ -291,7 +299,7 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
               role="progressbar"
               aria-label="Form completion"
               aria-valuemin={0}
-              aria-valuemax={5}
+              aria-valuemax={6}
               aria-valuenow={completedFields}
             >
               <div
@@ -474,7 +482,16 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
             <div className="field-group">
               <button type="button" className="submit-button" onClick={captureRestaurantLocation} style={{ marginTop: 0, justifyContent: "center", background: "#fff", color: "#171717" }}><MapPin size={17} /> {restaurantLocation ? "Update restaurant location" : "Use this device at the restaurant"}</button>
               {locationMessage && <p className="field-description" role="status">{locationMessage}</p>}
-              <p className="field-description">Use this while physically at the restaurant. You can skip it for now.</p>
+              <p className="field-description">Stand at your restaurant and allow precise location access. This stores the restaurant pin coordinates for nearby discovery.</p>
+              {restaurantLocation && <a className="field-description" href={`https://www.google.com/maps?q=${restaurantLocation.latitude},${restaurantLocation.longitude}`} target="_blank" rel="noreferrer">Review selected pin in Google Maps ↗</a>}
+              <label htmlFor="deliveryRadiusKm" style={{ display: "block", marginTop: 18 }}>Delivery radius <span>*</span></label>
+              <div className="input-shell">
+                <MapPin className="field-icon" size={18} />
+                <select id="deliveryRadiusKm" value={deliveryRadiusKm} onChange={(event) => setDeliveryRadiusKm(event.target.value)} style={{ width: "100%", border: 0, outline: 0, background: "transparent", color: "#171717", font: "inherit" }}>
+                  <option value="1">1 KM</option><option value="2">2 KM</option><option value="3">3 KM</option><option value="5">5 KM</option><option value="7">7 KM</option><option value="10">10 KM</option><option value="15">15 KM</option><option value="20">20 KM</option>
+                </select>
+              </div>
+              <p className="field-description">Customers outside this radius can still view your menu, but delivery will be marked unavailable.</p>
             </div>
             {error && (
               <div
