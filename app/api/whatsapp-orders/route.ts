@@ -126,6 +126,16 @@ export async function POST(request: Request) {
       return jsonError("This restaurant does not offer delivery.", 400);
     }
 
+    // Start offer validation lookup alongside product lookup to reduce checkout latency.
+    const offerLookupPromise = offerId
+      ? supabase
+          .from("offers")
+          .select("id,title,scope,discount_type,discount_value,product_ids,min_order_amount,max_discount,starts_at,ends_at,is_active,restaurant_id")
+          .eq("id", offerId)
+          .eq("restaurant_id", restaurant.id)
+          .maybeSingle()
+      : null;
+
     // Fetch product prices from the database.
     // Never trust prices sent by the client.
     const uniqueProductIds = [
@@ -199,12 +209,7 @@ export async function POST(request: Request) {
     let appliedOffer: { id: string; title: string } | null = null;
 
     if (offerId) {
-      const { data: offer, error: offerError } = await supabase
-        .from("offers")
-        .select("id,title,scope,discount_type,discount_value,product_ids,min_order_amount,max_discount,starts_at,ends_at,is_active,restaurant_id")
-        .eq("id", offerId)
-        .eq("restaurant_id", restaurant.id)
-        .maybeSingle();
+      const { data: offer, error: offerError } = await offerLookupPromise!;
 
       if (offerError) {
         console.error("Offer lookup failed:", offerError);
