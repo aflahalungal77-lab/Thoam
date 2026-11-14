@@ -9,11 +9,11 @@ import { supabase } from "@/lib/supabase";
 import "./cravings-fields.css";
 import {
   ArrowLeft, Plus, Trash2, Upload, Image as ImageIcon,
-  Package, Search, CheckCircle2, XCircle, LoaderCircle,
+  Package, Search, CheckCircle2, XCircle, LoaderCircle, Pencil, X,
 } from "lucide-react";
 
 type ProductVariant = { name: string; price: number | string; is_available?: boolean | null };
-type ProductRow = { id: string; name: string; price: number | string; is_available: boolean; category?: string | null; description?: string | null; image_url?: string | null; is_veg?: boolean; variants?: ProductVariant[] | null };
+type ProductRow = { id: string; name: string; price: number | string; is_available: boolean; category?: string | null; description?: string | null; image_url?: string | null; is_veg?: boolean; variants?: ProductVariant[] | null; cuisine_type?: string | null; taste_tags?: string[] | null };
 
 const categories = [
   "Biriyani", "Mandhi", "Fried Rice", "Shawarma", "Burger",
@@ -38,6 +38,7 @@ export default function ProductsPage() {
   const [imageUrl, setImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState("");
   const [msg, setMsg] = useState("");
   const [search, setSearch] = useState("");
@@ -169,7 +170,7 @@ export default function ProductsPage() {
     setSaving(true);
     setMsg("");
 
-    const { error } = await supabase.from("products").insert({
+    const productPayload = {
       restaurant_id: rid,
       name: name.trim(),
       price: useVariants ? Math.min(...cleanVariants.map((v) => v.price)) : Number(price),
@@ -180,11 +181,14 @@ export default function ProductsPage() {
       is_veg: veg,
       description: desc.trim(),
       image_url: imageUrl || null,
-      is_available: true,
-    });
+    };
 
-    if (error) {
-      setMsg(error.message);
+    const result = editingId
+      ? await supabase.from("products").update(productPayload).eq("id", editingId).eq("restaurant_id", rid)
+      : await supabase.from("products").insert({ ...productPayload, is_available: true });
+
+    if (result.error) {
+      setMsg(result.error.message);
     } else {
       setName("");
       setPrice("");
@@ -196,11 +200,45 @@ export default function ProductsPage() {
       setVeg(false);
       setDesc("");
       setImageUrl("");
-      setMsg("Product added successfully.");
+      setEditingId(null);
+      setMsg(editingId ? "Product updated successfully." : "Product added successfully.");
       await load();
     }
 
     setSaving(false);
+  }
+
+  function edit(product: ProductRow) {
+    setEditingId(product.id);
+    setName(product.name);
+    setUseVariants(Boolean(product.variants?.length));
+    setVariants(product.variants?.length
+      ? product.variants.map((variant) => ({ name: variant.name, price: String(variant.price) }))
+      : [{ name: "Half", price: "" }, { name: "Full", price: "" }]);
+    setPrice(String(product.price ?? ""));
+    setCategory(product.category || "Other");
+    setCuisineType(product.cuisine_type || "");
+    setTasteTags(product.taste_tags || []);
+    setVeg(Boolean(product.is_veg));
+    setDesc(product.description || "");
+    setImageUrl(product.image_url || "");
+    setMsg("Editing " + product.name + ". Update the details and save your changes.");
+    document.querySelector(".ta-add-product")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setName("");
+    setPrice("");
+    setUseVariants(false);
+    setVariants([{ name: "Half", price: "" }, { name: "Full", price: "" }]);
+    setCategory("Biriyani");
+    setCuisineType("");
+    setTasteTags([]);
+    setVeg(false);
+    setDesc("");
+    setImageUrl("");
+    setMsg("Edit cancelled.");
   }
 
   async function toggle(product: ProductRow) {
@@ -310,7 +348,7 @@ export default function ProductsPage() {
           <div className="ta-panel-heading">
             <div>
               <span className="ta-eyebrow">{t("MENU EDITOR")}</span>
-              <h2>{t("Add a dish")}</h2>
+              <h2>{editingId ? "Edit dish" : t("Add a dish")}</h2>
             </div>
             <div className="ta-panel-icon"><Plus size={20} /></div>
           </div>
@@ -475,8 +513,9 @@ export default function ProductsPage() {
               disabled={saving || uploading || !rid}
             >
               {saving ? <LoaderCircle className="ta-refreshing" size={17} /> : <Plus size={17} />}
-              {saving ? "Adding product..." : "Add product to menu"}
+              {saving ? (editingId ? "Saving changes..." : "Adding product...") : (editingId ? "Save product changes" : "Add product to menu")}
             </button>
+            {editingId && <button type="button" className="ta-edit-cancel" onClick={cancelEdit}><X size={15} /> Cancel editing</button>}
           
 </form>
         </section>
@@ -551,6 +590,9 @@ export default function ProductsPage() {
                     </div>
 
                     <div className="ta-product-actions">
+                      <button className="ta-edit-button" onClick={() => edit(product)} disabled={Boolean(busyId) || saving} aria-label={`Edit ${product.name}`} title="Edit product">
+                        <Pencil size={14} /> Edit
+                      </button>
                       <button
                         className="ta-availability-button"
                         onClick={() => void toggle(product)}
