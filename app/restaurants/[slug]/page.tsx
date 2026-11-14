@@ -469,6 +469,20 @@ export default function RestaurantPage() {
                 Explore restaurants
               </Link>
             </section>
+          ) : deliveryUnsupported ? (
+            <section
+              className="premium-empty"
+              role="status"
+              aria-live="polite"
+              style={{ minHeight: "55vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14 }}
+            >
+              <MapPin size={34} />
+              <h1>Your location is not supported for delivery</h1>
+              <Link href="/restaurants" className="premium-primary-button">
+                <ArrowLeft size={16} />
+                Back to restaurants
+              </Link>
+            </section>
           ) : (
             <>
               {/* Restaurant hero */}
@@ -491,13 +505,6 @@ export default function RestaurantPage() {
 
                 <h1>{restaurant.name}</h1>
 
-                {restaurant.delivery_enabled && locationChecked && deliveryDistanceKm !== null && (
-                <div role="status" style={{ marginTop: 16, padding: "12px 14px", borderRadius: 12, background: deliveryUnsupported ? "#fff1f0" : "#effaf2", color: deliveryUnsupported ? "#9b2520" : "#176534", fontSize: 13, lineHeight: 1.5 }}>
-                  {deliveryUnsupported
-                    ? `Your location is not supported for delivery. This restaurant delivers within ${restaurant.delivery_radius_km} KM, and you are ${deliveryDistanceKm.toFixed(1)} KM away. You can still explore the menu.`
-                    : `Delivery is available to your location · ${deliveryDistanceKm.toFixed(1)} KM away.`}
-                </div>
-              )}
               <p className="premium-restaurant-description">
                   {restaurant.description ||
                     "Discover your next favourite meal, freshly prepared."}
