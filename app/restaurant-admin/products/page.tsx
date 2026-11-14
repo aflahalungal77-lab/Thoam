@@ -30,6 +30,8 @@ export default function ProductsPage() {
   const [useVariants, setUseVariants] = useState(false);
   const [variants, setVariants] = useState([{ name: "Half", price: "" }, { name: "Full", price: "" }]);
   const [category, setCategory] = useState("Biriyani");
+  const [cuisineType, setCuisineType] = useState("");
+  const [tasteTags, setTasteTags] = useState<string[]>([]);
   const [veg, setVeg] = useState(false);
   const [desc, setDesc] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -172,6 +174,8 @@ export default function ProductsPage() {
       price: useVariants ? Math.min(...cleanVariants.map((v) => v.price)) : Number(price),
       variants: cleanVariants,
       category,
+      cuisine_type: cuisineType || null,
+      taste_tags: tasteTags,
       is_veg: veg,
       description: desc.trim(),
       image_url: imageUrl || null,
@@ -186,6 +190,8 @@ export default function ProductsPage() {
       setUseVariants(false);
       setVariants([{ name: "Half", price: "" }, { name: "Full", price: "" }]);
       setCategory("Biriyani");
+      setCuisineType("");
+      setTasteTags([]);
       setVeg(false);
       setDesc("");
       setImageUrl("");
@@ -421,6 +427,35 @@ export default function ProductsPage() {
               )}
             </div>
 
+            <section className="ta-cravings-fields">
+              <div>
+                <strong>Find Your Cravings tags</strong>
+                <small>Help nearby customers discover this dish by taste and cuisine.</small>
+              </div>
+              <label className="ta-field">
+                Cuisine
+                <select value={cuisineType} onChange={(e) => setCuisineType(e.target.value)}>
+                  <option value="">Select cuisine</option>
+                  <option value="kerala">Kerala</option>
+                  <option value="south_indian">South Indian</option>
+                  <option value="north_indian">North Indian</option>
+                  <option value="arabic">Arabic</option>
+                  <option value="chinese">Chinese</option>
+                  <option value="continental">Continental</option>
+                  <option value="fast_food">Fast Food</option>
+                </select>
+              </label>
+              <div className="ta-cravings-tastes">
+                <span>Taste tags</span>
+                {["spicy", "sweet", "tangy", "savoury", "mild", "crunchy"].map((tag) => (
+                  <label key={tag}>
+                    <input type="checkbox" checked={tasteTags.includes(tag)} onChange={() => setTasteTags((current) => current.includes(tag) ? current.filter((item) => item !== tag) : [...current, tag])} />
+                    {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                  </label>
+                ))}
+              </div>
+            </section>
+
             <label className="ta-veg-toggle">
               <input
                 type="checkbox"
@@ -441,6 +476,16 @@ export default function ProductsPage() {
               {saving ? <LoaderCircle className="ta-refreshing" size={17} /> : <Plus size={17} />}
               {saving ? "Adding product..." : "Add product to menu"}
             </button>
+          
+.ta-cravings-fields{display:grid;gap:12px;padding:15px;border:1px solid #e7e6df;border-radius:13px;background:#fafaf7}
+.ta-cravings-fields>div:first-child{display:grid;gap:4px}
+.ta-cravings-fields>div:first-child strong{font-size:12px}
+.ta-cravings-fields>div:first-child small{font-size:10px;color:#888}
+.ta-cravings-fields .ta-field select{width:100%;padding:11px;border:1px solid #ddd;border-radius:9px;background:#fff}
+.ta-cravings-tastes{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ta-cravings-tastes>span{width:100%;font-size:11px;font-weight:750}
+.ta-cravings-tastes label{display:flex;align-items:center;gap:5px;padding:7px 9px;border:1px solid #e4e3dc;border-radius:99px;background:#fff;font-size:10px}
+
           </form>
         </section>
 
