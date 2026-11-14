@@ -17,10 +17,9 @@
 
 /* Keep customer checkout actions clear of the fixed mobile navigation. */
 @media(max-width:640px){
-  /* Keep the floating cart below the mobile header while scrolling. */
+  /* The floating cart CTA is fixed separately from the cart drawer. */
   .premium-floating-cart{
-    top:calc(68px + env(safe-area-inset-top) + 10px) !important;
-    bottom:auto !important;
+    bottom:calc(82px + env(safe-area-inset-bottom)) !important;
   }
 
   .premium-cart-footer{
