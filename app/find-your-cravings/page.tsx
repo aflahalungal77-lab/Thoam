@@ -60,9 +60,19 @@ export default function FindYourCravingsPage() {
     if (!navigator.geolocation) { setLocationState("denied"); return; }
     setLocationState("loading");
     navigator.geolocation.getCurrentPosition(
-      p => { setLocation({ latitude: p.coords.latitude, longitude: p.coords.longitude }); setLocationState("ready"); setError(""); },
-      () => { setLocationState("denied"); setError("Location access is needed to show food that can actually be delivered to you."); },
-      { enableHighAccuracy: false, timeout: 12000, maximumAge: 180000 }
+      p => {
+        if (p.coords.accuracy > 1000) {
+          setLocation(null);
+          setLocationState("denied");
+          setError("Your phone returned an inaccurate location. Turn on device location and try again, or select a more accurate location.");
+          return;
+        }
+        setLocation({ latitude: p.coords.latitude, longitude: p.coords.longitude });
+        setLocationState("ready");
+        setError("");
+      },
+      () => { setLocation(null); setLocationState("denied"); setError("Location access is needed to show food that can actually be delivered to you."); },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   }, []);
 
