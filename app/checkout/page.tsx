@@ -177,7 +177,15 @@ function CheckoutInner() {
 
         if (!active) return;
 
-        setName(user.user_metadata?.full_name || "");
+        let savedDetails: { name?: string; phone?: string; address?: string } = {};
+        try {
+          const rawSavedDetails = localStorage.getItem("thoam_customer_details_v1");
+          if (rawSavedDetails) savedDetails = JSON.parse(rawSavedDetails);
+        } catch {
+          localStorage.removeItem("thoam_customer_details_v1");
+        }
+
+        setName(savedDetails.name || user.user_metadata?.full_name || "");
 
         const { data: profile } = await supabase
           .from("profiles")
@@ -186,7 +194,8 @@ function CheckoutInner() {
           .maybeSingle();
 
         if (!active) return;
-        if (profile?.phone) setPhone(profile.phone);
+        setPhone(savedDetails.phone || profile?.phone || "");
+        if (savedDetails.address) setAddress(savedDetails.address);
 
         const { data: restaurantData, error: restaurantError } =
           await supabase
@@ -395,6 +404,16 @@ function CheckoutInner() {
         throw new Error(result.error || "Could not place order.");
       }
 
+      try {
+        localStorage.setItem("thoam_customer_details_v1", JSON.stringify({
+          name: name.trim(),
+          phone: phone.trim(),
+          address: address.trim(),
+        }));
+      } catch {
+        // The order is already placed; storage failure must not block confirmation.
+      }
+
       localStorage.removeItem(`thoam-cart-${slug}`);
       setOrderNumber(String(result.order.order_number));
     } catch (error) {
@@ -477,6 +496,11 @@ function CheckoutInner() {
           <div className="tc-main-column">
             <section className="tc-card">
               <div className="tc-card-title"><span>01</span><div><h2>{t("Delivery details")}</h2><p>{t("Where should we deliver your food?")}</p></div></div>
+              <div className="tc-saved-details-note" role="note">
+                <p><strong>Saved Details</strong> — പേര്, ഫോൺ നമ്പർ, address എന്നിവ ആദ്യമായി order place ചെയ്താൽ അതേ device-ൽ save ചെയ്യും.</p>
+                <p><strong>Auto-fill</strong> — അടുത്ത തവണ checkout തുറക്കുമ്പോൾ വിവരങ്ങൾ സ്വയം വരും.</p>
+                <p><strong>Edit anytime</strong> — Auto-filled വിവരങ്ങൾ നേരിട്ട് മാറ്റാം.</p>
+              </div>
               <div className="tc-fields">
                 <label>Full name *
                   <input required value={name} onChange={(e) => setName(e.target.value)} maxLength={100} autoComplete="name" placeholder={t("Enter your full name")} />
@@ -610,6 +634,7 @@ function CheckoutStyles() {
       .tc-card-title{display:flex;gap:14px;align-items:center;margin-bottom:24px}
       .tc-card-title>span{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#111;color:white;font-weight:800}
       .tc-card-title h2,.tc-summary-title h2{font-size:18px;margin:0;font-weight:850}
+      .tc-saved-details-note{display:grid;gap:6px;margin:0 0 18px;padding:12px 14px;border:1px solid #dcebe0;border-radius:11px;background:#f1f8f3;color:#42634c;font-size:11px;line-height:1.55}.tc-saved-details-note p{margin:0}.tc-saved-details-note strong{color:#26794a;font-weight:850}
       .tc-fields{display:flex;flex-direction:column;gap:18px}.tc-fields label{display:flex;flex-direction:column;gap:8px;font-size:12px;font-weight:750}
       .tc-fields input,.tc-fields textarea{width:100%;padding:13px 14px;border:1px solid #e5e5e5;border-radius:10px;background:#fafafa;color:#111;font:inherit;font-size:13px;outline:none}
       .tc-fields input:focus,.tc-fields textarea:focus{border-color:#111;background:white;box-shadow:0 0 0 3px #0000000a}
