@@ -470,18 +470,27 @@ export default function RestaurantPage() {
               </Link>
             </section>
           ) : deliveryUnsupported ? (
-            <section
-              className="premium-empty"
-              role="status"
-              aria-live="polite"
-              style={{ minHeight: "55vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 14 }}
-            >
-              <MapPin size={34} />
-              <h1>Your location is not supported for delivery</h1>
-              <Link href="/restaurants" className="premium-primary-button">
-                <ArrowLeft size={16} />
-                Back to restaurants
-              </Link>
+            <section className="thoam-delivery-blocked" role="status" aria-live="polite">
+              <div className="thoam-delivery-card">
+                <div className="thoam-delivery-icon"><MapPin size={27} strokeWidth={1.8} /></div>
+                <span className="thoam-delivery-eyebrow">DELIVERY AREA CHECK</span>
+                <h1>This location isn’t covered yet.</h1>
+                <p className="thoam-delivery-copy">
+                  This restaurant is outside your delivery area. Explore other restaurants that may deliver to your location.
+                </p>
+                <div className="thoam-delivery-facts">
+                  {deliveryDistanceKm !== null && (
+                    <span><strong>{deliveryDistanceKm.toFixed(1)} km</strong><small>From restaurant</small></span>
+                  )}
+                  {restaurant.delivery_radius_km != null && (
+                    <span><strong>{Number(restaurant.delivery_radius_km).toFixed(0)} km</strong><small>Delivery radius</small></span>
+                  )}
+                </div>
+                <Link href="/restaurants" className="thoam-delivery-cta">
+                  <ArrowLeft size={17} /> Explore other restaurants
+                </Link>
+                <span className="thoam-delivery-footnote">Delivery availability is based on your current location.</span>
+              </div>
             </section>
           ) : (
             <>
@@ -879,7 +888,7 @@ export default function RestaurantPage() {
       )}
 
       {/* Floating cart */}
-      {restaurant && cartCount > 0 && !cartOpen && (
+      {restaurant && !deliveryUnsupported && cartCount > 0 && !cartOpen && (
         <button
           className="premium-floating-cart"
           onClick={() => setCartOpen(true)}
@@ -1088,6 +1097,20 @@ export default function RestaurantPage() {
 
       {/* Internal CSS */}
       <style jsx global>{`
+        .thoam-delivery-blocked{min-height:58vh;display:grid;place-items:center;padding:34px 0 54px;}
+        .thoam-delivery-card{width:min(100%,640px);min-height:440px;padding:clamp(28px,6vw,58px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:1px solid #e8e7e1;border-radius:30px;background:radial-gradient(ellipse at 50% 0%,#edf6f0 0%,#fff 56%);box-shadow:0 22px 70px rgba(20,35,26,.07);}
+        .thoam-delivery-icon{width:68px;height:68px;display:grid;place-items:center;margin-bottom:24px;border:1px solid #d9e9df;border-radius:22px;background:#edf6f0;color:#176b49;box-shadow:0 8px 24px rgba(23,107,73,.08);}
+        .thoam-delivery-eyebrow{color:#176b49;font-size:10px;font-weight:850;letter-spacing:2.1px;}
+        .thoam-delivery-card h1{max-width:460px;margin:13px 0 10px;color:#171a17;font-size:clamp(27px,4vw,39px);font-weight:780;line-height:1.13;letter-spacing:-1.5px;}
+        .thoam-delivery-copy{max-width:410px;margin:0;color:#747a74;font-size:14px;line-height:1.75;}
+        .thoam-delivery-facts{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:25px 0 26px;}
+        .thoam-delivery-facts span{min-width:130px;padding:12px 18px;border:1px solid #e8ece7;border-radius:14px;background:#fff;display:grid;gap:4px;}
+        .thoam-delivery-facts strong{color:#202820;font-size:16px;font-weight:800;}
+        .thoam-delivery-facts small{color:#858b84;font-size:10px;}
+        .thoam-delivery-cta{display:inline-flex!important;min-height:50px;align-items:center;justify-content:center;gap:10px;padding:0 24px;border:1px solid #14583e;border-radius:14px;background:#14583e;color:#fff!important;font-size:13px;font-weight:800;text-decoration:none!important;box-shadow:0 9px 22px rgba(20,88,62,.18);transition:transform .18s ease,background .18s ease;}
+        .thoam-delivery-cta:hover{transform:translateY(-2px);background:#104a34;}
+        .thoam-delivery-footnote{margin-top:18px;color:#9a9e98;font-size:10px;line-height:1.5;}
+        @media(max-width:600px){.thoam-delivery-blocked{min-height:52vh;padding:20px 0 38px;}.thoam-delivery-card{min-height:430px;padding:30px 22px;border-radius:24px;}.thoam-delivery-copy{font-size:13px;}.thoam-delivery-facts{gap:8px;margin:21px 0 23px;}.thoam-delivery-facts span{min-width:118px;padding:11px 13px;}.thoam-delivery-cta{width:100%;min-height:50px;}}
         .thoam-variant-backdrop{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:18px;background:#0009;backdrop-filter:blur(5px)}
         .thoam-variant-modal{position:relative;width:min(100%,430px);max-height:90vh;overflow:auto;padding:22px;border-radius:20px;background:#fff;color:#111;box-shadow:0 25px 80px #0004}
         .thoam-variant-close{position:absolute;top:12px;right:12px;width:36px;height:36px;border:0;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;z-index:2;cursor:pointer}
