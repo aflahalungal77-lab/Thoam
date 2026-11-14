@@ -74,17 +74,23 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
     const w = window as LeafletWindow;
     const initializeMap = () => {
       if (cancelled || !mapElementRef.current || !w.L || mapRef.current) return;
-      const map = w.L.map(mapElementRef.current, { scrollWheelZoom: true }).setView([11.05, 76.07], 11);
-      w.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      const L = w.L;
+      const map = L.map(mapElementRef.current, { scrollWheelZoom: true }).setView([11.05, 76.07], 11);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19,
       }).addTo(map);
       map.on("click", (event: MapClickEvent) => {
         const { lat, lng } = event.latlng;
-        if (markerRef.current) markerRef.current.setLatLng([lat, lng]);
-        else markerRef.current = w.L.marker([lat, lng], { draggable: true }).addTo(map);
-        markerRef.current.on("dragend", async () => {
-          const point = markerRef.current.getLatLng();
+        let marker = markerRef.current;
+        if (marker) marker.setLatLng([lat, lng]);
+        else {
+          marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+          markerRef.current = marker;
+        }
+        marker.on("dragend", () => {
+          const point = marker?.getLatLng();
+          if (!point) return;
           setRestaurantLocation({ latitude: point.lat, longitude: point.lng });
           setLocationMessage("Pin updated. This is your restaurant location.");
         });
@@ -93,7 +99,7 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
       });
       mapRef.current = map;
       if (restaurantLocation) {
-        markerRef.current = w.L.marker([restaurantLocation.latitude, restaurantLocation.longitude], { draggable: true }).addTo(map);
+        markerRef.current = L.marker([restaurantLocation.latitude, restaurantLocation.longitude], { draggable: true }).addTo(map);
         map.setView([restaurantLocation.latitude, restaurantLocation.longitude], 16);
       }
       window.setTimeout(() => map.invalidateSize(), 100);
@@ -137,11 +143,16 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
     setRestaurantLocation({ latitude, longitude });
     const w = window as LeafletWindow;
     if (mapRef.current && w.L) {
-      if (markerRef.current) markerRef.current.setLatLng([latitude, longitude]);
-      else markerRef.current = w.L.marker([latitude, longitude], { draggable: true }).addTo(mapRef.current);
-      markerRef.current.off("dragend");
-      markerRef.current.on("dragend", () => {
-        const point = markerRef.current.getLatLng();
+      let marker = markerRef.current;
+      if (marker) marker.setLatLng([latitude, longitude]);
+      else {
+        marker = w.L.marker([latitude, longitude], { draggable: true }).addTo(mapRef.current);
+        markerRef.current = marker;
+      }
+      marker.off("dragend");
+      marker.on("dragend", () => {
+        const point = marker?.getLatLng();
+        if (!point) return;
         setRestaurantLocation({ latitude: point.lat, longitude: point.lng });
         setLocationMessage("Pin updated. This is your restaurant location.");
       });
