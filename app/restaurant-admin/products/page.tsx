@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState, type FormEvent, type ChangeEvent } fr
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import "./cravings-fields.css";
 import {
   ArrowLeft, Plus, Trash2, Upload, Image as ImageIcon,
   Package, Search, CheckCircle2, XCircle, LoaderCircle,
@@ -477,16 +478,7 @@ export default function ProductsPage() {
               {saving ? "Adding product..." : "Add product to menu"}
             </button>
           
-.ta-cravings-fields{display:grid;gap:12px;padding:15px;border:1px solid #e7e6df;border-radius:13px;background:#fafaf7}
-.ta-cravings-fields>div:first-child{display:grid;gap:4px}
-.ta-cravings-fields>div:first-child strong{font-size:12px}
-.ta-cravings-fields>div:first-child small{font-size:10px;color:#888}
-.ta-cravings-fields .ta-field select{width:100%;padding:11px;border:1px solid #ddd;border-radius:9px;background:#fff}
-.ta-cravings-tastes{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.ta-cravings-tastes>span{width:100%;font-size:11px;font-weight:750}
-.ta-cravings-tastes label{display:flex;align-items:center;gap:5px;padding:7px 9px;border:1px solid #e4e3dc;border-radius:99px;background:#fff;font-size:10px}
-
-          </form>
+</form>
         </section>
 
         <section className="ta-menu-section">
