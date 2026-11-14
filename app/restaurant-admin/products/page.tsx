@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState, type FormEvent, type ChangeEvent } fr
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import "./cravings-fields.css";
 import {
   ArrowLeft, Plus, Trash2, Upload, Image as ImageIcon,
   Package, Search, CheckCircle2, XCircle, LoaderCircle,
@@ -30,6 +31,8 @@ export default function ProductsPage() {
   const [useVariants, setUseVariants] = useState(false);
   const [variants, setVariants] = useState([{ name: "Half", price: "" }, { name: "Full", price: "" }]);
   const [category, setCategory] = useState("Biriyani");
+  const [cuisineType, setCuisineType] = useState("");
+  const [tasteTags, setTasteTags] = useState<string[]>([]);
   const [veg, setVeg] = useState(false);
   const [desc, setDesc] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -172,6 +175,8 @@ export default function ProductsPage() {
       price: useVariants ? Math.min(...cleanVariants.map((v) => v.price)) : Number(price),
       variants: cleanVariants,
       category,
+      cuisine_type: cuisineType || null,
+      taste_tags: tasteTags,
       is_veg: veg,
       description: desc.trim(),
       image_url: imageUrl || null,
@@ -186,6 +191,8 @@ export default function ProductsPage() {
       setUseVariants(false);
       setVariants([{ name: "Half", price: "" }, { name: "Full", price: "" }]);
       setCategory("Biriyani");
+      setCuisineType("");
+      setTasteTags([]);
       setVeg(false);
       setDesc("");
       setImageUrl("");
@@ -421,6 +428,35 @@ export default function ProductsPage() {
               )}
             </div>
 
+            <section className="ta-cravings-fields">
+              <div>
+                <strong>Find Your Cravings tags</strong>
+                <small>Help nearby customers discover this dish by taste and cuisine.</small>
+              </div>
+              <label className="ta-field">
+                Cuisine
+                <select value={cuisineType} onChange={(e) => setCuisineType(e.target.value)}>
+                  <option value="">Select cuisine</option>
+                  <option value="kerala">Kerala</option>
+                  <option value="south_indian">South Indian</option>
+                  <option value="north_indian">North Indian</option>
+                  <option value="arabic">Arabic</option>
+                  <option value="chinese">Chinese</option>
+                  <option value="continental">Continental</option>
+                  <option value="fast_food">Fast Food</option>
+                </select>
+              </label>
+              <div className="ta-cravings-tastes">
+                <span>Taste tags</span>
+                {["spicy", "sweet", "tangy", "savoury", "mild", "crunchy"].map((tag) => (
+                  <label key={tag}>
+                    <input type="checkbox" checked={tasteTags.includes(tag)} onChange={() => setTasteTags((current) => current.includes(tag) ? current.filter((item) => item !== tag) : [...current, tag])} />
+                    {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                  </label>
+                ))}
+              </div>
+            </section>
+
             <label className="ta-veg-toggle">
               <input
                 type="checkbox"
@@ -441,7 +477,8 @@ export default function ProductsPage() {
               {saving ? <LoaderCircle className="ta-refreshing" size={17} /> : <Plus size={17} />}
               {saving ? "Adding product..." : "Add product to menu"}
             </button>
-          </form>
+          
+</form>
         </section>
 
         <section className="ta-menu-section">
