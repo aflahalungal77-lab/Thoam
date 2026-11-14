@@ -473,7 +473,7 @@ function CheckoutInner() {
           </div>
         )}
 
-        <form className="tc-layout" onSubmit={submitOrder}>
+        <form id="thoam-checkout-form" className="tc-layout" onSubmit={submitOrder}>
           <div className="tc-main-column">
             <section className="tc-card">
               <div className="tc-card-title"><span>01</span><div><h2>{t("Delivery details")}</h2><p>{t("Where should we deliver your food?")}</p></div></div>
@@ -573,6 +573,20 @@ function CheckoutInner() {
           </aside>
         </form>
 
+        <div className="tc-mobile-submit" aria-label="Quick order action">
+          <div className="tc-mobile-submit-total">
+            <span>{t("TOTAL")}</span>
+            <strong>{formatPrice(total)}</strong>
+          </div>
+          <button
+            type="submit"
+            form="thoam-checkout-form"
+            disabled={busy || !items.length || !restaurant || !restaurant.is_open || !restaurant.delivery_enabled}
+          >
+            {busy ? <><LoaderCircle className="tc-spin" size={17} /> {t("Placing order...")}</> : <>{t("Place COD order")} <ArrowRight size={17} /></>}
+          </button>
+        </div>
+
         <footer className="tc-footer"><strong>THO’AM</strong><span>{t("Good food. Made simple.")}</span></footer>
       </main>
       <CheckoutStyles />
@@ -642,7 +656,29 @@ function CheckoutStyles() {
       .tc-cod p{margin:4px 0 0}.tc-secondary{color:#222;font-size:12px;text-decoration:none;padding:12px}
       .tc-spin{animation:tcspin 1s linear infinite}@keyframes tcspin{to{transform:rotate(360deg)}}
       @media(max-width:850px){.tc-layout{grid-template-columns:1fr}.tc-summary{position:static}}
-      @media(max-width:520px){.tc-page{padding:22px 14px}.tc-card{padding:18px}.tc-heading{margin:30px 0 22px}.tc-heading h1{font-size:40px}}
+      .tc-mobile-submit{display:none}
+      @media(max-width:520px){
+        .tc-page{padding:22px 14px 112px}
+        .tc-card{padding:18px}
+        .tc-heading{margin:30px 0 22px}
+        .tc-heading h1{font-size:40px}
+        .tc-mobile-submit{
+          position:fixed;z-index:80;right:0;bottom:0;left:0;
+          display:flex;align-items:center;justify-content:space-between;gap:14px;
+          padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+          border-top:1px solid #e8e8e4;background:rgba(255,255,255,.97);
+          box-shadow:0 -8px 28px #0000000c;backdrop-filter:blur(12px)
+        }
+        .tc-mobile-submit-total{display:flex;min-width:0;flex-direction:column;gap:3px}
+        .tc-mobile-submit-total span{font-size:9px;font-weight:850;letter-spacing:1.2px;color:#888}
+        .tc-mobile-submit-total strong{font-size:18px;letter-spacing:-.5px;white-space:nowrap}
+        .tc-mobile-submit button{
+          display:inline-flex;min-height:46px;align-items:center;justify-content:center;gap:8px;
+          padding:0 16px;border:0;border-radius:11px;background:#111;color:#fff;
+          font-size:12px;font-weight:800;cursor:pointer
+        }
+        .tc-mobile-submit button:disabled{opacity:.5;cursor:not-allowed}
+      }
       @media(prefers-reduced-motion:reduce){.tc-page *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
     `}</style>
   );
