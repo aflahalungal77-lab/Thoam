@@ -26,6 +26,28 @@ type Props = {
 
 type LocationSearchResult = { place_id: number; display_name: string; lat: string; lon: string };
 
+type MapPoint = { lat: number; lng: number };
+type MapClickEvent = { latlng: MapPoint };
+type LeafletMarker = {
+  setLatLng: (point: [number, number]) => LeafletMarker;
+  getLatLng: () => MapPoint;
+  on: (event: "dragend", handler: () => void) => LeafletMarker;
+  off: (event: "dragend") => LeafletMarker;
+  addTo: (map: LeafletMap) => LeafletMarker;
+};
+type LeafletMap = {
+  setView: (center: [number, number], zoom: number) => LeafletMap;
+  on: (event: "click", handler: (event: MapClickEvent) => void) => LeafletMap;
+  invalidateSize: () => void;
+  remove: () => void;
+};
+type LeafletApi = {
+  map: (element: HTMLElement, options: { scrollWheelZoom: boolean }) => LeafletMap;
+  tileLayer: (url: string, options: { attribution: string; maxZoom: number }) => { addTo: (map: LeafletMap) => void };
+  marker: (point: [number, number], options: { draggable: boolean }) => LeafletMarker;
+};
+type LeafletWindow = Window & { L?: LeafletApi };
+
 export default function RestaurantSetupModal({ onComplete }: Props) {
   const [ownerName, setOwnerName] = useState("");
   const [restaurantName, setRestaurantName] = useState("");
@@ -40,8 +62,8 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
   const [locationResults, setLocationResults] = useState<LocationSearchResult[]>([]);
   const [searchingLocation, setSearchingLocation] = useState(false);
   const mapElementRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<any>(null);
-  const markerRef = useRef<any>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const markerRef = useRef<LeafletMarker | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const [saving, setSaving] = useState(false);
@@ -49,7 +71,7 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    const w = window as Window & { L?: any };
+    const w = window as LeafletWindow;
     const initializeMap = () => {
       if (cancelled || !mapElementRef.current || !w.L || mapRef.current) return;
       const map = w.L.map(mapElementRef.current, { scrollWheelZoom: true }).setView([11.05, 76.07], 11);
@@ -57,7 +79,7 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19,
       }).addTo(map);
-      map.on("click", (event: any) => {
+      map.on("click", (event: MapClickEvent) => {
         const { lat, lng } = event.latlng;
         if (markerRef.current) markerRef.current.setLatLng([lat, lng]);
         else markerRef.current = w.L.marker([lat, lng], { draggable: true }).addTo(map);
@@ -113,7 +135,7 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
 
   function placeRestaurantPin(latitude: number, longitude: number) {
     setRestaurantLocation({ latitude, longitude });
-    const w = window as Window & { L?: any };
+    const w = window as LeafletWindow;
     if (mapRef.current && w.L) {
       if (markerRef.current) markerRef.current.setLatLng([latitude, longitude]);
       else markerRef.current = w.L.marker([latitude, longitude], { draggable: true }).addTo(mapRef.current);
