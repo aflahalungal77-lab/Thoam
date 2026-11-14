@@ -306,15 +306,15 @@ export default function RestaurantPage() {
       setVariantQuantity(1);
       return;
     }
+    // Keep the customer in the menu so they can add multiple dishes
+    // without the cart drawer interrupting every add action.
     changeQuantity(product, 1);
-    setCartOpen(true);
   }
 
   function confirmVariantAdd() {
     if (!selectedProduct || !selectedVariantName) return;
     changeQuantity(selectedProduct, variantQuantity, selectedVariantName);
     setSelectedProduct(null);
-    setCartOpen(true);
   }
 
   const categories = useMemo(
