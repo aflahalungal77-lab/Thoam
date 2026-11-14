@@ -143,6 +143,21 @@ export default function RestaurantPage() {
   }, []);
 
   useEffect(() => {
+    if (loading || !products.length || typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get("product");
+    if (!productId) return;
+    const target = document.getElementById(`product-${productId}`);
+    if (!target) return;
+    const timer = window.setTimeout(() => {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.classList.add("premium-food-card-highlight");
+      window.setTimeout(() => target.classList.remove("premium-food-card-highlight"), 2600);
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [loading, products]);
+
+  useEffect(() => {
     const refreshClock = () => setIndiaClock(getIndiaClock());
     refreshClock();
     const timer = window.setInterval(refreshClock, 15_000);
@@ -735,6 +750,7 @@ export default function RestaurantPage() {
 
                       return (
                         <article
+                          id={`product-${product.id}`}
                           className="premium-food-card"
                           key={product.id}
                         >
