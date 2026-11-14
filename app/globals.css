@@ -4070,3 +4070,53 @@ to{transform:rotate(360deg);}
 .ta-size-preview strong{color:#44433b;font-size:10px;font-weight:750;line-height:1.6;overflow-wrap:anywhere}
 @media(max-width:520px){.ta-size-builder-toggle{gap:9px;padding:12px}.ta-size-builder-icon{width:35px;height:35px}.ta-size-builder-copy strong{font-size:11px}.ta-size-builder-copy small{font-size:9px}.ta-size-builder-content{padding:0 10px 10px}.ta-size-row{grid-template-columns:20px minmax(0,1fr) minmax(82px,.72fr) 28px;gap:6px;padding:8px}.ta-size-row input{height:35px;padding-inline:7px;font-size:10px}.ta-size-remove{width:28px;height:35px}}
 @media(prefers-reduced-motion:reduce){.ta-size-builder,.ta-size-switch,.ta-size-switch:after{transition:none}}
+
+
+/* THO'AM RESTAURANT PRODUCT MANAGEMENT — premium editor and menu cards */
+.ta-add-product{scroll-margin-top:24px}
+.ta-add-product:has(.ta-size-builder){border-radius:20px}
+.ta-edit-cancel{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:42px;margin-top:9px;border:1px solid #e7e5de;border-radius:11px;background:#fff;color:#666;font-size:11px;font-weight:750}
+.ta-edit-cancel:hover{background:#f7f6f2;border-color:#c9c5b8}
+.ta-product-grid{gap:18px}
+.ta-product-card{overflow:hidden;border:1px solid #e9e7e0;border-radius:19px;background:#fff;box-shadow:0 5px 18px rgba(22,22,18,.035);transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+.ta-product-card:hover{transform:translateY(-3px);border-color:#d8d5ca;box-shadow:0 14px 32px rgba(22,22,18,.08)}
+.ta-product-image{height:190px;background:#f3f2ed}
+.ta-product-image img{transition:transform .45s ease}
+.ta-product-card:hover .ta-product-image img{transform:scale(1.035)}
+.ta-product-info{padding:16px}
+.ta-product-category{display:inline-flex;align-items:center;padding:5px 8px;border:1px solid #eeece5;border-radius:999px;background:#faf9f6;color:#777469;font-size:8px;font-weight:850;letter-spacing:.12em;text-transform:uppercase}
+.ta-product-info h3{margin:10px 0 6px;font-size:16px;line-height:1.25;letter-spacing:-.35px}
+.ta-product-info>p{display:-webkit-box;overflow:hidden;margin:0;color:#77766f;font-size:11px;line-height:1.6;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ta-product-variant-tags{display:flex;flex-wrap:wrap;gap:7px;margin:13px 0 4px}
+.ta-product-variant-tags>span{display:inline-flex;align-items:center;gap:5px;min-height:31px;padding:6px 11px;border:1px solid #e9e5d9;border-radius:999px;background:linear-gradient(180deg,#fff,#f8f7f2);color:#34332d;font-size:10px;font-weight:800;box-shadow:0 2px 5px rgba(20,20,15,.035)}
+.ta-product-variant-tags>span::first-letter{color:#777}
+.ta-product-card-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid #efeee9}
+.ta-product-card-bottom strong{font-size:17px;letter-spacing:-.4px}
+.ta-product-card-bottom>span{color:#99968c;font-size:9px;font-weight:700}
+.ta-product-actions{gap:7px;margin-top:12px}
+.ta-edit-button,.ta-availability-button,.ta-delete-button{min-height:39px;border:1px solid #e8e6df;border-radius:10px;background:#fff;color:#34332e;font-size:10px;font-weight:800;transition:background .18s,border-color .18s,transform .18s}
+.ta-edit-button{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 12px}
+.ta-edit-button:hover{border-color:#c8c3b4;background:#f7f6f1}
+.ta-availability-button{flex:1}
+.ta-availability-button:hover{border-color:#c8c3b4;background:#f7f6f1}
+.ta-delete-button{width:40px;flex-shrink:0}
+.ta-edit-button:disabled,.ta-availability-button:disabled,.ta-delete-button:disabled{opacity:.5;cursor:not-allowed}
+.ta-product-status{backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.8);box-shadow:0 3px 12px rgba(0,0,0,.07)}
+.ta-product-card:focus-within{outline:2px solid #bdb9a9;outline-offset:3px}
+@media(max-width:760px){
+ .ta-product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+ .ta-product-image{height:145px}
+ .ta-product-info{padding:12px}
+ .ta-product-info h3{font-size:13px}
+ .ta-product-variant-tags{gap:5px}
+ .ta-product-variant-tags>span{min-height:27px;padding:5px 8px;font-size:9px}
+ .ta-edit-button{padding:0 8px}
+ .ta-availability-button{font-size:9px}
+}
+@media(max-width:420px){
+ .ta-product-grid{grid-template-columns:1fr}
+ .ta-product-image{height:190px}
+}
+@media(prefers-reduced-motion:reduce){
+ .ta-product-card,.ta-product-image img,.ta-edit-button,.ta-availability-button{transition:none}
+}
