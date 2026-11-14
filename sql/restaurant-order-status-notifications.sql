@@ -90,3 +90,26 @@ with check (
 
 revoke all on function public.restaurant_update_order_status(uuid, public.order_status) from public, anon;
 grant execute on function public.restaurant_update_order_status(uuid, public.order_status) to authenticated;
+ 
+-- Enable Realtime delivery for customer order tracking.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'orders'
+  ) then
+    alter publication supabase_realtime add table public.orders;
+  end if;
+
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'order_status_history'
+  ) then
+    alter publication supabase_realtime add table public.order_status_history;
+  end if;
+end
+$$;
