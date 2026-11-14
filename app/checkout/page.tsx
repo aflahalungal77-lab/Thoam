@@ -39,6 +39,9 @@ type Restaurant = {
   delivery_enabled: boolean;
   delivery_fee: number | null;
   status: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  delivery_radius_km?: number | null;
 };
 
 type CheckoutProductVariant = { name: string; price: number | string; is_available?: boolean | null };
@@ -114,6 +117,7 @@ function CheckoutInner() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"error" | "info">("error");
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [customerLocation, setCustomerLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + item.price * item.quantity, 0),
@@ -151,6 +155,15 @@ function CheckoutInner() {
     },
     []
   );
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (position) => setCustomerLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
+      () => setCustomerLocation(null),
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 300000 }
+    );
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -200,7 +213,7 @@ function CheckoutInner() {
         const { data: restaurantData, error: restaurantError } =
           await supabase
             .from("restaurants")
-            .select("id,name,slug,is_open,delivery_enabled,delivery_fee,status")
+            .select("id,name,slug,is_open,delivery_enabled,delivery_fee,status,latitude,longitude,delivery_radius_km")
             .eq("slug", slug)
             .eq("status", "approved")
             .maybeSingle();
@@ -358,6 +371,11 @@ function CheckoutInner() {
       return;
     }
 
+    if (!customerLocation) {
+      showMessage("Please allow location access to verify whether this restaurant delivers to your location.");
+      return;
+    }
+
     if (!name.trim()) {
       showMessage("Full name enter cheyyuka.");
       return;
@@ -388,6 +406,8 @@ function CheckoutInner() {
           customerName: name.trim(),
           customerPhone: phone.trim(),
           deliveryAddress: address.trim(),
+          customerLatitude: customerLocation.latitude,
+          customerLongitude: customerLocation.longitude,
           notes: notes.trim(),
           offerId: bestOffer?.offer.id || null,
           items: items.map((item) => ({
@@ -524,7 +544,7 @@ function CheckoutInner() {
                 <div><strong>Cash on Delivery</strong><small>{t("Pay when your food arrives.")}</small></div>
                 <CheckCircle2 size={20} />
               </div>
-              <p className="tc-muted">{t("No online payment required.")}</p>
+              <p className="tc-muted">{t("No online payment required.")}</p>\n              <p className="tc-muted">{customerLocation ? "Location verified for delivery coverage." : "Allow location access to verify delivery coverage."}</p>
             </section>
           </div>
 
@@ -587,7 +607,7 @@ function CheckoutInner() {
                 <div className="tc-total"><span>{t("Total amount")}</span><strong>{formatPrice(total)}</strong></div>
               </div>
 
-              <button className="tc-place" type="submit" disabled={busy || !items.length || !restaurant || !restaurant.is_open || !restaurant.delivery_enabled}>
+              <button className="tc-place" type="submit" disabled={busy || !items.length || !restaurant || !restaurant.is_open || !restaurant.delivery_enabled || !customerLocation}>
                 {busy ? <><LoaderCircle className="tc-spin" size={18} /> {t("Placing order...")}</> : <>{t("Place COD order")} <ArrowRight size={18} /></>}
               </button>
               <p className="tc-note"><CheckCircle2 size={14} /> {t("Final discount and total verified by the server.")}</p>
