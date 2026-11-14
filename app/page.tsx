@@ -253,6 +253,24 @@ export default function Home() {
           </div>
         </section>
 
+        {/* FIND YOUR CRAVINGS — immersive food discovery banner */}
+        <section className="cravings-home-section">
+          <div className="home-container">
+            <Link href="/find-your-cravings" className="cravings-home-card">
+              <div className="cravings-home-photo" aria-hidden="true" />
+              <div className="cravings-home-shade" />
+              <div className="cravings-home-copy">
+                <span className="cravings-home-kicker"><Sparkles size={14} /> YOUR NEXT FOOD OBSESSION</span>
+                <h2>Craving something<br /><em>delicious?</em></h2>
+                <p>Spicy, crispy, comforting or full of flavour. Tell us your mood — we’ll find dishes nearby that can reach your door.</p>
+                <span className="cravings-home-cta">Find your cravings <ArrowRight size={17} /></span>
+                <div className="cravings-home-tastes"><span>🌶️ Spicy</span><span>🍗 Savoury</span><span>🍋 Tangy</span><span>🍟 Crunchy</span></div>
+              </div>
+              <div className="cravings-home-stamp"><Sparkles size={15} /><span>MADE<br />FOR YOUR<br />MOOD</span></div>
+            </Link>
+          </div>
+        </section>
+
         {/* FOOD */}
         <section className="home-section food-section" id="popular-food">
           <div className="home-container">
@@ -1881,6 +1899,39 @@ export default function Home() {
           letter-spacing: 0;
           line-height: 1.8;
         }
+
+
+        /* Find Your Cravings — premium appetite-first homepage feature */
+        .cravings-home-section { padding: 28px 0 12px; background: #fff; }
+        .cravings-home-card { position: relative; display: flex; min-height: 390px; align-items: center; overflow: hidden; isolation: isolate; border-radius: 22px; background: #17130f; color: #fff; text-decoration: none; box-shadow: 0 22px 65px rgba(28,20,12,.14); }
+        .cravings-home-photo { position: absolute; z-index: -2; inset: 0; background-image: url('/hero.jpg'); background-position: center 54%; background-size: cover; transform: scale(1.015); transition: transform .7s cubic-bezier(.2,.7,.2,1); }
+        .cravings-home-card:hover .cravings-home-photo { transform: scale(1.06); }
+        .cravings-home-shade { position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg,rgba(12,10,8,.94) 0%,rgba(12,10,8,.82) 43%,rgba(12,10,8,.25) 100%),linear-gradient(0deg,rgba(0,0,0,.22),transparent 60%); }
+        .cravings-home-copy { width: min(590px,72%); padding: 54px 58px; }
+        .cravings-home-kicker { display: inline-flex; align-items: center; gap: 8px; color: #e8c99b; font-size: 10px; font-weight: 850; letter-spacing: .19em; }
+        .cravings-home-copy h2 { margin: 19px 0 13px; color: #fff; font-size: clamp(39px,5.2vw,65px); line-height: .99; letter-spacing: -.075em; font-weight: 760; }
+        .cravings-home-copy h2 em { color: #e9c99b; font-family: Georgia,serif; font-weight: 400; }
+        .cravings-home-copy p { max-width: 440px; margin: 0; color: rgba(255,255,255,.76); font-size: 13px; line-height: 1.9; }
+        .cravings-home-cta { display: inline-flex; align-items: center; gap: 12px; margin-top: 24px; padding: 13px 19px; border-radius: 999px; background: #f5e6ce; color: #20180f; font-size: 12px; font-weight: 850; transition: gap .2s ease,background .2s ease; }
+        .cravings-home-card:hover .cravings-home-cta { gap: 17px; background: #fff3df; }
+        .cravings-home-tastes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 23px; }
+        .cravings-home-tastes span { padding: 7px 10px; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; background: rgba(255,255,255,.09); color: rgba(255,255,255,.9); font-size: 10px; backdrop-filter: blur(8px); }
+        .cravings-home-stamp { position: absolute; right: 35px; bottom: 30px; display: flex; align-items: center; gap: 8px; padding: 12px 15px; border: 1px solid rgba(255,255,255,.3); border-radius: 12px; background: rgba(20,16,12,.32); color: #f4dfc1; font-size: 8px; font-weight: 850; letter-spacing: .14em; line-height: 1.45; backdrop-filter: blur(12px); }
+        @media (max-width:700px) {
+          .cravings-home-section { padding: 15px 0 0; }
+          .cravings-home-card { min-height: 410px; align-items: flex-end; border-radius: 17px; }
+          .cravings-home-photo { background-position: 58% center; }
+          .cravings-home-shade { background: linear-gradient(0deg,rgba(10,8,6,.96) 0%,rgba(10,8,6,.84) 48%,rgba(10,8,6,.12) 100%); }
+          .cravings-home-copy { width: 100%; padding: 28px 22px 24px; }
+          .cravings-home-kicker { font-size: 8px; letter-spacing: .14em; }
+          .cravings-home-copy h2 { margin: 14px 0 10px; font-size: clamp(40px,11vw,54px); }
+          .cravings-home-copy p { max-width: 340px; font-size: 11px; line-height: 1.8; }
+          .cravings-home-cta { margin-top: 17px; padding: 12px 16px; font-size: 11px; }
+          .cravings-home-tastes { gap: 6px; margin-top: 16px; }
+          .cravings-home-tastes span { padding: 6px 8px; font-size: 9px; }
+          .cravings-home-stamp { top: 16px; right: 15px; bottom: auto; padding: 9px 11px; font-size: 7px; }
+        }
+        @media (prefers-reduced-motion: reduce) { .cravings-home-photo,.cravings-home-cta { transition: none; } }
 
       `}</style>
     </>
