@@ -128,9 +128,17 @@ export default function RestaurantPage() {
   useEffect(() => {
     if (!navigator.geolocation) { setLocationChecked(true); return; }
     navigator.geolocation.getCurrentPosition(
-      (position) => { setCustomerLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude }); setLocationChecked(true); },
-      () => setLocationChecked(true),
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+      (position) => {
+        // Reject inaccurate fixes so an old/coarse phone location cannot falsely block delivery.
+        if (position.coords.accuracy > 1000) {
+          setCustomerLocation(null);
+        } else {
+          setCustomerLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+        }
+        setLocationChecked(true);
+      },
+      () => { setCustomerLocation(null); setLocationChecked(true); },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   }, []);
 
