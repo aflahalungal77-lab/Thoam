@@ -115,9 +115,15 @@ export default function FindYourCravingsPage() {
         const score = Math.round(((selectedTastes.length ? tasteMatch * 0.6 : 0.6) + (selectedCuisines.length ? cuisineMatch * 0.4 : 0.4)) * 100);
         const reasons = [...selectedTastes.filter(t => tags.includes(t)), ...(selectedCuisines.includes(cuisine) && cuisine ? [cuisine.replaceAll("_", " ")] : [])];
         return { ...product, restaurant: entry.restaurant, distance: entry.distance, score, reasons };
-      }).filter((item): item is Match => Boolean(item) && (item as Match).score > 0)
-        .sort((a, b) => b.score - a.score || a.distance - b.distance).slice(0, 15);
-      setMatches(ranked);
+      }).filter((item): item is Match => Boolean(item));
+
+      const exactMatches = ranked.filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score || a.distance - b.distance);
+      // Existing menu items may not have been tagged yet. Never hide deliverable food:
+      // show untagged nearby dishes as clearly labelled discovery picks instead.
+      const untaggedPicks = ranked.filter(item => !item.taste_tags?.length && !item.cuisine_type)
+        .sort((a, b) => a.distance - b.distance);
+      setMatches((exactMatches.length ? exactMatches : untaggedPicks).slice(0, 15));
     } catch (e) {
       setError(e instanceof Error ? e.message : "We couldn't load food recommendations.");
       setMatches([]);
@@ -162,10 +168,10 @@ export default function FindYourCravingsPage() {
             <div className="cravings-reveal"><span><Sparkles size={14} /> YOUR CRAVING PROFILE</span><h2>{cravingIdentity.title}</h2><p>{cravingIdentity.copy}</p></div>
             <div className="cravings-results-head"><div><span>MADE FOR YOUR MOOD</span><h2>Food you can order nearby</h2><p>Only open restaurants that support delivery to your current location.</p></div><button type="button" className="cravings-secondary" onClick={() => setStep(0)}>Start over</button></div>
             {error && <p className="cravings-error" role="alert">{error}</p>}
-            {!matches.length && !error && <div className="cravings-empty"><ChefHat size={28}/><h3>No matching dishes just yet</h3><p>Nearby delivery restaurants may not have tagged their dishes for cravings yet. Please check back soon.</p></div>}
+            {!matches.length && !error && <div className="cravings-empty"><ChefHat size={28}/><h3>No matching dishes just yet</h3><p>We couldn’t find tagged matches yet, so we’re showing nearby available dishes you can still explore. Restaurants are gradually adding taste and cuisine details.</p></div>}
             <div className="cravings-food-grid">{matches.map(item => <article className="cravings-food-card" key={item.id}>
               {item.image_url ? <img src={item.image_url} alt={item.name} /> : <div className="cravings-food-placeholder"><Utensils size={28}/></div>}
-              <div className="cravings-food-content"><div className="cravings-match">{item.score}% match</div><h3>{item.name}</h3><p className="cravings-restaurant">{item.restaurant.name} · {item.distance.toFixed(1)} km</p><p>{item.reasons.length ? `Matches your ${item.reasons.join(", ")} preferences.` : "A nearby delivery option for your food mood."}</p><div className="cravings-card-bottom"><strong>{money(Number(item.price))}</strong><Link href={`/restaurants/${item.restaurant.slug}`}>Order now <ArrowRight size={15}/></Link></div></div>
+              <div className="cravings-food-content"><div className="cravings-match">{item.score > 0 ? `${item.score}% match` : "Nearby pick"}</div><h3>{item.name}</h3><p className="cravings-restaurant">{item.restaurant.name} · {item.distance.toFixed(1)} km</p><p>{item.reasons.length ? `Matches your ${item.reasons.join(", ")} preferences.` : "Not tagged yet — a nearby dish you can explore."}</p><div className="cravings-card-bottom"><strong>{money(Number(item.price))}</strong><Link href={`/restaurants/${item.restaurant.slug}`}>Order now <ArrowRight size={15}/></Link></div></div>
             </article>)}</div>
           </>}
         </section>}
