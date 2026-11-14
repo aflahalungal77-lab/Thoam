@@ -2,7 +2,7 @@
 
 import { useLanguage } from "@/components/LanguageProvider";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 export interface CustomerOrderForm {
   customerName: string;
@@ -26,6 +26,26 @@ export default function WhatsAppOrderForm({ loading, onSubmit, onCancel }: Props
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [validationError, setValidationError] = useState("");
+  const [detailsLoaded, setDetailsLoaded] = useState(false);
+  const [detailsSaved, setDetailsSaved] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("thoam_customer_details_v1");
+      if (saved) {
+        const details = JSON.parse(saved) as Partial<CustomerOrderForm>;
+        if (typeof details.customerName === "string") setCustomerName(details.customerName);
+        if (typeof details.customerPhone === "string") setCustomerPhone(details.customerPhone);
+        if (typeof details.address === "string") setAddress(details.address);
+        if (details.orderType === "DELIVERY" || details.orderType === "TAKEAWAY") setOrderType(details.orderType);
+        setDetailsSaved(true);
+      }
+    } catch {
+      localStorage.removeItem("thoam_customer_details_v1");
+    } finally {
+      setDetailsLoaded(true);
+    }
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,13 +65,28 @@ export default function WhatsAppOrderForm({ loading, onSubmit, onCancel }: Props
       return;
     }
 
-    await onSubmit({
+    const submittedDetails: CustomerOrderForm = {
       customerName: customerName.trim(),
       customerPhone: cleanPhone,
       orderType,
       address: orderType === "DELIVERY" ? address.trim() : "",
       notes: notes.trim(),
-    });
+    };
+
+    // Keep reusable contact details on this device for the next order.
+    try {
+      localStorage.setItem("thoam_customer_details_v1", JSON.stringify({
+        customerName: submittedDetails.customerName,
+        customerPhone: submittedDetails.customerPhone,
+        orderType: submittedDetails.orderType,
+        address: submittedDetails.address,
+      }));
+      setDetailsSaved(true);
+    } catch {
+      // Checkout can continue even when browser storage is unavailable.
+    }
+
+    await onSubmit(submittedDetails);
   }
 
   return (
@@ -63,6 +98,13 @@ export default function WhatsAppOrderForm({ loading, onSubmit, onCancel }: Props
       </div>
 
       {validationError && <p className="validation-error" role="alert">{validationError}</p>}
+
+      {detailsLoaded && detailsSaved && (
+        <div className="saved-details-note" role="status">
+          <span aria-hidden="true">✓</span>
+          Saved details loaded · You can edit them anytime.
+        </div>
+      )}
 
       <div className="form-grid">
         <div className="form-field">
@@ -112,7 +154,7 @@ export default function WhatsAppOrderForm({ loading, onSubmit, onCancel }: Props
 
       <div className="form-actions">
         <button type="submit" disabled={loading} className="submit-button">
-          <span>{loading ? t("Preparing your order...") : t("Continue to WhatsApp")}</span>
+          <span>{loading ? t("Placing your order...") : t("Place order") }</span>
           {!loading && <span className="submit-arrow" aria-hidden="true">→</span>}
         </button>
         <button type="button" onClick={onCancel} disabled={loading} className="cancel-button">{t("Back to menu")}</button>
@@ -132,7 +174,7 @@ export default function WhatsAppOrderForm({ loading, onSubmit, onCancel }: Props
         .form-heading h2{margin-top:7px;font-size:20px;font-weight:850;letter-spacing:-.7px;line-height:1.25}
         .form-heading h2 span{color:#65736a}
         .form-heading p{margin-top:6px;color:#78847c;font-size:11px;line-height:1.55}
-        .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+        .saved-details-note{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:10px 12px;border:1px solid #dcebe0;border-radius:10px;background:#f1f8f3;color:#26794a;font-size:10px;font-weight:750}.saved-details-note span{display:grid;width:17px;height:17px;place-items:center;border-radius:50%;background:#dcefe2;font-size:10px}\n        .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
         .form-field{display:grid;gap:6px;margin-top:13px;min-width:0}
         .form-field label,.order-type-field legend{color:#34443a;font-size:11px;font-weight:800}
         .form-field label span{margin-left:5px;color:#929d95;font-size:9px;font-weight:600}
