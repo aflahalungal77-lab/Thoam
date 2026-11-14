@@ -159,9 +159,19 @@ function CheckoutInner() {
   useEffect(() => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
-      (position) => setCustomerLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
-      () => setCustomerLocation(null),
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 300000 }
+      (position) => {
+        if (position.coords.accuracy > 1000) {
+          setCustomerLocation(null);
+          showMessage("Your phone location is not accurate enough to verify delivery. Please enable precise location and try again.");
+          return;
+        }
+        setCustomerLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+      },
+      () => {
+        setCustomerLocation(null);
+        showMessage("Unable to get your current location. Enable location access and try again.");
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   }, []);
 
