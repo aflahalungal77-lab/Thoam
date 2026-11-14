@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   Store,
@@ -24,6 +24,30 @@ type Props = {
   onComplete: () => void;
 };
 
+type LocationSearchResult = { place_id: number; display_name: string; lat: string; lon: string };
+
+type MapPoint = { lat: number; lng: number };
+type MapClickEvent = { latlng: MapPoint };
+type LeafletMarker = {
+  setLatLng: (point: [number, number]) => LeafletMarker;
+  getLatLng: () => MapPoint;
+  on: (event: "dragend", handler: () => void) => LeafletMarker;
+  off: (event: "dragend") => LeafletMarker;
+  addTo: (map: LeafletMap) => LeafletMarker;
+};
+type LeafletMap = {
+  setView: (center: [number, number], zoom: number) => LeafletMap;
+  on: (event: "click", handler: (event: MapClickEvent) => void) => LeafletMap;
+  invalidateSize: () => void;
+  remove: () => void;
+};
+type LeafletApi = {
+  map: (element: HTMLElement, options: { scrollWheelZoom: boolean }) => LeafletMap;
+  tileLayer: (url: string, options: { attribution: string; maxZoom: number }) => { addTo: (map: LeafletMap) => void };
+  marker: (point: [number, number], options: { draggable: boolean }) => LeafletMarker;
+};
+type LeafletWindow = Window & { L?: LeafletApi };
+
 export default function RestaurantSetupModal({ onComplete }: Props) {
   const [ownerName, setOwnerName] = useState("");
   const [restaurantName, setRestaurantName] = useState("");
@@ -34,15 +58,136 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
   const [restaurantLocation, setRestaurantLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [deliveryRadiusKm, setDeliveryRadiusKm] = useState("5");
   const [locationMessage, setLocationMessage] = useState("");
+  const [locationQuery, setLocationQuery] = useState("");
+  const [locationResults, setLocationResults] = useState<LocationSearchResult[]>([]);
+  const [searchingLocation, setSearchingLocation] = useState(false);
+  const mapElementRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const markerRef = useRef<LeafletMarker | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    let cancelled = false;
+    const w = window as LeafletWindow;
+    const initializeMap = () => {
+      if (cancelled || !mapElementRef.current || !w.L || mapRef.current) return;
+      const L = w.L;
+      const map = L.map(mapElementRef.current, { scrollWheelZoom: true }).setView([11.05, 76.07], 11);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
+      map.on("click", (event: MapClickEvent) => {
+        const { lat, lng } = event.latlng;
+        let marker = markerRef.current;
+        if (marker) marker.setLatLng([lat, lng]);
+        else {
+          marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+          markerRef.current = marker;
+        }
+        marker.on("dragend", () => {
+          const point = marker?.getLatLng();
+          if (!point) return;
+          setRestaurantLocation({ latitude: point.lat, longitude: point.lng });
+          setLocationMessage("Pin updated. This is your restaurant location.");
+        });
+        setRestaurantLocation({ latitude: lat, longitude: lng });
+        setLocationMessage("Location selected. Drag the pin to adjust it precisely.");
+      });
+      mapRef.current = map;
+      if (restaurantLocation) {
+        markerRef.current = L.marker([restaurantLocation.latitude, restaurantLocation.longitude], { draggable: true }).addTo(map);
+        map.setView([restaurantLocation.latitude, restaurantLocation.longitude], 16);
+      }
+      window.setTimeout(() => map.invalidateSize(), 100);
+    };
+
+    const loadMap = () => {
+      if (document.querySelector('link[data-thoam-leaflet]')) {
+        if (w.L) initializeMap();
+        else {
+          const existing = document.querySelector('script[data-thoam-leaflet]') as HTMLScriptElement | null;
+          existing?.addEventListener("load", initializeMap, { once: true });
+        }
+        return;
+      }
+      const css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      css.dataset.thoamLeaflet = "true";
+      document.head.appendChild(css);
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      script.async = true;
+      script.dataset.thoamLeaflet = "true";
+      script.onload = initializeMap;
+      script.onerror = () => setLocationMessage("Map could not load. Check your internet connection and refresh.");
+      document.body.appendChild(script);
+    };
+
+    loadMap();
+    return () => {
+      cancelled = true;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+        markerRef.current = null;
+      }
+    };
+  }, []);
+
+  function placeRestaurantPin(latitude: number, longitude: number) {
+    setRestaurantLocation({ latitude, longitude });
+    const w = window as LeafletWindow;
+    if (mapRef.current && w.L) {
+      let marker = markerRef.current;
+      if (marker) marker.setLatLng([latitude, longitude]);
+      else {
+        marker = w.L.marker([latitude, longitude], { draggable: true }).addTo(mapRef.current);
+        markerRef.current = marker;
+      }
+      marker.off("dragend");
+      marker.on("dragend", () => {
+        const point = marker?.getLatLng();
+        if (!point) return;
+        setRestaurantLocation({ latitude: point.lat, longitude: point.lng });
+        setLocationMessage("Pin updated. This is your restaurant location.");
+      });
+      mapRef.current.setView([latitude, longitude], 16);
+    }
+    setLocationMessage("Restaurant location selected. You can drag the pin to adjust it.");
+  }
+
+  async function searchRestaurantLocation() {
+    const query = locationQuery.trim();
+    if (!query) return;
+    setSearchingLocation(true);
+    setLocationMessage("");
+    setLocationResults([]);
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=in&q=${encodeURIComponent(query)}`);
+      if (!response.ok) throw new Error("Location search is temporarily unavailable.");
+      const results = (await response.json()) as LocationSearchResult[];
+      setLocationResults(results);
+      if (!results.length) setLocationMessage("No matching places found. Try a nearby landmark or full address.");
+    } catch (searchError) {
+      setLocationMessage(searchError instanceof Error ? searchError.message : "Could not search this location.");
+    } finally {
+      setSearchingLocation(false);
+    }
+  }
+
   function captureRestaurantLocation() {
     setLocationMessage("");
     if (!navigator.geolocation) { setLocationMessage("Location is not supported by this browser."); return; }
-    navigator.geolocation.getCurrentPosition(pos => { setRestaurantLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }); setLocationMessage("Restaurant location saved for nearby discovery."); }, () => setLocationMessage("Could not get location. Allow location access and try again."), { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+    navigator.geolocation.getCurrentPosition(
+      (pos) => placeRestaurantPin(pos.coords.latitude, pos.coords.longitude),
+      () => setLocationMessage("Current location unavailable. Search for your restaurant or select its position directly on the map."),
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
   }
 
   function handleRestaurantName(value: string) {
@@ -478,12 +623,20 @@ export default function RestaurantSetupModal({ onComplete }: Props) {
               </p>
             </div>
 
-            <div className="section-heading section-heading-spaced"><span className="section-number">04</span><div><h2>Restaurant location</h2><p>Help nearby customers discover your restaurant.</p></div></div>
+            <div className="section-heading section-heading-spaced"><span className="section-number">04</span><div><h2>Restaurant location</h2><p>Search your restaurant or pin its exact position on the map.</p></div></div>
             <div className="field-group">
-              <button type="button" className="submit-button" onClick={captureRestaurantLocation} style={{ marginTop: 0, justifyContent: "center", background: "#fff", color: "#171717" }}><MapPin size={17} /> {restaurantLocation ? "Update restaurant location" : "Use this device at the restaurant"}</button>
-              {locationMessage && <p className="field-description" role="status">{locationMessage}</p>}
-              <p className="field-description">Stand at your restaurant and allow precise location access. This stores the restaurant pin coordinates for nearby discovery.</p>
-              {restaurantLocation && <a className="field-description" href={`https://www.google.com/maps?q=${restaurantLocation.latitude},${restaurantLocation.longitude}`} target="_blank" rel="noreferrer">Review selected pin in Google Maps ↗</a>}
+              <label htmlFor="restaurantLocationSearch">Search address or landmark</label>
+              <div className="input-shell">
+                <MapPin className="field-icon" size={18} />
+                <input id="restaurantLocationSearch" value={locationQuery} onChange={(event) => setLocationQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void searchRestaurantLocation(); } }} placeholder="Restaurant name, area or landmark" autoComplete="off" />
+                <button type="button" onClick={() => void searchRestaurantLocation()} disabled={searchingLocation} aria-label="Search location" style={{ border: 0, background: "transparent", fontWeight: 700, whiteSpace: "nowrap" }}>{searchingLocation ? "Searching…" : "Search"}</button>
+              </div>
+              {locationResults.length > 0 && <div style={{ display: "grid", gap: 7, marginTop: 8 }}>{locationResults.map((result) => <button key={result.place_id} type="button" onClick={() => { placeRestaurantPin(Number(result.lat), Number(result.lon)); setLocationQuery(result.display_name); setLocationResults([]); }} style={{ textAlign: "left", border: "1px solid #e5e5e5", borderRadius: 10, padding: "10px 12px", background: "#fff", color: "#171717", cursor: "pointer", fontSize: 12 }}>{result.display_name}</button>)}</div>}
+              <div ref={mapElementRef} role="application" aria-label="Select restaurant location map" style={{ width: "100%", height: 300, marginTop: 12, borderRadius: 14, overflow: "hidden", border: "1px solid #e5e5e5", zIndex: 0 }} />
+              <p className="field-description">Tap anywhere on the map to place your pin. Drag the pin to fine-tune the exact restaurant location. You can also search above; GPS is optional.</p>
+              <button type="button" className="submit-button" onClick={captureRestaurantLocation} style={{ marginTop: 10, justifyContent: "center", background: "#fff", color: "#171717" }}><MapPin size={17} /> Use current location</button>
+              {locationMessage && <p className="field-description" role="status" aria-live="polite">{locationMessage}</p>}
+              {restaurantLocation && <div style={{ marginTop: 10, padding: 12, borderRadius: 12, background: "#f5f5f5", fontSize: 12 }}><strong>Selected coordinates</strong><div>{restaurantLocation.latitude.toFixed(6)}, {restaurantLocation.longitude.toFixed(6)}</div><a className="field-description" href={`https://www.google.com/maps?q=${restaurantLocation.latitude},${restaurantLocation.longitude}`} target="_blank" rel="noreferrer">Review pin in Google Maps ↗</a></div>}
               <label htmlFor="deliveryRadiusKm" style={{ display: "block", marginTop: 18 }}>Delivery radius <span>*</span></label>
               <div className="input-shell">
                 <MapPin className="field-icon" size={18} />
