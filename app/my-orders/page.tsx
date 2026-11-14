@@ -2,7 +2,7 @@
 
 import { useLanguage } from "@/components/LanguageProvider";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
@@ -54,6 +54,8 @@ export default function MyOrders() {
   const [msg, setMsg] = useState("Loading your orders…");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [statusNotice, setStatusNotice] = useState("");
+  const previousStatuses = useRef<Record<string, string> | null>(null);
 
   const load = useCallback(async (manual = false) => {
     if (!supabase) { setMsg("Connect Supabase to see your orders."); setLoading(false); return; }
@@ -77,6 +79,23 @@ export default function MyOrders() {
         }, {});
       }
       const enriched = rows.map((o) => ({ ...o, history: historyByOrder[o.id] || [] }));
+      const nextStatuses = Object.fromEntries(enriched.map((order) => [order.id, String(order.status || "placed")]));
+      if (previousStatuses.current) {
+        const changed = enriched.find((order) => previousStatuses.current?.[order.id] !== undefined && previousStatuses.current[order.id] !== String(order.status || "placed"));
+        if (changed) {
+          const messages: Record<string, string> = {
+            accepted: "Your order has been accepted!",
+            rejected: "Your order was rejected. You can place another order.",
+            preparing: "Your food is being prepared!",
+            ready: "Your order is ready!",
+            out_for_delivery: "Your order is on the way!",
+            delivered: "Your order has been delivered!",
+          };
+          setStatusNotice(messages[String(changed.status)] || `Your order status is now ${label(String(changed.status))}.`);
+          window.setTimeout(() => setStatusNotice(""), 5500);
+        }
+      }
+      previousStatuses.current = nextStatuses;
       setOrders(enriched);
       setSelected((old) => old ? enriched.find((o) => o.id === old.id) || null : null);
       setMsg(enriched.length ? "" : "Your next favourite meal is just a few taps away.");
@@ -105,6 +124,7 @@ export default function MyOrders() {
         <div><span className="mo-eyebrow">{t("YOUR THO'AM ACCOUNT")}</span><h1>{t("My orders")}<span>.</span></h1><p>{t("Every order, every update — all in one place.")}</p></div>
         <button className="mo-refresh" onClick={() => void load(true)} disabled={refreshing || loading}><RefreshCw size={15} className={refreshing ? "mo-spin" : ""} /> {t("Refresh")}</button>
       </header>
+      {statusNotice && <div className="mo-status-notice" role="status" aria-live="polite"><Check size={17} /><strong>{statusNotice}</strong><button type="button" onClick={() => setStatusNotice("")} aria-label="Dismiss notification"><X size={16} /></button></div>}
 
       {!loading && orders.length > 0 && <section className="mo-summary">
         <div className="mo-summary-icon"><ShoppingBag size={19} /></div>
@@ -144,7 +164,7 @@ export default function MyOrders() {
         <header className="mo-drawer-head"><div><span className="mo-eyebrow">{t("ORDER TRACKING")}</span><h2 id="mo-dialog-title">#{selected.order_number || selected.id.slice(0, 8).toUpperCase()}</h2><p>{selected.restaurant?.name || "Tho'am restaurant"}</p></div>
           <button className="mo-close" onClick={() => setSelected(null)} aria-label={t("Close tracking")}><X size={19} /></button></header>
         <div className="mo-drawer-scroll">
-          {["cancelled", "rejected"].includes(norm(selected.status)) ? <div className="mo-cancelled"><span><X size={18} /></span><div><strong>Order {label(norm(selected.status)).toLowerCase()}</strong><p>{t("Please contact the restaurant if you need more information.")}</p></div></div> :
+          {["cancelled", "rejected"].includes(norm(selected.status)) ? <div className="mo-cancelled"><span><X size={18} /></span><div><strong>Order {label(norm(selected.status)).toLowerCase()}</strong><p>{norm(selected.status) === "rejected" ? "Unfortunately, the restaurant couldn't process this order." : t("Please contact the restaurant if you need more information.")}</p>{norm(selected.status) === "rejected" && <Link href="/restaurants" className="mo-order-again">Order Again <ArrowRight size={15} /></Link>}</div></div> :
             <div className="mo-live-banner"><span className="mo-live-dot" /><div><strong>{norm(selected.status) === "delivered" ? "Order completed" : "Live order updates"}</strong><p>{norm(selected.status) === "delivered" ? "Your order has reached its destination." : "This timeline updates when the restaurant changes your order status."}</p></div></div>}
           <div className="mo-timeline">{steps.filter((x) => selected.order_type !== "dine_in" || x.key !== "out_for_delivery").map((step, index, arr) => {
             const idx = currentStep(selected.status, selected.order_type === "dine_in");
@@ -173,6 +193,10 @@ export default function MyOrders() {
 
     <style jsx global>{`
       .thoam-myorders{max-width:940px;padding-bottom:100px;color:#171717}
+      .mo-status-notice{display:flex;align-items:center;gap:10px;margin:0 0 18px;padding:14px 16px;border:1px solid #b8e2c8;border-radius:13px;background:#effaf2;color:#176b49;font-size:13px;box-shadow:0 8px 24px rgba(23,107,73,.07)}
+      .mo-status-notice strong{flex:1}
+      .mo-status-notice button{display:grid;place-items:center;width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}
+      .mo-order-again{display:inline-flex;align-items:center;gap:6px;margin-top:9px;padding:9px 12px;border-radius:9px;background:#171717;color:#fff;text-decoration:none;font-size:12px;font-weight:800}
       .mo-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:52px 0 27px}
       .mo-eyebrow{display:block;color:#85857d;font-size:9px;font-weight:850;letter-spacing:2px}
       .mo-heading h1{margin:9px 0 7px;font-size:clamp(38px,6vw,57px);line-height:1;letter-spacing:-2.8px;font-weight:850}

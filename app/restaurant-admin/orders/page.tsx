@@ -16,16 +16,11 @@ import {
   LoaderCircle,
   IndianRupee,
   TrendingUp,
+  Check,
+  X,
 } from "lucide-react";
 
-const statuses = [
-  "accepted",
-  "preparing",
-  "ready",
-  "out_for_delivery",
-  "delivered",
-  "cancelled",
-];
+const statuses = ["preparing", "ready", "out_for_delivery", "delivered"];
 
 type AdminOrderItem = { id: string; product_name?: string | null; variant_name?: string | null; quantity: number; unit_price?: number | string; line_total?: number | string };
 type AdminOrder = { id: string; session_id?: string | null; status?: string; total_amount: number | string; created_at: string; payment_status?: string; payment_method?: string; order_number?: number | string; order_type?: string; customer_name?: string | null; customer_phone?: string | null; delivery_address?: string | null; delivery_fee?: number | string; discount_amount?: number | string; platform_fee?: number | string; subtotal?: number | string; notes?: string | null; restaurant?: { name?: string; area?: string | null; city?: string | null } | null; order_items?: AdminOrderItem[] };
@@ -178,10 +173,10 @@ export default function OrdersPage() {
     );
 
     try {
-      const { error } = await client
-        .from("orders")
-        .update({ status })
-        .eq("id", id);
+      const { error } = await client.rpc("restaurant_update_order_status", {
+        p_order_id: id,
+        p_new_status: status,
+      });
 
       if (error) throw error;
     } catch (error) {
@@ -535,39 +530,42 @@ const todayRevenue = revenueOrders
                     </button>
                   </div>
 
-                  <div className="ta-order-update">
-                    <label htmlFor={`status-${order.id}`}>
-                      Update order status
-                    </label>
-
-                    <select
-                      id={`status-${order.id}`}
-                      value={order.status || "pending"}
-                      disabled={Boolean(updatingId)}
-                      onChange={(e) =>
-                        void update(order.id, e.target.value)
-                      }
-                    >
-                      {[
-                        order.status || "pending",
-                        ...statuses.filter(
-                          (statusOption) =>
-                            statusOption !== order.status
-                        ),
-                      ].map((statusOption: string) => (
-                        <option key={statusOption} value={statusOption}>
-                          {statusOption.replace(/_/g, " ")}
-                        </option>
-                      ))}
-                    </select>
-
-                    {updatingId === order.id && (
-                      <LoaderCircle
-                        size={16}
-                        className="ta-refreshing"
-                      />
-                    )}
-                  </div>
+                  {isNew ? (
+                    <div className="ta-order-decision">
+                      <button
+                        type="button"
+                        className="ta-accept-order"
+                        disabled={Boolean(updatingId)}
+                        onClick={() => void update(order.id, "accepted")}
+                      >
+                        {updatingId === order.id ? <LoaderCircle size={15} className="ta-refreshing" /> : <Check size={15} />}
+                        Accept Order
+                      </button>
+                      <button
+                        type="button"
+                        className="ta-reject-order"
+                        disabled={Boolean(updatingId)}
+                        onClick={() => void update(order.id, "rejected")}
+                      >
+                        <X size={15} />
+                        Reject Order
+                      </button>
+                    </div>
+                  ) : !isCancelled(status) && !isDelivered(status) ? (
+                    <div className="ta-order-update">
+                      <label htmlFor={`status-${order.id}`}>Update order status</label>
+                      <select
+                        id={`status-${order.id}`}
+                        value={order.status || "placed"}
+                        disabled={Boolean(updatingId)}
+                        onChange={(e) => void update(order.id, e.target.value)}
+                      >
+                        {[order.status || "placed", ...statuses.filter((option) => option !== order.status)]
+                          .map((option) => <option key={option} value={option}>{option.replace(/_/g, " ")}</option>)}
+                      </select>
+                      {updatingId === order.id && <LoaderCircle size={16} className="ta-refreshing" />}
+                    </div>
+                  ) : null}
                 </article>
               );
             })}
@@ -663,6 +661,12 @@ const todayRevenue = revenueOrders
         .ta-session-discount{margin:6px 0 0;text-align:right;font-size:11px;color:#777}
         .ta-session-hint{padding:12px;border-radius:10px;background:#f6f8f6;color:#5e6c62;font-size:11px;line-height:1.5}
         .ta-order-actions{display:flex;justify-content:flex-end;margin:0 0 12px}
+        .ta-order-decision{display:flex;flex-wrap:wrap;gap:9px;margin:0 0 14px}
+        .ta-order-decision button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:10px 16px;border:0;border-radius:10px;font-size:12px;font-weight:850;cursor:pointer;transition:transform .18s ease,opacity .18s ease}
+        .ta-order-decision button:hover{transform:translateY(-1px)}
+        .ta-order-decision button:disabled{opacity:.55;cursor:not-allowed;transform:none}
+        .ta-accept-order{background:#176b49;color:#fff}
+        .ta-reject-order{background:#fff1f0;color:#b42318;border:1px solid #f2c9c5!important}
         .ta-view-bill{border:1px solid #171717;border-radius:9px;background:#fff;color:#171717;padding:9px 15px;font-size:12px;font-weight:800;cursor:pointer;transition:background .18s ease,color .18s ease}
         .ta-view-bill:hover{background:#171717;color:#fff}
         .ta-bill-backdrop{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.58);display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto}
