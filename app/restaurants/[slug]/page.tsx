@@ -27,6 +27,14 @@ import type { FoodProduct, Restaurant } from "@/lib/types";
 
 type FoodFilter = "all" | "veg" | "nonveg";
 
+function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const rad = (value: number) => (value * Math.PI) / 180;
+  const dLat = rad(lat2 - lat1);
+  const dLon = rad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 type RestaurantOffer = {
   id: string;
   restaurant_id: string;
@@ -114,6 +122,17 @@ export default function RestaurantPage() {
   const [selectedProduct, setSelectedProduct] = useState<FoodProduct | null>(null);
   const [selectedVariantName, setSelectedVariantName] = useState("");
   const [variantQuantity, setVariantQuantity] = useState(1);
+  const [customerLocation, setCustomerLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locationChecked, setLocationChecked] = useState(false);
+
+  useEffect(() => {
+    if (!navigator.geolocation) { setLocationChecked(true); return; }
+    navigator.geolocation.getCurrentPosition(
+      (position) => { setCustomerLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude }); setLocationChecked(true); },
+      () => setLocationChecked(true),
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+    );
+  }, []);
 
   useEffect(() => {
     const refreshClock = () => setIndiaClock(getIndiaClock());
@@ -138,7 +157,7 @@ export default function RestaurantPage() {
           error: restaurantError,
         } = await supabase
           .from("restaurants")
-          .select("id,name,slug,description,area,city,is_open,qr_enabled")
+          .select("id,name,slug,description,area,city,is_open,qr_enabled,delivery_enabled,latitude,longitude,delivery_radius_km")
           .eq("slug", slug)
           .eq("status", "approved")
           .maybeSingle();
@@ -370,9 +389,23 @@ export default function RestaurantPage() {
   const total = cartItems.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
   const unavailableCartItems = cartItems.filter((product) => !isProductAvailableNow(product.id));
 
+  const deliveryDistanceKm = customerLocation && restaurant?.latitude != null && restaurant?.longitude != null
+    ? calculateDistanceKm(customerLocation.latitude, customerLocation.longitude, Number(restaurant.latitude), Number(restaurant.longitude))
+    : null;
+  const deliveryUnsupported = Boolean(restaurant?.delivery_enabled && deliveryDistanceKm !== null && restaurant.delivery_radius_km != null && deliveryDistanceKm > Number(restaurant.delivery_radius_km));
+
   function checkout() {
+    if (deliveryUnsupported) {
+      setMessage("Your location is not supported for delivery by this restaurant.");
+      return;
+    }
     if (!supabase) {
       setMessage("Connect Supabase to place real orders.");
+      return;
+    }
+
+    if (deliveryUnsupported) {
+      setMessage("Your location is not supported for delivery by this restaurant.");
       return;
     }
 
@@ -458,7 +491,14 @@ export default function RestaurantPage() {
 
                 <h1>{restaurant.name}</h1>
 
-                <p className="premium-restaurant-description">
+                {restaurant.delivery_enabled && locationChecked && deliveryDistanceKm !== null && (
+                <div role="status" style={{ marginTop: 16, padding: "12px 14px", borderRadius: 12, background: deliveryUnsupported ? "#fff1f0" : "#effaf2", color: deliveryUnsupported ? "#9b2520" : "#176534", fontSize: 13, lineHeight: 1.5 }}>
+                  {deliveryUnsupported
+                    ? `Your location is not supported for delivery. This restaurant delivers within ${restaurant.delivery_radius_km} KM, and you are ${deliveryDistanceKm.toFixed(1)} KM away. You can still explore the menu.`
+                    : `Delivery is available to your location · ${deliveryDistanceKm.toFixed(1)} KM away.`}
+                </div>
+              )}
+              <p className="premium-restaurant-description">
                   {restaurant.description ||
                     "Discover your next favourite meal, freshly prepared."}
                 </p>
