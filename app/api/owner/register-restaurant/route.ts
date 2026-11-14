@@ -84,6 +84,15 @@ export async function POST(request: Request) {
     const logoUrl = String(body.logoUrl ?? "").trim();
     const latitude = body.latitude == null ? null : Number(body.latitude);
     const longitude = body.longitude == null ? null : Number(body.longitude);
+    const deliveryRadiusKm = Number(body.deliveryRadiusKm);
+    if (latitude === null || longitude === null) {
+      return jsonError("Please select the exact restaurant location.", 400);
+    }
+
+    if (!Number.isFinite(deliveryRadiusKm) || deliveryRadiusKm < 1 || deliveryRadiusKm > 20) {
+      return jsonError("Delivery radius must be between 1 and 20 KM.", 400);
+    }
+
     if (
       (latitude === null) !== (longitude === null) ||
       (latitude !== null &&
@@ -227,6 +236,7 @@ export async function POST(request: Request) {
         logo_url: logoUrl || null,
         latitude,
         longitude,
+        delivery_radius_km: deliveryRadiusKm,
         is_open: true,
         status: "pending",
       })

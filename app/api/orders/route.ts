@@ -83,6 +83,8 @@ export async function POST(req: NextRequest) {
   const notes = String(body.notes || "")
     .trim()
     .slice(0, 500);
+  const customerLatitude = Number(body.customerLatitude);
+  const customerLongitude = Number(body.customerLongitude);
 
   const offerId =
     body.offerId === null || body.offerId === undefined || body.offerId === ""
@@ -156,12 +158,43 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  if (!Number.isFinite(customerLatitude) || customerLatitude < -90 || customerLatitude > 90 || !Number.isFinite(customerLongitude) || customerLongitude < -180 || customerLongitude > 180) {
+    return NextResponse.json({ error: "Your location is required to verify delivery availability." }, { status: 400 });
+  }
+
   const db = createClient(url, serviceKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
     },
   });
+
+  const { data: restaurant, error: restaurantLookupError } = await db
+    .from("restaurants")
+    .select("latitude,longitude,delivery_radius_km,delivery_enabled")
+    .eq("id", restaurantId)
+    .maybeSingle();
+
+  if (restaurantLookupError || !restaurant) {
+    return NextResponse.json({ error: "Could not verify restaurant delivery coverage." }, { status: 500 });
+  }
+
+  if (!restaurant.delivery_enabled) {
+    return NextResponse.json({ error: "This restaurant does not offer delivery." }, { status: 409 });
+  }
+
+  if (restaurant.latitude == null || restaurant.longitude == null || restaurant.delivery_radius_km == null) {
+    return NextResponse.json({ error: "This restaurant has not configured its delivery location and radius yet." }, { status: 409 });
+  }
+
+  const toRad = (value: number) => value * Math.PI / 180;
+  const dLat = toRad(Number(restaurant.latitude) - customerLatitude);
+  const dLon = toRad(Number(restaurant.longitude) - customerLongitude);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(customerLatitude)) * Math.cos(toRad(Number(restaurant.latitude))) * Math.sin(dLon / 2) ** 2;
+  const distanceKm = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  if (distanceKm > Number(restaurant.delivery_radius_km)) {
+    return NextResponse.json({ error: `Your location is not supported for delivery. This restaurant delivers within ${restaurant.delivery_radius_km} KM; you are ${distanceKm.toFixed(1)} KM away.` }, { status: 409 });
+  }
 
   const { data: order, error: orderError } = await db.rpc(
     "create_cod_delivery_order",
